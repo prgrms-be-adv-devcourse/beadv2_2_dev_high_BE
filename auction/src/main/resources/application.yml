@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: auction-service
+  profiles:
+    active: ${env.SPRING_PROFILES_ACTIVE:local}
+server:
+  port: 8081
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+    import:
+      - optional:configserver:http://localhost:8888
+      - optional:file:.env[.properties]
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"

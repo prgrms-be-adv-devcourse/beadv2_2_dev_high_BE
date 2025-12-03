@@ -1,1 +1,20 @@
+// rootProject
 rootProject.name = 'more'
+
+// infrastructure & common module
+include 'common'
+include 'config'
+include 'apigateway'
+include 'discovery'
+
+// service module
+include 'notification'
+include 'auction'
+include 'deposit'
+include 'order'
+include 'product'
+include 'product-domain'
+include 'search'
+include 'settlement'
+include 'user'
+include 'file-service'
