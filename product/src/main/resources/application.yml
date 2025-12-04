@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: product-service
+  config:
+    import: "configserver:http://localhost:8888"
+server:
+  port: 8085

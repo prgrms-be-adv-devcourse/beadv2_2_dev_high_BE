@@ -8,6 +8,11 @@ group = 'com.dev_high'
 version = '0.0.1-SNAPSHOT'
 description = 'common'
 
+bootJar {
+    enabled = false
+}
+
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -19,11 +24,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
