@@ -19,6 +19,7 @@ bin/
 
 ### IntelliJ IDEA ###
 .idea
+config/src/main/resources/config
 *.iws
 *.iml
 *.ipr
