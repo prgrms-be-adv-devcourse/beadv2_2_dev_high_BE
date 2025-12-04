@@ -54,7 +54,7 @@ public class CustomIdGenerator implements BeforeExecutionGenerator {
 
   private String callPostgresFunction(String tableNm, SharedSessionContractImplementor session) {
     String newId = null;
-    String sql = "SELECT fn_nextval('" + tableNm + "')";
+    String sql = "SELECT public.fn_nextval('" + tableNm + "')";
 
     try (Connection con = session.getJdbcConnectionAccess().obtainConnection();
         PreparedStatement ps = con.prepareStatement(sql);
