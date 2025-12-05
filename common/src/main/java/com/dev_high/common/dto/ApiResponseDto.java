@@ -28,8 +28,13 @@ public class ApiResponseDto<T> {
     return new ApiResponseDto<>("FAIL", message, null);
   }
 
+  public static <T> ApiResponseDto<T> fail(String message,String errorCode) {
+    return new ApiResponseDto<>(errorCode, message, null);
+  }
+
+
   public static <T> ApiResponseDto<T> error(String message) {
-    return new ApiResponseDto<>("ERROR", message, null);
+    return new ApiResponseDto<>("ERR001", message, null);
   }
 
   private ApiResponseDto(T data) {
@@ -46,14 +51,4 @@ public class ApiResponseDto<T> {
     this.data = data;
   }
 
-  private ApiResponseDto(String message, T data) {
-    this.message = message;
-    this.data = data;
-  }
-
-  private ApiResponseDto(String code, String message, T data) {
-    this.code = code;
-    this.message = message;
-    this.data = data;
-  }
 }
