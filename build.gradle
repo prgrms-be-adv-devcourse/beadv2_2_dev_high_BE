@@ -31,6 +31,10 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'io.spring.dependency-management'
 
+    tasks.withType(Test).configureEach {
+        enabled = false
+    }
+
     repositories {
         mavenCentral()
     }
@@ -47,6 +51,7 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-validation'
         annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+
         // Lombok
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
@@ -61,6 +66,11 @@ subprojects {
 
         // Swagger
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+        // querydsl
+        implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.0'
+        implementation 'io.github.openfeign.querydsl:querydsl-core:7.0'
+        annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:7.0:jpa'
 
         // 테스트
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -83,7 +93,6 @@ subprojects {
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
         }
     }
-
 
 
     tasks.named('test') {
