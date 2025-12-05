@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.dev_high.product", "com.dev_high.product.domain"})
 @EnableDiscoveryClient
 public class ProductApplication {
 
