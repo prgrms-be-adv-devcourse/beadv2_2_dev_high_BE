@@ -46,5 +46,14 @@ public class ApiResponseDto<T> {
     this.data = data;
   }
 
-}
+  private ApiResponseDto(String message, T data) {
+    this.message = message;
+    this.data = data;
+  }
 
+  private ApiResponseDto(String code, String message, T data) {
+    this.code = code;
+    this.message = message;
+    this.data = data;
+  }
+}

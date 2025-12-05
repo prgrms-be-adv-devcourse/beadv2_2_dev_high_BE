@@ -36,3 +36,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Product env ###
+product/.env
+product/.env.*
+.productSQL.sql
+
+
