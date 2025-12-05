@@ -7,20 +7,41 @@ import org.springframework.http.HttpStatus;
  * */
 public class CustomException extends RuntimeException {
   private final HttpStatus status;
+  private final String errorCode; // error code  ex: ERR001
 
   // 기본 상태코드 400
   public CustomException(String message) {
     super(message);
     this.status = HttpStatus.BAD_REQUEST;
+    this.errorCode="null";
   }
 
-  // 상태코드 지정 가능
+
+  // 에러코드 ,메세지 변경
+  public CustomException(String errorCode ,String message) {
+    super(message);
+    this.errorCode =errorCode;
+    this.status = HttpStatus.BAD_REQUEST;
+  }
+
+  //상태코드 메세지 변경
   public CustomException( HttpStatus status,String message) {
     super(message);
     this.status = status;
+    this.errorCode =null;
+  }
+
+  // 전부변경
+  public CustomException( HttpStatus status,String message,String errorCode) {
+    super(message);
+    this.status = status;
+    this.errorCode=errorCode;
   }
 
   public HttpStatus getStatus() {
     return status;
+  }
+  public String getErrorCode() {
+    return errorCode;
   }
 }
