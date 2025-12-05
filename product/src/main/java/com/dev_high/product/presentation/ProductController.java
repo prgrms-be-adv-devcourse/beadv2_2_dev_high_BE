@@ -7,6 +7,8 @@ import com.dev_high.product.presentation.dto.ProductRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +24,18 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<ProductInfo> createProduct(@RequestBody ProductRequest request) {
+    public ApiResponseDto<ProductInfo> createProduct(@Valid @RequestBody ProductRequest request) {
         ProductInfo productInfo = productService.registerProduct(request.toCommand());
         return ApiResponseDto.success("상품이 등록되었습니다.", productInfo);
+    }
+
+    @GetMapping
+    public ApiResponseDto<java.util.List<ProductInfo>> getProducts() {
+        return ApiResponseDto.success(productService.getProducts());
+    }
+
+    @GetMapping("/{productId}")
+    public ApiResponseDto<ProductInfo> getProduct(@PathVariable String productId) {
+        return ApiResponseDto.success(productService.getProduct(productId));
     }
 }
