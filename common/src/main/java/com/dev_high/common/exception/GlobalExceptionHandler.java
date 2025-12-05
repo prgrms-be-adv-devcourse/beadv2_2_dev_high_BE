@@ -12,27 +12,27 @@ import org.springframework.web.server.ResponseStatusException;
 public class GlobalExceptionHandler {
 
 
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponseDto<Void>> handleCustomException(CustomException ex) {
-        return ResponseEntity
-                .status(ex.getStatus())
-                .body(ApiResponseDto.fail(ex.getMessage()));
-    }
+  @ExceptionHandler(CustomException.class)
+  public ResponseEntity<ApiResponseDto<Void>> handleCustomException(CustomException ex) {
+    return ResponseEntity
+        .status(ex.getStatus())
+        .body(ApiResponseDto.fail(ex.getMessage()));
+  }
 
 
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiResponseDto<Void>> handleOtherException(ResponseStatusException ex) {
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ApiResponseDto<Void>> handleOtherException(ResponseStatusException ex) {
 
-        return ResponseEntity
-                .status(ex.getStatusCode())
-                .body(ApiResponseDto.fail(ex.getReason()));
-    }
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponseDto<Void>> handleOtherException(Exception ex) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponseDto.error("서버 에러가 발생했습니다."));
-    }
+    return ResponseEntity
+        .status(ex.getStatusCode())
+        .body(ApiResponseDto.fail(ex.getReason()));
+  }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponseDto<Void>> handleOtherException(Exception ex) {
+    return ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponseDto.error("서버 에러가 발생했습니다."));
+  }
 
 
 }
