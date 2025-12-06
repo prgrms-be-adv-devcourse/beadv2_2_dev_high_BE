@@ -1,13 +1,22 @@
 package com.dev_high.auction.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.common.util.DateUtil;
+import com.dev_high.product.domain.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
@@ -22,22 +31,20 @@ public class Auction {
   @CustomGeneratedId(method = "auction")
   private String id;
 
-  // 상품 외래키
-//  @ManyToOne(fetch = FetchType.LAZY)
-//  @JoinColumn(name = "product_id", nullable = false)
-//  private Product product;
-  @Column(name = "product_id")
-  private String productId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "product_id", nullable = false, insertable = false, updatable = false)
+  private Product product;
 
-  /*TODO: Enum change*/
   @Column(length = 50, nullable = false)
-  private String status;
+  @Enumerated(EnumType.STRING)
+  private AuctionStatus status;
 
-  @Column(name = "current_bid")
-  private Long currentBid;
+  @OneToOne(mappedBy = "auction", fetch = FetchType.LAZY)
+  private AuctionLiveState liveState;
+
 
   @Column(name = "start_bid", nullable = false)
-  private Long startBid;
+  private BigDecimal startBid;
 
   @Column(name = "auction_start_at", nullable = false)
   private LocalDateTime auctionStartAt;
@@ -45,17 +52,16 @@ public class Auction {
   @Column(name = "auction_end_at", nullable = false)
   private LocalDateTime auctionEndAt;
 
-  @Column(name = "highest_user_id", length = 20)
-  private String highestUserId;
-
   @Column(name = "deposit_amount")
-  private Long depositAmount;
+  private BigDecimal depositAmount;
+
 
   @Column(name = "deleted_yn",  nullable = false)
-  private String deletedYn = "N";
+  private String deletedYn;
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
 
   @Column(name = "created_by", length = 50, nullable = false)
   private String createdBy;
@@ -69,35 +75,59 @@ public class Auction {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt = LocalDateTime.now();
 
-  @Version
-  @Column(name = "version", nullable = false)
-  private Long version = 0L;
 
   @PrePersist
   public void prePersist() {
-    createdAt = LocalDateTime.now();
-    updatedAt = LocalDateTime.now();
+    createdAt = DateUtil.now();
+    updatedAt = DateUtil.now();
   }
 
   @PreUpdate
   public void preUpdate() {
-    updatedAt = LocalDateTime.now();
+    updatedAt = DateUtil.now();
   }
 
 
   protected Auction() {
   }
 
-  public Auction(String productId, Long startBid, LocalDateTime auctionStartAt,
+  public Auction(BigDecimal startBid, LocalDateTime auctionStartAt,
       LocalDateTime auctionEndAt, String creatorId) {
-    this.productId = productId;
-    this.status ="PENDING";
+
+    this.status =AuctionStatus.READY;
     this.startBid = startBid;
+    this.depositAmount =  startBid
+        .multiply(new BigDecimal("0.05"))       // 5% 계산
+        .divide(new BigDecimal("10"), 0, RoundingMode.CEILING) // 10으로 나눈 후 올림
+        .multiply(new BigDecimal("10"));
     this.auctionStartAt = auctionStartAt;
     this.auctionEndAt = auctionEndAt;
     this.createdBy = creatorId;
     this.updatedBy = creatorId;
+    this.deletedYn = "N";
 
+  }
+  public void modify(BigDecimal startBid , LocalDateTime auctionStartAt ,LocalDateTime auctionEndAt) {
+
+    this.startBid= startBid;
+    this.auctionStartAt = auctionStartAt;
+    this.auctionEndAt = auctionEndAt;
+
+  }
+
+
+  public void setProduct(Product product) {
+    this.product = product;
+  }
+
+
+  public void changeStatus(AuctionStatus status) {
+    this.status = status;
+  }
+
+  public void remove(){
+    this.deletedYn="Y";
+    this.deletedAt = DateUtil.now();
 
   }
 }
