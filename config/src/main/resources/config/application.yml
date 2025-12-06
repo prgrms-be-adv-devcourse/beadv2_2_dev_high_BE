@@ -1,3 +1,10 @@
+spring:
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      table-prefix: public.batch_
+
 eureka:
   client:
     service-url:
