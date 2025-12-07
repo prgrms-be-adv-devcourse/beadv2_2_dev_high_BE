@@ -30,6 +30,7 @@ spring:
     jdbc:
       initialize-schema: never
 
+
 server:
   port: ${SERVER_PORT}
 
