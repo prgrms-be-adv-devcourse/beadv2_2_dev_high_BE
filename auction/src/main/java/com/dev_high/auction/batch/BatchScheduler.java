@@ -3,15 +3,12 @@ package com.dev_high.auction.batch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
-@Configuration
-@EnableScheduling
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class BatchScheduler {
@@ -29,7 +26,7 @@ public class BatchScheduler {
           .toJobParameters());
     } catch (Exception e) {
       // 배치 실행 실패 로그
-      log.error(e.getMessage());
+      log.error("StartAuctionsJob 실행 중 오류 발생", e);
     }
   }
 
@@ -41,7 +38,8 @@ public class BatchScheduler {
           .addLong("time", System.currentTimeMillis())
           .toJobParameters());
     } catch (Exception e) {
-      log.error(e.getMessage());
+      log.error("endAuctionsJob 실행 중 예외 발생", e);
+
     }
   }
 }
