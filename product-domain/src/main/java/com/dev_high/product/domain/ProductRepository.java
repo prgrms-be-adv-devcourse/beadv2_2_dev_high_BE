@@ -2,6 +2,8 @@ package com.dev_high.product.domain;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ProductRepository {
 
@@ -10,4 +12,6 @@ public interface ProductRepository {
     Optional<Product> findById(String id);
 
     List<Product> findAll();
+
+    Page<Product> findAll(Pageable pageable);
 }
