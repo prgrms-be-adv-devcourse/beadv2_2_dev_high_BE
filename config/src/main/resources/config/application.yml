@@ -33,3 +33,14 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
+logging:
+  level:
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN
+    org.apache.kafka.clients.consumer.internals.ConsumerCoordinator: WARN
+    org.apache.kafka.clients.consumer.internals.ConsumerNetworkClient: WARN
+    org.apache.kafka.clients.producer.ProducerConfig: WARN
+    org.apache.kafka.clients.producer.internals.Sender: WARN
+
+log:
+  path: ${LOG_PATH:./logs}

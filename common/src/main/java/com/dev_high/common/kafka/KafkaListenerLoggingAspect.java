@@ -3,22 +3,22 @@ package com.dev_high.common.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
 public class KafkaListenerLoggingAspect {
 
   private final ObjectMapper objectMapper;
-
+  private static final Logger log = LoggerFactory.getLogger("KAFKA_LOG");
 
   @Value("${spring.application.name:unknown-module}")
   private String appName;  // 수신 모듈 이름
