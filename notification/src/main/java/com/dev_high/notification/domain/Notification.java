@@ -1,7 +1,7 @@
 package com.dev_high.notification.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.notification.infrastructure.persistense.converter.BooleanToYNConverter;
+import com.dev_high.notification.infrastructure.converter.BooleanToYNConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

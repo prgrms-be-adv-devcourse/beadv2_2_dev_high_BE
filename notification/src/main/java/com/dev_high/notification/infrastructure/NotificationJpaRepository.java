@@ -1,4 +1,4 @@
-package com.dev_high.notification.infrastructure.persistense;
+package com.dev_high.notification.infrastructure;
 
 import com.dev_high.notification.application.dto.NotificationInfo;
 import com.dev_high.notification.domain.Notification;
