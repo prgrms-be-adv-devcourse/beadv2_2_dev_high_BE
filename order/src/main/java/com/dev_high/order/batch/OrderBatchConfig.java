@@ -64,7 +64,7 @@ public class OrderBatchConfig {
                             OrderRepository orderRepository) {
         return new StepBuilder("findTargets", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
-                    List<Order> targets = orderRepository.findAllByPayCompleteDateAndStatus(LocalDate.now().atStartOfDay(), LocalDate.now().atTime(LocalTime.MAX), OrderStatus.CONFIRM_BUY);
+                    List<Order> targets = orderRepository.findAllByPayCompleteDateAndStatus(LocalDate.now().minusWeeks(2).atStartOfDay(), LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX), OrderStatus.CONFIRM_BUY);
                     chunkContext.getStepContext().getStepExecution().getExecutionContext().put("targets", targets);
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
