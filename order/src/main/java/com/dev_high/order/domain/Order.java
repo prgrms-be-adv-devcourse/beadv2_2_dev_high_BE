@@ -43,6 +43,9 @@ public class Order {
     @Column(nullable = false, length = 20)
     private OrderStatus status = OrderStatus.BEFORE_PAYMENT;
 
+    @Column(nullable = false, length = 1)
+    private String payYn = "N";
+
     @Column(name = "created_at", nullable = false,
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
