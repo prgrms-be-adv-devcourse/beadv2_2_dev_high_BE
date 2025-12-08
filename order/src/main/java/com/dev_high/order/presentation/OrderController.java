@@ -40,12 +40,31 @@ public class OrderController {
 
     @PostMapping("/post")
     public ApiResponseDto<OrderResponse> create(@RequestBody OrderRegisterRequest request) {
+        String validateResult = validateRegisterParam(request);
+        if (validateResult != null) return ApiResponseDto.fail(validateResult);
         return orderService.create(request);
     }
 
     @PutMapping("/update")
     public ApiResponseDto<OrderResponse> update(@RequestBody OrderModifyRequest request) {
+        String validateResult = validateModifyParam(request);
+        if (validateResult != null) return ApiResponseDto.fail(validateResult);
         return orderService.update(request);
     }
 
+    private String validateModifyParam(OrderModifyRequest request) {
+        if (request.id() == null || request.id().isEmpty()) return "id가 필요합니다.";
+        if (request.status() == null) return "변경할 상태가 필요합니다.";
+        return null;
+    }
+
+    private String validateRegisterParam(OrderRegisterRequest request) {
+        if (request.sellerId() == null || request.sellerId().isEmpty()) return "판매자 id가 필요합니다.";
+        if (request.buyerId() == null || request.buyerId().isEmpty()) return "구매자 id가 필요합니다.";
+        if (request.auctionId() == null || request.auctionId().isEmpty()) return "경매 id가 필요합니다.";
+        if (request.confirmAmount() == null) return "낙찰가가 필요합니다.";
+        if (request.confirmDate() == null) return "낙찰이 확정된 일자가 필요합니다.";
+
+        return null;
+    }
 }

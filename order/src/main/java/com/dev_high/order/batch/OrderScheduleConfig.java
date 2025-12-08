@@ -22,9 +22,9 @@ public class OrderScheduleConfig {
     private final Job sendConfirmedOrder; // BatchConfig에서 정의한 Job 빈 주입
 
     /**
-     * 매일 새벽 2시 0분에 정산 Job을 실행합니다. (Cron 표현식: 초 분 시 일 월 요일)
+     * 매일 새벽 1시 1분 1초에 정산 Job을 실행합니다. (Cron 표현식: 초 분 시 일 월 요일)
      */
-    @Scheduled(cron = "0 1 1 * * *")
+    @Scheduled(cron = "1 1 1 * * *")
     public void runSettlementJob() {
         try {
             // Job 재실행을 위해 현재 시간을 파라미터로 추가하여 고유한 JobParameters를 생성합니다.
