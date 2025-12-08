@@ -1,6 +1,5 @@
 package com.dev_high.auction.batch;
 
-import com.dev_high.auction.kafka.AuctionEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
