@@ -24,7 +24,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +63,10 @@ public class OrderBatchConfig {
                             OrderRepository orderRepository) {
         return new StepBuilder("findTargets", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
-                    List<Order> targets = orderRepository.findAllByPayCompleteDateAndStatus(LocalDate.now().minusWeeks(2).atStartOfDay(), LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX), OrderStatus.CONFIRM_BUY);
+                    List<Order> targets = orderRepository.findAllByPayCompleteDateAndStatus(
+                            LocalDate.now().minusWeeks(2).atStartOfDay(),
+                            LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX),
+                            OrderStatus.CONFIRM_BUY);
                     chunkContext.getStepContext().getStepExecution().getExecutionContext().put("targets", targets);
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
