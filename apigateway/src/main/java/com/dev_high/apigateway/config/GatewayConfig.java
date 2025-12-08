@@ -17,10 +17,10 @@ public class GatewayConfig {
             .path("/api/v1/auctions/**") // 해당 경로로 요청하면 > 해당서비스로 요청전달
             .uri("lb://AUCTION-SERVICE")) // 유레카에 등록된 서비스이름
 
-        // Notice Service
-        .route("notice-service", r -> r
-            .path("/api/v1/notice/**")
-            .uri("lb://NOTICE-SERVICE"))
+        // Notification Service
+        .route("notification-service", r -> r
+            .path("/api/v1/notifications/**")
+            .uri("lb://NOTIFICATION-SERVICE"))
 
         // Deposit Service
         .route("deposit-service", r -> r
