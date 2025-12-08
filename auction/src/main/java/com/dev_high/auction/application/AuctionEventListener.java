@@ -1,7 +1,5 @@
-package com.dev_high.auction.kafka;
+package com.dev_high.auction.application;
 
-import com.dev_high.auction.application.AuctionService;
-import com.dev_high.auction.application.BidService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
