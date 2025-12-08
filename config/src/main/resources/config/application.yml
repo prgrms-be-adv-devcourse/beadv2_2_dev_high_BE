@@ -4,7 +4,18 @@ spring:
       enabled: false
     jdbc:
       table-prefix: public.batch_
-
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      group-id: ${spring.application.name:default-group} # 각서비스 네임으로 그룹아이디 사용
+    listener:
+      concurrency: 3
 eureka:
   client:
     service-url:
