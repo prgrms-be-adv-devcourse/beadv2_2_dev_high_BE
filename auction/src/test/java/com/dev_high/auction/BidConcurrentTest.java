@@ -13,10 +13,11 @@ import com.dev_high.auction.domain.AuctionBidHistory;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionParticipation;
 import com.dev_high.auction.domain.idclass.AuctionParticipationId;
-import com.dev_high.auction.infrastructure.auction.AuctionRepository;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionBidHistoryJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
+import com.dev_high.auction.kafka.AuctionEventPublisher;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
 import jakarta.persistence.OptimisticLockException;
 import java.lang.reflect.Field;
@@ -58,7 +59,7 @@ class BidConcurrentTest {
         AuctionBidHistoryJpaRepository.class);
     AuctionRepository auctionRepository = mock(AuctionRepository.class);
     AuctionWebSocketService auctionWebSocketService = mock(AuctionWebSocketService.class);
-
+    AuctionEventPublisher eventPublisher = mock(AuctionEventPublisher.class);
     participations = new ConcurrentHashMap<>();
     bidHistories = Collections.synchronizedList(new ArrayList<>());
 
@@ -67,7 +68,8 @@ class BidConcurrentTest {
         auctionLiveStateJpaRepository,
         auctionParticipationJpaRepository,
         auctionRepository,
-        auctionWebSocketService
+        auctionWebSocketService,
+        eventPublisher
     );
 
     // --- Auction 생성 ---

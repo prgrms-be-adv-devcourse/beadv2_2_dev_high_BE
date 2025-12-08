@@ -2,6 +2,7 @@ package com.dev_high.auction.infrastructure.auction;
 
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.domain.Auction;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.auction.domain.QAuction;
 import com.dev_high.auction.domain.QAuctionLiveState;
@@ -79,8 +80,9 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
   @Override
   public List<String> bulkUpdateStartStatus() {
 
-      return auctionJpaRepository.bulkUpdateStart();
+    return auctionJpaRepository.bulkUpdateStart();
   }
+
   @Override
   public List<String> bulkUpdateEndStatus() {
 

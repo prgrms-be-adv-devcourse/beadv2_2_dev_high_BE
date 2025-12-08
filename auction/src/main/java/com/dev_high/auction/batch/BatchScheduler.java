@@ -1,5 +1,6 @@
 package com.dev_high.auction.batch;
 
+import com.dev_high.auction.kafka.AuctionEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -16,6 +17,7 @@ public class BatchScheduler {
   private final JobLauncher jobLauncher;
   private final Job startAuctionsJob;
   private final Job endAuctionsJob;
+
 
   // 매시간 정각마다 시작 배치 실행
   @Scheduled(cron = "0 0 * * * *") // 초 분 시 일 월 요일

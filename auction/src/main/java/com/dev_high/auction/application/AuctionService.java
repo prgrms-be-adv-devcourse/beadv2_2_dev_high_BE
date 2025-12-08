@@ -9,8 +9,9 @@ import com.dev_high.auction.exception.AuctionModifyForbiddenException;
 import com.dev_high.auction.exception.AuctionNotFoundException;
 import com.dev_high.auction.exception.AuctionStatusInvalidException;
 import com.dev_high.auction.exception.DuplicateAuctionException;
-import com.dev_high.auction.infrastructure.auction.AuctionRepository;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
+import com.dev_high.auction.kafka.AuctionEventPublisher;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
@@ -29,7 +30,7 @@ public class AuctionService {
 
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
-
+  private final AuctionEventPublisher auctionEventPublisher;
 
   public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
@@ -115,9 +116,9 @@ public class AuctionService {
     if (auction.getStartBid() != request.startBid()) {
       AuctionLiveState state = auction.getLiveState();
 
-      if(state==null){
-        state =new AuctionLiveState(auction, auction.getStartBid());
-      }else{
+      if (state == null) {
+        state = new AuctionLiveState(auction, auction.getStartBid());
+      } else {
         state.update(null, auction.getStartBid());
 
       }
