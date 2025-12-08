@@ -3,5 +3,21 @@ spring:
     name: user-service
   config:
     import: "configserver:http://localhost:8888"
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    jackson:
+      time-zone: Asia/Seoul
+    jpa:
+      hibernate:
+        ddl-auto: validate
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+          jdbc:
+            time_zone: UTC
 server:
   port: 8088
