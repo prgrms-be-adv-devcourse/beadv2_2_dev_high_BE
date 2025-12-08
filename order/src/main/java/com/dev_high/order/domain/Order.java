@@ -1,10 +1,10 @@
 package com.dev_high.order.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.order.batch.dto.SettlementRegisterRequest;
+import com.dev_high.order.batch.dto.SettlementStatus;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
-import com.dev_high.settlement.domain.SettlementStatus;
-import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,7 +41,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private OrderStatus status = OrderStatus.BEFORE_PAYMENT;
+    private OrderStatus status = OrderStatus.UNPAID;
 
     @Column(nullable = false, length = 1)
     private String payYn = "N";

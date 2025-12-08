@@ -1,10 +1,11 @@
 package com.dev_high.order.batch;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.order.batch.dto.SettlementRegisterRequest;
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderRepository;
 import com.dev_high.order.domain.OrderStatus;
-import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
+import com.dev_high.order.infrastructure.OrderBatchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -34,6 +35,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderBatchConfig {
 
+    private final OrderBatchRepository orderBatchRepository;
+
     @Bean
     public Job sendConfirmedOrder(JobRepository jobRepository,
                                   PlatformTransactionManager transactionManager,
@@ -51,12 +54,8 @@ public class OrderBatchConfig {
     public Step findOverdueTargets(JobRepository jobRepository, PlatformTransactionManager transactionManager, OrderRepository orderRepository) {
         return new StepBuilder("findUnpaidTargets", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
-                    List<Order> targets = orderRepository.findAllOrdersByCreatedAtAndPayYn(
-                            "N",
-                            LocalDate.now().minusWeeks(2).atStartOfDay(),
-                            LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX)
-                    );
-                    targets.forEach(o -> o.setStatus(OrderStatus.CANCEL_UNPAID_OVERDUE));
+                    int result = orderBatchRepository.cancelOverdueOrders();
+                    System.out.println("result = " + result);
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
                 .build();
@@ -96,8 +95,8 @@ public class OrderBatchConfig {
         return new StepBuilder("convertToEntity", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     List<Order> targets = (List<Order>)
-                            chunkContext.getAttribute("targets");
-                    List<SettlementRegisterRequest> data = targets.stream().map(Order::toSettlementRequest).toList();
+                            chunkContext.getStepContext().getStepExecution().getExecutionContext().get("targets");
+                    List<SettlementRegisterRequest> data =  targets.stream().map(Order::toSettlementRequest).toList();
                     chunkContext.getStepContext().getStepExecution().getExecutionContext().put("data", data);
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
@@ -110,7 +109,7 @@ public class OrderBatchConfig {
         return new StepBuilder("sendToService", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     List<SettlementRegisterRequest> data = (List<SettlementRegisterRequest>)
-                            chunkContext.getAttribute("data");
+                            chunkContext.getStepContext().getStepExecution().getExecutionContext().get("data");
 
                     HttpHeaders headers = new org.springframework.http.HttpHeaders();
 //        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

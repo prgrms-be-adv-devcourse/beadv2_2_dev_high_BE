@@ -57,7 +57,7 @@ public class OrderService {
         Order order = orderRepository.findById(request.id()).orElse(null);
         if (order == null) return ApiResponseDto.fail("id에 해당하는 주문 없음");
         order.setStatus(request.status());
-        if (request.status() == OrderStatus.PAY_COMPLETE) {
+        if (request.status() == OrderStatus.PAID) {
             order.setPayYn("Y");
             order.setPayCompleteDate(LocalDateTime.now());
         }
