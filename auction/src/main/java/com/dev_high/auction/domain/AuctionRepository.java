@@ -1,8 +1,6 @@
-package com.dev_high.auction.infrastructure.auction;
+package com.dev_high.auction.domain;
 
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
-import com.dev_high.auction.domain.Auction;
-import com.dev_high.auction.domain.AuctionStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -12,6 +10,7 @@ public interface AuctionRepository {
 
 
   Optional<Auction> findById(String id);
+
   // 경매아이디로 해당하는 경매조회
   List<Auction> findByIdIn(List<String> ids);
 
@@ -22,6 +21,7 @@ public interface AuctionRepository {
 
 
   List<String> bulkUpdateStartStatus(); // READY -> IN_PROGRESS
+
   List<String> bulkUpdateEndStatus();   // IN_PROGRESS -> COMPLETED
 
 
