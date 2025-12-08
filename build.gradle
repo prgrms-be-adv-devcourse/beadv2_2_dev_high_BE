@@ -31,9 +31,9 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'io.spring.dependency-management'
 
-    tasks.withType(Test).configureEach {
-        enabled = false
-    }
+//    tasks.withType(Test).configureEach {
+//        enabled = false
+//    }
 
     repositories {
         mavenCentral()
