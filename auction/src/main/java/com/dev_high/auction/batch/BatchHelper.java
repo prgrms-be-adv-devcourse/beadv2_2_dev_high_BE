@@ -2,12 +2,15 @@ package com.dev_high.auction.batch;
 
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
-import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.auction.domain.AuctionRepository;
-import com.dev_high.auction.kafka.AuctionEventPublisher;
+import com.dev_high.auction.domain.AuctionStatus;
+import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.auction.AuctionCreateOrderRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionNotificationRequestEvent;
+import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.product.domain.Product;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +27,8 @@ import org.springframework.stereotype.Component;
 public class BatchHelper {
 
   private final AuctionRepository auctionRepository;
-  private final AuctionEventPublisher eventPublisher;
+  private final KafkaEventPublisher eventPublisher;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public RepeatStatus startAuctionsUpdate(StepContribution stepContribution,
       ChunkContext chunkContext) {
@@ -43,11 +47,14 @@ public class BatchHelper {
 
   public RepeatStatus startAuctionsPostProcessing(StepContribution stepContribution,
       ChunkContext chunkContext) {
-    List<String> targetIds = (List<String>) chunkContext.getStepContext()
+    Object raw = chunkContext.getStepContext()
         .getStepExecution()
         .getJobExecution()
         .getExecutionContext()
         .get("startAuctionIds");
+
+    List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
+    });
 
     if (targetIds != null && !targetIds.isEmpty()) {
 
@@ -56,7 +63,8 @@ public class BatchHelper {
       // 여기서 알림, 후처리 로직 실행 ex) 해당 상품찜한 유저에게알림 발송
       for (Auction auction : auctions) {
         List<String> userIds = new ArrayList<>();
-        eventPublisher.publishRequestNotification(
+        eventPublisher.publish(
+            KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
             new AuctionNotificationRequestEvent(auction.getId(), userIds, "start"));
       }
     }
@@ -83,11 +91,14 @@ public class BatchHelper {
 
   public RepeatStatus endAuctionsPostProcessing(StepContribution stepContribution,
       ChunkContext chunkContext) {
-    List<String> targetIds = (List<String>) chunkContext.getStepContext()
+    Object raw = chunkContext.getStepContext()
         .getStepExecution()
         .getJobExecution()
         .getExecutionContext()
-        .get("endAuctionIds");
+        .get("startAuctionIds");
+
+    List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
+    });
 
     if (targetIds != null && !targetIds.isEmpty()) {
       List<Auction> auctions = auctionRepository.findByIdIn(targetIds);
@@ -116,7 +127,8 @@ public class BatchHelper {
 
       try {
         // 주문생성 요청 kafka  ,
-        eventPublisher.publishRequestOrder(
+        eventPublisher.publish(
+            KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
             new AuctionCreateOrderRequestEvent(auctionId, product.getId(), winnerId, sellerId,
                 bid));
       } catch (Exception e) {
@@ -128,7 +140,8 @@ public class BatchHelper {
 
         List<String> userIds = new ArrayList<>();
 
-        eventPublisher.publishRequestNotification(
+        eventPublisher.publish(
+            KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
             new AuctionNotificationRequestEvent(auction.getId(), userIds, "end"));
 
       } catch (Exception e) {

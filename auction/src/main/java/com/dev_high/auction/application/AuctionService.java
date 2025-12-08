@@ -4,16 +4,16 @@ import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.auction.exception.AuctionModifyForbiddenException;
 import com.dev_high.auction.exception.AuctionNotFoundException;
 import com.dev_high.auction.exception.AuctionStatusInvalidException;
 import com.dev_high.auction.exception.DuplicateAuctionException;
-import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
-import com.dev_high.auction.kafka.AuctionEventPublisher;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.util.DateUtil;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +30,7 @@ public class AuctionService {
 
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
-  private final AuctionEventPublisher auctionEventPublisher;
+  private final KafkaEventPublisher eventPublisher;
 
   public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
@@ -39,6 +39,7 @@ public class AuctionService {
 
     Page<AuctionResponse> responsePage = page.map(AuctionResponse::fromEntity);
 
+//    eventPublisher.publish("TEST", "TEST 입니다.");
     return responsePage;
   }
 
@@ -46,7 +47,7 @@ public class AuctionService {
   public AuctionResponse getAuctionDetail(String auctionId) {
 
     Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
 
     return AuctionResponse.fromEntity(auction);
   }
@@ -58,11 +59,11 @@ public class AuctionService {
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
+
     LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
+
     validateAuctionTime(start, end);
 
     // 대기중, 진행중 ,완료된 경매가 있으면 throw
@@ -94,14 +95,13 @@ public class AuctionService {
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
     LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
     validateAuctionTime(start, end);
 
     Auction auction = auctionRepository.findById(request.auctionId())
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
 
     if (!userId.equals(auction.getProduct().getSellerId())) {
       throw new AuctionModifyForbiddenException();
@@ -113,7 +113,7 @@ public class AuctionService {
     }
 
     // 경매시작전에 시작가격을 변경했을때.
-    if (auction.getStartBid() != request.startBid()) {
+    if (auction.getStartBid().compareTo(request.startBid()) != 0) {
       AuctionLiveState state = auction.getLiveState();
 
       if (state == null) {
@@ -136,7 +136,7 @@ public class AuctionService {
   @Transactional
   public void removeAuction(String auctionId) {
     Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
 
     auction.remove();
 
