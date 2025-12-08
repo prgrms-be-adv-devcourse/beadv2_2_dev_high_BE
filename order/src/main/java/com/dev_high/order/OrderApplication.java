@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableBatchProcessing
 @EnableDiscoveryClient
 @SpringBootApplication(scanBasePackages = {
-        "com.dev_high.settlement",
         "com.dev_high.order",
         "com.dev_high.common"
 })
