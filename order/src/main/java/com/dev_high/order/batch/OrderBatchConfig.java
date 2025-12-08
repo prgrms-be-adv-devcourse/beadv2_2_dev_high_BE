@@ -56,7 +56,7 @@ public class OrderBatchConfig {
                             LocalDate.now().minusWeeks(2).atStartOfDay(),
                             LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX)
                     );
-                    targets.forEach(o -> o.setStatus(OrderStatus.UNPAID_OVERDUE_CANCEL));
+                    targets.forEach(o -> o.setStatus(OrderStatus.CANCEL_UNPAID_OVERDUE));
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
                 .build();
