@@ -18,8 +18,8 @@ public class AuctionEventListener {
   public void test(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
     // 리스너 및 로깅 테스트
     Object val = envelope.payload();
-    System.out.println("test message:" + val);
 
+    // 서비스로직
   }
 
 }
