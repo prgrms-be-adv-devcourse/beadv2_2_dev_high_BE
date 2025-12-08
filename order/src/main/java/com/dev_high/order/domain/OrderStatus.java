@@ -9,7 +9,7 @@ public enum OrderStatus {
 
     CANCEL_BEFORE_PAYMENT,
     CANCEL_AFTER_PAYMENT,
-    UNPAID_CANCEL,
+    UNPAID_OVERDUE_CANCEL,
 
     CONFIRM_BUY
 }
