@@ -36,6 +36,7 @@ dependencies {
 
     // call modules
     implementation project(':common')
+    implementation project(':settlement')
 
 }
 

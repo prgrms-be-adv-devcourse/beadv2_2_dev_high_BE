@@ -3,6 +3,8 @@ package com.dev_high.order.domain;
 import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
+import com.dev_high.settlement.domain.SettlementStatus;
+import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,7 +31,7 @@ public class Order {
     private String auctionId;
 
     @Column(name = "confirm_amount", nullable = false)
-    private Integer confirmAmount; // DB에 맞춰 통일
+    private Long confirmAmount; // DB에 맞춰 통일
 
     @Column(name = "confirm_date", nullable = false)
     private LocalDateTime confirmDate;
@@ -39,7 +41,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.BEFORE_PAYMENT;
 
     @Column(name = "created_at", nullable = false,
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -60,8 +62,8 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Order(String sellerId, String buyerId, String auctionId,
-                 Integer confirmAmount, LocalDateTime confirmDate,
+    private Order(String sellerId, String buyerId, String auctionId,
+                 Long confirmAmount, LocalDateTime confirmDate,
                  OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
@@ -94,6 +96,17 @@ public class Order {
                 payCompleteDate,
                 createdAt,
                 updatedAt
+        );
+    }
+
+    public SettlementRegisterRequest toSettlementRequest() {
+        return new SettlementRegisterRequest(
+                sellerId,
+                buyerId,
+                auctionId,
+                confirmAmount,
+                SettlementStatus.WAITING,
+                LocalDateTime.now().plusDays(30)
         );
     }
 }

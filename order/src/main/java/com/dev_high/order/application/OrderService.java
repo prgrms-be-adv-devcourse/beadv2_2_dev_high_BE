@@ -3,12 +3,14 @@ package com.dev_high.order.application;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderRepository;
+import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -57,4 +59,7 @@ public class OrderService {
         return ApiResponseDto.success("주문 상태 업데이트", order.toResponse());
     }
 
+    public List<Order> findConfirmedOrders(OrderStatus status, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
+        return orderRepository.findAllByPayCompleteDateAndStatus(payCompleteDateStart, payCompleteDateEnd, status);
+    }
 }

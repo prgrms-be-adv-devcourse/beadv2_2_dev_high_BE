@@ -40,7 +40,6 @@ public class OrderController {
 
     @PostMapping("/post")
     public ApiResponseDto<OrderResponse> create(@RequestBody OrderRegisterRequest request) {
-        System.out.println("request = " + request);
         return orderService.create(request);
     }
 

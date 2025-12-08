@@ -9,7 +9,7 @@ public record OrderResponse (
     String sellerId,
     String buyerId,
     String auctionId,
-    Integer confirmAmount,
+    Long confirmAmount,
     LocalDateTime confirmDate,
     OrderStatus status,
     LocalDateTime payCompleteDate,
