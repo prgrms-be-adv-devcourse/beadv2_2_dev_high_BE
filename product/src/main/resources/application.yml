@@ -37,5 +37,15 @@ spring:
     discovery:
       enabled: false # 로컬개발용으로 discovery 서버 접속 끊음 --> 배포시 true
 
+
 api:
   v1: /api/v1
+
+
+springdoc:
+  pageable:
+    enabled: true
+    page-parameter: page
+    size-parameter: size
+    sort-parameter: sort
+
