@@ -23,8 +23,6 @@ public class JsonConfig {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     javaTimeModule.addSerializer(LOCAL_DATETIME_SERIALIZER);
 
-    javaTimeModule.addSerializer(LOCAL_DATETIME_SERIALIZER);
-
     mapper.registerModule(javaTimeModule);
     mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     return mapper;

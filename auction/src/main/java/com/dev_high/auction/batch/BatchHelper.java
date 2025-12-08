@@ -63,9 +63,15 @@ public class BatchHelper {
       // 여기서 알림, 후처리 로직 실행 ex) 해당 상품찜한 유저에게알림 발송
       for (Auction auction : auctions) {
         List<String> userIds = new ArrayList<>();
-        eventPublisher.publish(
-            KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
-            new AuctionNotificationRequestEvent(auction.getId(), userIds, "start"));
+
+        try {
+          eventPublisher.publish(
+              KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
+              new AuctionNotificationRequestEvent(auction.getId(), userIds, "start"));
+        } catch (Exception e) {
+          // pass
+        }
+
       }
     }
 
