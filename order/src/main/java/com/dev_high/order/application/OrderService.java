@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -57,11 +56,9 @@ public class OrderService {
         Order order = orderRepository.findById(request.id()).orElse(null);
         if (order == null) return ApiResponseDto.fail("id에 해당하는 주문 없음");
         order.setStatus(request.status());
+        if (request.status() == OrderStatus.PAY_COMPLETE) order.setPayYn("Y");
         order = orderRepository.save(order);
         return ApiResponseDto.success("주문 상태 업데이트", order.toResponse());
     }
 
-    public List<Order> findConfirmedOrders(OrderStatus status, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
-        return orderRepository.findAllByPayCompleteDateAndStatus(payCompleteDateStart, payCompleteDateEnd, status);
-    }
 }

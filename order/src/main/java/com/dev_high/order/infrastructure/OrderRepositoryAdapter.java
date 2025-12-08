@@ -42,5 +42,11 @@ public class OrderRepositoryAdapter implements OrderRepository {
 
     @Override
     public List<Order> findAllByPayCompleteDateAndStatus(LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd, OrderStatus status) {
-        return orderRepository.findAllByStatusAndPayCompleteDateBetween(status, payCompleteDateStart, payCompleteDateEnd);    }
+        return orderRepository.findAllByStatusAndPayCompleteDateBetween(status, payCompleteDateStart, payCompleteDateEnd);
+    }
+
+    @Override
+    public List<Order> findAllOrdersByCreatedAtAndPayYn(String payYn, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
+        return orderRepository.findAllOrdersByPayYnAndCreatedAtBetween(payYn, payCompleteDateStart, payCompleteDateEnd);
+    }
 }

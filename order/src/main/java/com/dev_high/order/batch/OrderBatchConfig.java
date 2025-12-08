@@ -39,9 +39,26 @@ public class OrderBatchConfig {
                                   PlatformTransactionManager transactionManager,
                                   OrderRepository orderRepository) {
         return new JobBuilder("settlementJob", jobRepository)
-                .start(findTargets(jobRepository, transactionManager, orderRepository))
+                .start(findOverdueTargets(jobRepository, transactionManager, orderRepository))
+                .next(findTargets(jobRepository, transactionManager, orderRepository))
                 .next(convertToEntity(jobRepository, transactionManager))
                 .next(sendToService(jobRepository, transactionManager))
+                .build();
+    }
+
+    @Bean
+    @StepScope
+    public Step findOverdueTargets(JobRepository jobRepository, PlatformTransactionManager transactionManager, OrderRepository orderRepository) {
+        return new StepBuilder("findUnpaidTargets", jobRepository)
+                .tasklet(((contribution, chunkContext) -> {
+                    List<Order> targets = orderRepository.findAllOrdersByCreatedAtAndPayYn(
+                            "N",
+                            LocalDate.now().minusWeeks(2).atStartOfDay(),
+                            LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX)
+                    );
+                    targets.forEach(o -> o.setStatus(OrderStatus.UNPAID_CANCEL));
+                    return RepeatStatus.FINISHED;
+                }), transactionManager)
                 .build();
     }
 
@@ -78,7 +95,8 @@ public class OrderBatchConfig {
     public Step convertToEntity(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("convertToEntity", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
-                    List<Order> targets = (List<Order>) chunkContext.getAttribute("targets");
+                    List<Order> targets = (List<Order>)
+                            chunkContext.getAttribute("targets");
                     List<SettlementRegisterRequest> data = targets.stream().map(Order::toSettlementRequest).toList();
                     chunkContext.getStepContext().getStepExecution().getExecutionContext().put("data", data);
                     return RepeatStatus.FINISHED;
@@ -91,7 +109,8 @@ public class OrderBatchConfig {
     public Step sendToService(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("sendToService", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
-                    List<SettlementRegisterRequest> data = (List<SettlementRegisterRequest>) chunkContext.getAttribute("data");
+                    List<SettlementRegisterRequest> data = (List<SettlementRegisterRequest>)
+                            chunkContext.getAttribute("data");
 
                     HttpHeaders headers = new org.springframework.http.HttpHeaders();
 //        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

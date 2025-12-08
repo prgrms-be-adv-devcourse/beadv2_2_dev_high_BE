@@ -12,5 +12,7 @@ public interface OrderJpaRepository extends JpaRepository<Order, String> {
 
     List<Order> findAllOrdersByBuyerId(String buyerId);
 
+    List<Order> findAllOrdersByPayYnAndCreatedAtBetween(String payYn, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd);
+
     List<Order> findAllByStatusAndPayCompleteDateBetween(OrderStatus status, LocalDateTime payCompleteDate, LocalDateTime payCompleteDate2);
 }

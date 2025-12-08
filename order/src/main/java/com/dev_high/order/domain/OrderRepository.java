@@ -10,5 +10,6 @@ public interface OrderRepository {
     List<Order> findAllOrdersBySellerId(String sellerId);
     List<Order> findAllOrdersByBuyerId(String buyerId);
     Optional<Order> findById(String id);
+    List<Order> findAllOrdersByCreatedAtAndPayYn(String payYn, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd);
     List<Order> findAllByPayCompleteDateAndStatus(LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd, OrderStatus status);
 }
