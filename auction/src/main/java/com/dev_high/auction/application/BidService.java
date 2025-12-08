@@ -14,11 +14,13 @@ import com.dev_high.auction.exception.AuctionTimeOutOfRangeException;
 import com.dev_high.auction.exception.BidPriceTooLowException;
 import com.dev_high.auction.exception.CannotWithdrawHighestBidderException;
 import com.dev_high.auction.exception.OptimisticLockBidException;
-import com.dev_high.auction.infrastructure.auction.AuctionRepository;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionBidHistoryJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
+import com.dev_high.auction.kafka.AuctionEventPublisher;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
+import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
 import jakarta.persistence.OptimisticLockException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +43,7 @@ public class BidService {
   private final AuctionRepository auctionRepository;
   private final AuctionWebSocketService auctionWebSocketService;
 
+  private final AuctionEventPublisher eventPublisher;
 
   /**
    * 특정 경매에 참여한 기록이 있는지 체크
@@ -183,7 +186,9 @@ public class BidService {
 
     // 보증금 환불 요청 (kafka or 비동기 api호출)
     BigDecimal deposit = liveState.getAuction().getDepositAmount();
-    //refundDepositAsync(userId, auctionId,deposit);
+
+    eventPublisher.publishRequestRefund(
+        new AuctionDepositRefundRequestEvent(userId, auctionId, deposit));
   }
 
   @Transactional
