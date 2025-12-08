@@ -160,7 +160,10 @@ public class BidService {
 
     eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
         new AuctionDepositRefundRequestEvent(userId, auctionId, deposit));
+
+
   }
+
 
   @Transactional
   public void markDepositRefunded(String auctionId) {
