@@ -31,7 +31,7 @@ public class OrderService {
     }
 
     public ApiResponseDto<List<OrderResponse>> boughtList(String buyerId) {
-        List<Order> found = orderRepository.findAllOrdersBySellerId(buyerId);
+        List<Order> found = orderRepository.findAllOrdersByBuyerId(buyerId);
         if (found.isEmpty()) return ApiResponseDto.fail("buyerId에 해당하는 주문 없음");
         List<OrderResponse> result = found.stream().map(Order::toResponse).toList();
         return ApiResponseDto.success("구매 목록 전체 조회", result);
@@ -56,4 +56,5 @@ public class OrderService {
         order = orderRepository.save(order);
         return ApiResponseDto.success("주문 상태 업데이트", order.toResponse());
     }
+
 }
