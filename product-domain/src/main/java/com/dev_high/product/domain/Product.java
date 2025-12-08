@@ -99,6 +99,13 @@ public class Product {
         this.updatedBy = updatedBy;
     }
 
+    public void updateDetails(String name, String description, Long fileGroupId, String updatedBy) {
+        this.name = name;
+        this.description = description;
+        this.fileGroupId = fileGroupId;
+        this.updatedBy = updatedBy;
+    }
+
     public void markDeleted(String updatedBy) {
         this.deletedYn = DeleteStatus.Y;
         this.deletedAt = LocalDateTime.now();
