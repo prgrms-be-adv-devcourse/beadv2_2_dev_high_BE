@@ -2,9 +2,11 @@ package com.dev_high.order.infrastructure;
 
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderRepository;
+import com.dev_high.order.domain.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,5 +38,15 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public Optional<Order> findById(String id) {
         return orderRepository.findById(id);
+    }
+
+    @Override
+    public List<Order> findAllByPayCompleteDateAndStatus(LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd, OrderStatus status) {
+        return orderRepository.findAllByStatusAndPayCompleteDateBetween(status, payCompleteDateStart, payCompleteDateEnd);
+    }
+
+    @Override
+    public List<Order> findAllOrdersByCreatedAtAndPayYn(String payYn, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
+        return orderRepository.findAllOrdersByPayYnAndCreatedAtBetween(payYn, payCompleteDateStart, payCompleteDateEnd);
     }
 }
