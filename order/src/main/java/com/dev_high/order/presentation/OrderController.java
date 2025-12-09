@@ -2,12 +2,15 @@ package com.dev_high.order.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.order.application.OrderService;
+import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -35,6 +38,13 @@ public class OrderController {
     @GetMapping("/detail")
     public ApiResponseDto<OrderResponse> detail(@RequestParam(name = "orderId") String orderId) {
         return orderService.findOne(orderId);
+    }
+
+    @GetMapping("/findConfirmed")
+    public ApiResponseDto<List<OrderResponse>> findConfirmed() {
+        return orderService.findConfirmedOrders(OrderStatus.CONFIRM_BUY,
+                LocalDate.now().minusWeeks(2).atStartOfDay(),
+                LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX));
     }
 
 
