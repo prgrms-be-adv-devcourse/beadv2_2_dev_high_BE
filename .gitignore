@@ -41,6 +41,7 @@ out/
 product/.env
 product/.env.*
 .productSQL.sql
+ex.sql
 
 ### user env ###
 user/.env

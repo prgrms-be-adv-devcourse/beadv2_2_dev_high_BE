@@ -1,5 +1,6 @@
 package com.dev_high.auction.presentation;
 
+import com.dev_high.auction.application.BidRecordService;
 import com.dev_high.auction.application.BidService;
 import com.dev_high.auction.application.dto.BidResponse;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,14 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "AuctionBid", description = "경매 입찰 관련 API")
 public class AuctionBidController {
 
-  private  final BidService bidService;
+  private final BidService bidService;
+  private final BidRecordService bidRecordService;
 
   @Operation(summary = "경매 참여 현황 조회", description = "본인의 경매 참여 현황을 전체 조회합니다.")
   @GetMapping("participations")
-  public ApiResponseDto<?>  getParticipations(){
+  public ApiResponseDto<?> getParticipations() {
 
-
-    return ApiResponseDto.success(bidService.getParticipations());
+    return ApiResponseDto.success(bidRecordService.getAllMyParticipations());
   }
 
 
@@ -40,7 +40,7 @@ public class AuctionBidController {
       @Parameter(description = "조회할 경매 ID", required = true)
       @PathVariable String auctionId) {
 
-    boolean exists = bidService.hasParticipated(auctionId);
+    boolean exists = bidRecordService.hasParticipated("TEST", auctionId);
 
     return ApiResponseDto.success(exists);
   }
@@ -53,8 +53,8 @@ public class AuctionBidController {
       @PathVariable String auctionId,
       @RequestBody AuctionBidRequest request
   ) {
-    BidResponse res =bidService.createOrUpdateAuctionBid(auctionId, request);
-    return ApiResponseDto.of("CREATED","성공적으로 저장하였습니다.",res);
+    BidResponse res = bidService.createOrUpdateAuctionBid(auctionId, request);
+    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
   }
 
   @Operation(summary = "경매 입찰 포기", description = "auctionId에 해당하는 경매에서 본인의 입찰을 포기합니다.")
@@ -72,8 +72,8 @@ public class AuctionBidController {
   @PutMapping("{auctionId}/refund-complete")
   public ApiResponseDto<?> markRefundComplete(
       @Parameter(description = "환불 완료 처리할 경매 ID", required = true)
-      @PathVariable String auctionId,
-      @RequestParam String userId) {
+      @PathVariable String auctionId
+  ) {
 
     bidService.markDepositRefunded(auctionId);
     return ApiResponseDto.success("환불 완료 처리되었습니다.", null);
