@@ -1,6 +1,7 @@
 package com.dev_high.apigateway.config;
 
 
+import com.dev_high.apigateway.filter.AuthenticationFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -8,6 +9,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class GatewayConfig {
+
+  private final AuthenticationFilter authenticationFilter;
+
+  public GatewayConfig(AuthenticationFilter authenticationFilter) {
+    this.authenticationFilter = authenticationFilter;
+  }
 
   @Bean
   public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
@@ -30,10 +37,10 @@ public class GatewayConfig {
             .path("/api/v1/deposit/**")
             .uri("lb://DEPOSIT-SERVICE"))
 
-        // Auth Service
-        .route("auth-service", r -> r
-            .path("/api/v1/auth/**")
-            .uri("lb://AUTH"))
+//        // Auth Service
+//        .route("auth-service", r -> r
+//            .path("/api/v1/auth/**")
+//            .uri("lb://AUTH"))
 
         // Order Service
         .route("order-service", r -> r
@@ -57,7 +64,8 @@ public class GatewayConfig {
 
         // User Service
         .route("user-service", r -> r
-            .path("/api/v1/user/**")
+            .path("/api/v1/user/**", "/api/v1/auth/**")
+            .filters(f -> f.filter(authenticationFilter.apply(new AuthenticationFilter.Config())))
             .uri("lb://USER-SERVICE"))
 
         .build();
