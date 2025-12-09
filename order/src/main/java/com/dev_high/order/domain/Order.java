@@ -1,8 +1,6 @@
 package com.dev_high.order.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.order.batch.dto.SettlementRegisterRequest;
-import com.dev_high.order.batch.dto.SettlementStatus;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
 import jakarta.persistence.*;
@@ -41,10 +39,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private OrderStatus status = OrderStatus.UNPAID;
-
-    @Column(nullable = false, length = 1)
-    private String payYn = "N";
+    private OrderStatus status;
 
     @Column(name = "created_at", nullable = false,
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -65,9 +60,9 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
     }
 
-    private Order(String sellerId, String buyerId, String auctionId,
-                  Long winningAmount, LocalDateTime confirmDate,
-                  OrderStatus status) {
+    public Order(String sellerId, String buyerId, String auctionId,
+                 Long winningAmount, LocalDateTime confirmDate,
+                 OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
         this.auctionId = auctionId;
@@ -81,7 +76,7 @@ public class Order {
                 request.sellerId(),
                 request.buyerId(),
                 request.auctionId(),
-                request.confirmAmount(),
+                request.winningAmount(),
                 request.confirmDate(),
                 request.status()
         );
@@ -99,17 +94,6 @@ public class Order {
                 payCompleteDate,
                 createdAt,
                 updatedAt
-        );
-    }
-
-    public SettlementRegisterRequest toSettlementRequest() {
-        return new SettlementRegisterRequest(
-                sellerId,
-                buyerId,
-                auctionId,
-                winningAmount,
-                SettlementStatus.WAITING,
-                LocalDateTime.now().plusDays(30)
         );
     }
 }
