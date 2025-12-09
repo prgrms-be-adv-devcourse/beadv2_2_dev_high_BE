@@ -48,6 +48,10 @@ public class User {
     @Column(name = "status", length = 15, nullable = false)
     private UserStatus userStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 15, nullable = false)
+    private UserRole userRole;
+
     @Column(name = "deleted_yn",  nullable = false)
     private String deletedYn;
 
@@ -71,6 +75,7 @@ public class User {
         createdBy = id;
         updatedBy = id;
         this.userStatus = UserStatus.PENDING_VERIFICATION;
+        this.userRole = UserRole.USER;
         this.deletedYn = "N";
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();

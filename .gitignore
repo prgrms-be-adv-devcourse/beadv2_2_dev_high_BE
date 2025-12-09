@@ -44,3 +44,6 @@ product/.env.*
 
 ### user env ###
 user/.env
+
+### apigateway env ###
+apigateway/.env
