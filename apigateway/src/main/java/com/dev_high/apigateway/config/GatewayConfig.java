@@ -37,11 +37,6 @@ public class GatewayConfig {
             .path("/api/v1/deposit/**")
             .uri("lb://DEPOSIT-SERVICE"))
 
-//        // Auth Service
-//        .route("auth-service", r -> r
-//            .path("/api/v1/auth/**")
-//            .uri("lb://AUTH"))
-
         // Order Service
         .route("order-service", r -> r
             .path("/api/v1/order/**")
