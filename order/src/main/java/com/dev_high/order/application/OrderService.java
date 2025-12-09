@@ -65,9 +65,8 @@ public class OrderService {
         return ApiResponseDto.success("주문 상태 업데이트", order.toResponse());
     }
 
-    public ApiResponseDto<List<OrderResponse>> findConfirmedOrders(OrderStatus status, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
+    public List<OrderResponse> findConfirmedOrders(OrderStatus status, LocalDateTime payCompleteDateStart, LocalDateTime payCompleteDateEnd) {
         List<Order> targets = orderRepository.findAllByPayCompleteDateAndStatus(payCompleteDateStart, payCompleteDateEnd, status);
-        List<OrderResponse> result = targets.stream().map(Order::toResponse).toList();
-        return ApiResponseDto.success(result);
+        return targets.stream().map(Order::toResponse).toList();
     }
 }
