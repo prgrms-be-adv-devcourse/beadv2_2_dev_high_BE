@@ -46,7 +46,7 @@ public class FileService {
         }
 
         String resolvedFileType = resolveFileType(uploadCommand.fileType(), multipartFile.getContentType());
-        String key = buildObjectKey(multipartFile.getOriginalFilename());
+        String key = buildObjectKey(multipartFile.getOriginalFilename(), uploadCommand.userId());
 
         // 바이너리를 S3에 저장
         try (var inputStream = multipartFile.getInputStream()) {
@@ -107,13 +107,14 @@ public class FileService {
         return "file-" + UUID.randomUUID();
     }
 
-    private String buildObjectKey(String originalFilename) {
+    private String buildObjectKey(String originalFilename, String uploaderId) {
         String cleanName = resolveFileName(originalFilename).replace(" ", "_");
         int extensionStart = cleanName.lastIndexOf('.');
 
         String baseName = extensionStart > 0 ? cleanName.substring(0, extensionStart) : cleanName;
         String extension = extensionStart > -1 ? cleanName.substring(extensionStart) : "";
 
-        return LocalDate.now() + "/" + baseName + "-" + UUID.randomUUID() + extension;
+        String safeUploader = uploaderId.replace("/", "_").replace("\\", "_");
+        return safeUploader + "/" + LocalDate.now() + "/" + baseName + "-" + UUID.randomUUID() + extension;
     }
 }
