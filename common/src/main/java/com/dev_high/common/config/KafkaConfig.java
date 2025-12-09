@@ -29,8 +29,15 @@ public class KafkaConfig {
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
-  @Value("${spring.kafka.consumer.group-id:default-group}")
+  @Value("${spring.application.name:default-group}")
   private String groupId;
+
+  @Value("${spring.kafka.username}")
+  private String kafkaUsername;
+
+  @Value("${spring.kafka.password}")
+  private String kafkaPassword;
+
 
   // ---------------- Producer ----------------
   @Bean
@@ -39,6 +46,13 @@ public class KafkaConfig {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
+
+    props.put("security.protocol", "SASL_PLAINTEXT");
+    props.put("sasl.mechanism", "PLAIN");
+    props.put("sasl.jaas.config", String.format(
+        "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+        kafkaUsername, kafkaPassword));
     return props;
   }
 
@@ -67,11 +81,17 @@ public class KafkaConfig {
     props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
     props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
 
-    // trusted packages 수정(이게 핵심 문제)
+    // trusted packages
     props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.dev_high.common.kafka.*");
     props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.dev_high.common.kafka.KafkaEventEnvelope");
     props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);
+
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    props.put("security.protocol", "SASL_PLAINTEXT");
+    props.put("sasl.mechanism", "PLAIN");
+    props.put("sasl.jaas.config", String.format(
+        "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+        kafkaUsername, kafkaPassword));
     return props;
   }
 
@@ -79,7 +99,7 @@ public class KafkaConfig {
   public ConsumerFactory<String, Object> consumerFactory() {
     return new DefaultKafkaConsumerFactory<>(consumerConfigs());
   }
-
+  
   @Bean
   public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
     ConcurrentKafkaListenerContainerFactory<String, Object> factory =
