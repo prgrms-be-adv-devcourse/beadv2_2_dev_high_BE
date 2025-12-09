@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.dev_high'
 version = '0.0.1-SNAPSHOT'
-description = 'deposit'
+description = 'notification'
 
 java {
     toolchain {
