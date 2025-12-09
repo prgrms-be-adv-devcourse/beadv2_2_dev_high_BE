@@ -1,18 +1,20 @@
-package com.dev_high.order.infrastructure;
+package com.dev_high.order.config;
 
 import com.dev_high.order.domain.OrderStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class OrderBatchRepository {
+public class OrderStatusScheduler {
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Transactional
+    @Scheduled(cron = "1 1 1 * * *")
     public int cancelOverdueOrders() {
 
         int updatedCount = entityManager.createNativeQuery(
