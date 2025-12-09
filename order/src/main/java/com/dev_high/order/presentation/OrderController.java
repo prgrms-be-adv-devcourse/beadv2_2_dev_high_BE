@@ -41,7 +41,7 @@ public class OrderController {
     }
 
     @GetMapping("/findConfirmed")
-    public ApiResponseDto<List<OrderResponse>> findConfirmed() {
+    public List<OrderResponse> findConfirmed() {
         return orderService.findConfirmedOrders(OrderStatus.CONFIRM_BUY,
                 LocalDate.now().minusWeeks(2).atStartOfDay(),
                 LocalDate.now().minusWeeks(2).atTime(LocalTime.MAX));
