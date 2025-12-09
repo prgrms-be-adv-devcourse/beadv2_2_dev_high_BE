@@ -7,7 +7,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
-@EnableBatchProcessing
 @EnableDiscoveryClient
 @SpringBootApplication(scanBasePackages = {
         "com.dev_high.order",
