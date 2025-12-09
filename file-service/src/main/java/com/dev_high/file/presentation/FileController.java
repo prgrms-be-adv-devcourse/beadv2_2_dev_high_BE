@@ -20,10 +20,12 @@ public class FileController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponseDto<FileInfo> upload(
             @RequestPart("file") MultipartFile file, //file 데이터
-            @RequestPart("request") FileUploadRequest request
+            @RequestPart("metadata") FileUploadRequest request
     ) {
         return fileService.upload(file, request.toCommand());
     }
+
+
 
     @GetMapping
     public ApiResponseDto<List<FileInfo>> getAll() {
