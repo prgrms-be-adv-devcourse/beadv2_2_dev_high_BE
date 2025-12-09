@@ -11,32 +11,9 @@ import java.util.Date;
 @Component
 public class JwtProvider {
     private final String secretKey;
-    private final long accessTokenExpiration;
 
-    public JwtProvider(@Value("${jwt.secret}") String secretKey,
-                       @Value("${jwt.access-token-expiration}") long accessTokenExpiration) {
-
+    public JwtProvider(@Value("${jwt.secret}") String secretKey) {
         this.secretKey = secretKey;
-        this.accessTokenExpiration = accessTokenExpiration;
-    }
-
-
-    public String generateAccessToken(String userId, String role){
-        return generateToken(userId, role, accessTokenExpiration);
-    }
-
-    public String generateToken(String userId,
-                                String role,
-                                long expirationTime){
-        Date now = new Date();
-        Date expireDate = new Date(now.getTime() + expirationTime);
-        return Jwts.builder()
-                .setSubject(userId)
-                .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(expireDate)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
     }
 
     public Claims parseToken(String token) {
