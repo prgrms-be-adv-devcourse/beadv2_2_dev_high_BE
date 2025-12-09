@@ -8,7 +8,7 @@ public record OrderRegisterRequest(
     String buyerId,
     String auctionId,
     Long winningAmount,
-    LocalDateTime confirmDate,
+    LocalDateTime winningDate,
     OrderStatus status
 ) {
 }
