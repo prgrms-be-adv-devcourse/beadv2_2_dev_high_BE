@@ -43,4 +43,8 @@ product/.env.*
 .productSQL.sql
 ex.sql
 
+### user env ###
+user/.env
 
+### apigateway env ###
+apigateway/.env
