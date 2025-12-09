@@ -33,6 +33,3 @@ spring:
 
 server:
   port: ${SERVER_PORT}
-
-charge:
-  amount: 30
