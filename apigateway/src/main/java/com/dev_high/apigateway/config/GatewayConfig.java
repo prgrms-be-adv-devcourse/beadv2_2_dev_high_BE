@@ -1,42 +1,16 @@
 package com.dev_high.apigateway.config;
 
 
-import com.dev_high.apigateway.filter.AuthenticationFilter;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class GatewayConfig {
 
-  private final AuthenticationFilter authenticationFilter;
-
-  public GatewayConfig(AuthenticationFilter authenticationFilter) {
-    this.authenticationFilter = authenticationFilter;
-  }
-
-  @Bean
-  public CorsWebFilter corsWebFilter() {
-    CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of("*"));
-    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    config.setAllowedHeaders(Arrays.asList("*"));
-    config.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/api/**", config); // API 경로만 적용
-    source.registerCorsConfiguration("/swagger/**", config);  // Swagger
-
-    return new CorsWebFilter(source);
-  }
 
   @Bean
   public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
@@ -82,7 +56,6 @@ public class GatewayConfig {
         // User Service
         .route("user-service", r -> r
             .path("/api/v1/user/**", "/api/v1/auth/**")
-            .filters(f -> f.filter(authenticationFilter.apply(new AuthenticationFilter.Config())))
             .uri("lb://USER-SERVICE"))
 
         .build();
