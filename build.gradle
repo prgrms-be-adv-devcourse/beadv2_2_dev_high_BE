@@ -32,9 +32,9 @@ subprojects {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'com.diffplug.spotless'
 
-//    tasks.withType(Test).configureEach {
-//        enabled = false
-//    }
+    tasks.withType(Test).configureEach {
+        systemProperty "spring.profiles.active", "test"
+    }
 
     repositories {
         mavenCentral()
@@ -66,7 +66,7 @@ subprojects {
         implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
         // Swagger
-        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
 
         // querydsl
         implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.0'
@@ -98,6 +98,7 @@ subprojects {
         }
     }
 
+/* 코드 스타일 컨밴션 강제 */
 //    spotless {
 //        java {
 //            target("src/main/java/**/*.java", "src/test/java/**/*.java")
