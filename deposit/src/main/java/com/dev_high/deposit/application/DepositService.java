@@ -1,5 +1,6 @@
 package com.dev_high.deposit.application;
 
+import com.dev_high.deposit.application.dto.DepositCreateCommand;
 import com.dev_high.deposit.application.dto.DepositInfo;
 import com.dev_high.deposit.domain.Deposit;
 import com.dev_high.deposit.domain.DepositRepository;
@@ -18,15 +19,15 @@ public class DepositService {
     * @return 생성된 Deposit 엔티티
     * */
     @Transactional
-    public DepositInfo createDepositAccount(String userId) {
+    public DepositInfo createDepositAccount(DepositCreateCommand command) {
         // 1. 중복확인
-        depositRepository.findById(userId)
+        depositRepository.findById(command.userId())
                 .ifPresent(deposit -> {
-                    throw new IllegalArgumentException("사용자 ID: " + userId + "에 대한 예치금 계정이 이미 존재합니다.");
+                    throw new IllegalArgumentException("사용자 ID: " + command.userId() + "에 대한 예치금 계정이 이미 존재합니다.");
                 });
 
         // 2. Deposit 엔티티 생성
-        Deposit deposit = Deposit.create(userId);
+        Deposit deposit = Deposit.create(command.userId());
 
         // 3. DB 저장
         return DepositInfo.from(depositRepository.save(deposit));
