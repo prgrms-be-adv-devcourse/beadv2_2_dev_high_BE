@@ -1,22 +1,6 @@
 spring:
   application:
     name: notification-service
-  datasource:
-    url: jdbc:postgresql://3.39.162.115:30007/team5?currentSchema=notification&options=-c%20TimeZone=Asia/Seoul
-    driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: 1234
-  jackson:
-    time-zone: Asia/Seoul
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          time_zone: Asia/Seoul
   config:
     import: "configserver:http://localhost:8888"
 server:
