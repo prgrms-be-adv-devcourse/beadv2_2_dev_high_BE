@@ -34,6 +34,11 @@ spring:
       enabled: false # 로컬개발용으로 config 서버 접속 끊음 --> 배포시 true
     discovery:
       enabled: false # 로컬개발용으로 discovery 서버 접속 끊음 --> 배포시 true
+  servlet:
+    multipart:
+      max-file-size: 20MB     # 파일 하나의 최대 용량
+      max-request-size: 20MB  # 요청 전체(max-file-size 여러 개 합친 값)
+
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET:team5-dev-high-bucket}
