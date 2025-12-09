@@ -27,10 +27,10 @@ public class GatewayConfig {
             .path("/ws-auction/**")      // 클라이언트 WebSocket 접속 경로
             .uri("lb://AUCTION-SERVICE")) // WebSocket 업그레이드 요청도 프록시
 
-        // Notice Service
-        .route("notice-service", r -> r
-            .path("/api/v1/notice/**")
-            .uri("lb://NOTICE-SERVICE"))
+        // Notification Service
+        .route("notification-service", r -> r
+            .path("/api/v1/notifications/**")
+            .uri("lb://NOTIFICATION-SERVICE"))
 
         // Deposit Service
         .route("deposit-service", r -> r

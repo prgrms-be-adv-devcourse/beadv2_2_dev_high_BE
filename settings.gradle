@@ -9,7 +9,7 @@ include 'discovery'
 include 'auth'
 
 // service module
-include 'alarm'
+include 'notification'
 include 'auction'
 include 'deposit'
 include 'order'

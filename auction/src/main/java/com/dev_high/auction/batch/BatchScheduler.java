@@ -17,6 +17,7 @@ public class BatchScheduler {
   private final Job startAuctionsJob;
   private final Job endAuctionsJob;
 
+
   // 매시간 정각마다 시작 배치 실행
   @Scheduled(cron = "0 0 * * * *") // 초 분 시 일 월 요일
   public void runStartAuctionsJob() {
