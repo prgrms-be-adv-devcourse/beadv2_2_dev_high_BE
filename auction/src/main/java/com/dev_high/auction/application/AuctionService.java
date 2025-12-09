@@ -39,7 +39,8 @@ public class AuctionService {
 
     Page<AuctionResponse> responsePage = page.map(AuctionResponse::fromEntity);
 
-//    eventPublisher.publish("TEST", "TEST 입니다.");
+//    eventPublisher.publish(KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
+//        new AuctionNotificationRequestEvent("ACT1", List.of("TSETUSER"), "start"));
     return responsePage;
   }
 
