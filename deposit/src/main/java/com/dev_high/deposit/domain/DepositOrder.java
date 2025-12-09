@@ -22,6 +22,10 @@ public class DepositOrder {
     @CustomGeneratedId(method = "deposit_order")
     private String id;
 
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false)
+    private String userId;
+
     @Schema(description = "금액")
     @Column(name = "amount", nullable = false)
     private long amount;
@@ -48,7 +52,8 @@ public class DepositOrder {
     private String updatedBy;
 
     @Builder
-    public DepositOrder(long amount, DepositOrderStatus status) {
+    public DepositOrder(String userId, long amount, DepositOrderStatus status) {
+        this.userId = userId;
         this.amount = amount;
         this.status = status;
     }
@@ -68,8 +73,9 @@ public class DepositOrder {
         this.updatedBy = id;
     }
 
-    public static DepositOrder create(long amount) {
+    public static DepositOrder create(String userId, long amount) {
         return DepositOrder.builder()
+                .userId(userId)
                 .amount(amount)
                 .status(DepositOrderStatus.PENDING) // default : PENDING
                 .build();

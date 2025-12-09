@@ -27,6 +27,10 @@ public class DepositPaymentFailureHistory {
     @Column(name = "deposit_payment_id", length = 20, nullable = false, updatable = false)
     private String depositPaymentId;
 
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false, updatable = false)
+    private String userId;
+
     @Schema(description = "코드")
     @Column(name = "code", nullable = false, length = 50, updatable = false)
     private String code;
@@ -44,8 +48,9 @@ public class DepositPaymentFailureHistory {
     private String createdBy;
 
     @Builder
-    public DepositPaymentFailureHistory(String depositPaymentId, String code, String message) {
+    public DepositPaymentFailureHistory(String depositPaymentId, String userId, String code, String message) {
         this.depositPaymentId = depositPaymentId;
+        this.userId = userId;
         this.code = code;
         this.message = message;
     }
@@ -55,9 +60,10 @@ public class DepositPaymentFailureHistory {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static DepositPaymentFailureHistory create(String depositPaymentId, String code, String message) {
+    public static DepositPaymentFailureHistory create(String depositPaymentId, String userId, String code, String message) {
         return DepositPaymentFailureHistory.builder()
                 .depositPaymentId(depositPaymentId)
+                .userId(userId)
                 .code(code)
                 .message(message)
                 .build();

@@ -25,9 +25,13 @@ public class DepositPayment {
     /*
      * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음
      * */
-    @Schema(description = "사용자 ID")
-    @Column(name = "order_id", length = 20, nullable = false, updatable = false)
+    @Schema(description = "예치금 주문 ID")
+    @Column(name = "order_id", length = 20, nullable = false)
     private String orderId;
+
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false)
+    private String userId;
 
     @Schema(description = "결제키")
     @Column(name = "payment_key", nullable = false, length = 200)
@@ -72,8 +76,9 @@ public class DepositPayment {
     private String updatedBy;
 
     @Builder
-    public DepositPayment(String orderId, String paymentKey, DepositPaymentMethod method, LocalDateTime requestedAt, DepositPaymentStatus status, String approvalNum, LocalDateTime approvedAt) {
+    public DepositPayment(String orderId, String userId, String paymentKey, DepositPaymentMethod method, LocalDateTime requestedAt, DepositPaymentStatus status, String approvalNum, LocalDateTime approvedAt) {
         this.orderId = orderId;
+        this.userId = userId;
         this.paymentKey = paymentKey;
         this.method = method;
         this.requestedAt = requestedAt;
@@ -97,9 +102,10 @@ public class DepositPayment {
         this.updatedBy = id;
     }
 
-    public static DepositPayment create(String orderId, String paymentKey) {
+    public static DepositPayment create(String orderId, String userId, String paymentKey) {
         return DepositPayment.builder()
                 .orderId(orderId)
+                .userId(userId)
                 .paymentKey(paymentKey)
                 .method(DepositPaymentMethod.CARD) // default : CARD 비즈니스 로직 상 추후 수정
                 .status(DepositPaymentStatus.READY) // default : READY
