@@ -5,8 +5,10 @@ import com.dev_high.user.user.application.dto.UserInfo;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.exception.UserAlreadyExistsException;
+import com.dev_high.user.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import com.dev_high.common.dto.ApiResponseDto;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public ApiResponseDto<UserInfo> create(CreateUserCommand command) {
@@ -25,7 +28,7 @@ public class UserService {
         }
         User user = new User(
                 command.email(),
-                command.password(),
+                passwordEncoder.encode(command.password()),
                 command.name(),
                 command.nickname(),
                 command.phone_number(),
@@ -40,5 +43,11 @@ public class UserService {
 
     public Optional<User> findById(String id) {
         return userRepository.findById(id);
+    }
+
+    public ApiResponseDto<UserInfo> getProfile(String userId) {
+        User user = findById(userId).orElseThrow(() -> new UserNotFoundException());
+        return ApiResponseDto.success(UserInfo.from(user));
+
     }
 }

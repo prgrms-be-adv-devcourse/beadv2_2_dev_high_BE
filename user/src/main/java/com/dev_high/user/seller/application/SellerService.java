@@ -8,6 +8,7 @@ import com.dev_high.user.seller.domain.SellerRepository;
 import com.dev_high.user.seller.exception.SellerAlreadyExistsException;
 import com.dev_high.user.user.application.UserService;
 import com.dev_high.user.user.domain.User;
+import com.dev_high.user.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,7 @@ public class SellerService {
 
     @Transactional
     public ApiResponseDto<SellerInfo> create(CreateSellerCommand command) {
-        User user = userService.findById(command.userId()).orElseThrow();
+        User user = userService.findById(command.userId()).orElseThrow(() -> new UserNotFoundException());
         if(sellerRepository.existsByUserId(user.getId())) {
             throw new SellerAlreadyExistsException();
         }
