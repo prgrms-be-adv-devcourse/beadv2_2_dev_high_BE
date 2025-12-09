@@ -37,6 +37,9 @@ public class Order {
     @Column(name = "pay_complete_date")
     private LocalDateTime payCompleteDate; // NULL 허용
 
+    @Column(nullable = false, length = 1)
+    private String payYn = "N";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OrderStatus status;

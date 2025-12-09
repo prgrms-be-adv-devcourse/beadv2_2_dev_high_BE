@@ -18,13 +18,13 @@ public class OrderStatusScheduler {
     public int cancelOverdueOrders() {
 
         int updatedCount = entityManager.createNativeQuery(
-                        "UPDATE settlement.order "
+                        "UPDATE \"order\".\"order\"  "
                                 + "SET status = :newStatus "
                                 + "WHERE status = :oldStatus "
-                                + "AND confirm_date <= NOW() - INTERVAL '14 days'"
+                                + "AND winning_date <= NOW() - INTERVAL '14 days'"
                 )
-                .setParameter("newStatus", OrderStatus.UNPAID_OVERDUE_CANCEL)
-                .setParameter("oldStatus", OrderStatus.UNPAID)
+                .setParameter("newStatus", OrderStatus.UNPAID_OVERDUE_CANCEL.name())
+                .setParameter("oldStatus", OrderStatus.UNPAID.name())
                 .executeUpdate();
 
         // Bulk Update 후, 영속성 컨텍스트와의 어긋남을 가지치기
