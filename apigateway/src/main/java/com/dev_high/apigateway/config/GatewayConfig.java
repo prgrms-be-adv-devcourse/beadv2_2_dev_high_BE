@@ -2,10 +2,17 @@ package com.dev_high.apigateway.config;
 
 
 import com.dev_high.apigateway.filter.AuthenticationFilter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class GatewayConfig {
@@ -14,6 +21,21 @@ public class GatewayConfig {
 
   public GatewayConfig(AuthenticationFilter authenticationFilter) {
     this.authenticationFilter = authenticationFilter;
+  }
+
+  @Bean
+  public CorsWebFilter corsWebFilter() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(List.of("*"));
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(Arrays.asList("*"));
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/api/**", config); // API 경로만 적용
+    source.registerCorsConfiguration("/swagger/**", config);  // Swagger
+
+    return new CorsWebFilter(source);
   }
 
   @Bean
@@ -69,5 +91,34 @@ public class GatewayConfig {
             .uri("lb://USER-SERVICE"))
 
         .build();
+  }
+
+  @Bean
+  @Profile("!prod")
+  public RouteLocator swaggerRoutes(RouteLocatorBuilder builder) {
+    RouteLocatorBuilder.Builder routesBuilder = builder.routes();
+
+    // 서비스 이름과 lb URI를 맵으로 관리
+    Map<String, String> services = Map.of(
+        "auction-service", "lb://AUCTION-SERVICE",
+        "notice-service", "lb://NOTICE-SERVICE",
+        "deposit-service", "lb://DEPOSIT-SERVICE",
+        "order-service", "lb://ORDER-SERVICE",
+        "product-service", "lb://PRODUCT-SERVICE",
+        "search-service", "lb://SEARCH-SERVICE",
+        "settlement-service", "lb://SETTLEMENT-SERVICE",
+        "user-service", "lb://USER-SERVICE"
+    );
+
+    services.forEach((name, uri) -> {
+      routesBuilder.route(name + "-swagger", r -> r
+          .path("/swagger/" + name + "/**")
+          .filters(f -> f.rewritePath("/swagger/" + name + "(/(?<segment>.*))?",
+              "/v3/api-docs${segment}"))
+          .uri(uri)
+      );
+    });
+
+    return routesBuilder.build();
   }
 }
