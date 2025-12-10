@@ -1,6 +1,7 @@
 package com.dev_high.user.user.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.user.user.application.dto.UpdateUserCommand;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -100,5 +101,28 @@ public class User {
         this.state = state;
         this.city = city;
         this.detail = detail;
+    }
+
+    public void updateRole(UserRole role) {
+        this.userRole = role;
+    }
+
+    public void updateUser(UpdateUserCommand command) {
+        this.name = command.name();
+        this.nickname = command.nickname();
+        this.phoneNumber = command.phone_number();
+        this.zipCode = command.zip_code();
+        this.state = command.state();
+        this.city = command.city();
+        this.detail = command.detail();
+    }
+
+    public void updatePassWord(String password) {
+        this.password = password;
+    }
+
+    public void deleteUser() {
+        this.userStatus = UserStatus.WITHDRAWN;
+        this.deletedYn = "Y";
     }
 }

@@ -37,7 +37,7 @@ public class ProductService {
         Product product = Product.create(
                 command.name(),
                 command.description(),
-                command.fileGroupId(),
+                command.fileId(),
                 command.sellerId(),
                 command.sellerId() // 생성자/수정자를 판매자 ID로 통일
         );
@@ -95,7 +95,7 @@ public class ProductService {
             throw new ProductUpdateStatusException();
         }
 
-        product.updateDetails(command.name(), command.description(), command.fileGroupId(), command.sellerId());
+        product.updateDetails(command.name(), command.description(), command.fileId(), command.sellerId());
         List<Category> categories = replaceCategories(product, command.categoryIds(), command.sellerId());
         return ProductInfo.from(product, categories);
     }
