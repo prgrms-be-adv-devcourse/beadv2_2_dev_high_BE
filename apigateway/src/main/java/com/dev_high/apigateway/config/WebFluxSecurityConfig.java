@@ -27,8 +27,9 @@ public class WebFluxSecurityConfig {
 
 
   // 인증 필요없는 url
-  private final static String USER_JOIN_ANTPATTERNS = "api/v1/users/signup";
-  private final static String AUTH_ANTPATTERNS = "api/v1/auth/**";
+  private final static String USER_JOIN_ANTPATTERNS = "/api/v1/users/signup";
+  private final static String EMAIL_ANTPATTERNS = "/api/v1/auth/verify-email/**";
+  private final static String AUTH_ANTPATTERNS = "/api/v1/auth/**";
   private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
       "/ws-auction/**"};
   private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*",
@@ -63,6 +64,7 @@ public class WebFluxSecurityConfig {
             .authorizeExchange(exchanges -> exchanges
                     .pathMatchers(PERMITALL_ANTPATTERNS).permitAll()
                     .pathMatchers(AUTH_ANTPATTERNS).permitAll()
+                    .pathMatchers(EMAIL_ANTPATTERNS).permitAll()
                     .pathMatchers(HttpMethod.POST, USER_JOIN_ANTPATTERNS).permitAll()
                     .pathMatchers(HttpMethod.GET, AUCTION_ANTPATTERNS).permitAll()
                     .pathMatchers(HttpMethod.GET, PRODUCT_ANTPATTERNS).permitAll()

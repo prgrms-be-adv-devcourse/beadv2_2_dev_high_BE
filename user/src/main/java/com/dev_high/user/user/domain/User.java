@@ -125,4 +125,8 @@ public class User {
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedYn = "Y";
     }
+
+    public void updateStatus(UserStatus status) {
+        this.userStatus = status;
+    }
 }
