@@ -73,7 +73,7 @@ public class OrderController {
         if (request.buyerId() == null || request.buyerId().isEmpty()) return "구매자 id가 필요합니다.";
         if (request.auctionId() == null || request.auctionId().isEmpty()) return "경매 id가 필요합니다.";
         if (request.winningAmount() == null) return "낙찰가가 필요합니다.";
-        if (request.confirmDate() == null) return "낙찰이 확정된 일자가 필요합니다.";
+        if (request.winningDate() == null) return "낙찰이 확정된 일자가 필요합니다.";
 
         return null;
     }

@@ -31,8 +31,8 @@ public class Order {
     @Column(name = "winning_amount", nullable = false)
     private Long winningAmount; // DB에 맞춰 통일
 
-    @Column(name = "confirm_date", nullable = false)
-    private LocalDateTime confirmDate;
+    @Column(name = "winning_date", nullable = false)
+    private LocalDateTime winningDate;
 
     @Column(name = "pay_complete_date")
     private LocalDateTime payCompleteDate; // NULL 허용
@@ -64,13 +64,13 @@ public class Order {
     }
 
     public Order(String sellerId, String buyerId, String auctionId,
-                 Long winningAmount, LocalDateTime confirmDate,
+                 Long winningAmount, LocalDateTime winningDate,
                  OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
         this.auctionId = auctionId;
         this.winningAmount = winningAmount;
-        this.confirmDate = confirmDate;
+        this.winningDate = winningDate;
         this.status = status;
     }
 
@@ -80,7 +80,7 @@ public class Order {
                 request.buyerId(),
                 request.auctionId(),
                 request.winningAmount(),
-                request.confirmDate(),
+                request.winningDate(),
                 request.status()
         );
     }
@@ -92,7 +92,7 @@ public class Order {
                 buyerId,
                 auctionId,
                 winningAmount,
-                confirmDate,
+                winningDate,
                 status,
                 payCompleteDate,
                 createdAt,
