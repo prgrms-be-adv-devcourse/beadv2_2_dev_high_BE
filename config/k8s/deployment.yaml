@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config
+  labels:
+    app: config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config
+  template:
+    metadata:
+      labels:
+        app: config
+    spec:
+      containers:
+        - name: config
+          image: ghcr.io/prgrms-be-adv-devcourse/config:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8888
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "git"
+            - name: CONFIG_GIT_URI
+              value: "https://github.com/your-org/your-config-repo.git" # 배포용 설정 리포 주소로 교체
+            - name: CONFIG_GIT_LABEL
+              value: "main"
+            - name: CONFIG_GIT_SEARCH_PATHS
+              value: "config"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

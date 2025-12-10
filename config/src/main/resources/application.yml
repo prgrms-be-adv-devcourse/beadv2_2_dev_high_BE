@@ -6,10 +6,14 @@ spring:
     name: config
 
   profiles:
-    active: native
+    active: git
 
   cloud:
+    bus:
+      enabled: false
     config:
       server:
-        native:
-          search-locations: classpath:/config
+        git:
+          default-label: ${CONFIG_GIT_LABEL:feat/#46-ci-cd}
+          search-paths: ${CONFIG_GIT_SEARCH_PATHS:config}
+          uri: https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE

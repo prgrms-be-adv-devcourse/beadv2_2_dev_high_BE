@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery # deployment 소스의 이름 (k8s에서는 deployment/discovery처럼 저장)
+  labels:
+    app: discovery # deployment 검색을 위해 붙는 태그(콘솔에서 kubectl get deployments -l app=discovery과 같은 검색 시 필요)
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discovery # discovery 라벨이 붙은 Pod(template.metadata.labels.app에 명시)만 관리한다는 선언
+  template:
+    metadata:
+      labels:
+        app: discovery # pod에 실제로 붙는 라벨
+    spec:
+      containers:
+        - name: discovery
+          image: ghcr.io/prgrms-be-adv-devcourse/discovery:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8761
+          env:
+            - name: SERVER_PORT
+              value: "8761"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: discovery
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
