@@ -5,7 +5,7 @@ import java.util.List;
 public record ProductCommand(
         String name,
         String description,
-        Long fileGroupId,
+        String fileId,
         String sellerId,
         String createdBy,
         List<String> categoryIds
