@@ -7,7 +7,7 @@ import java.util.List;
 public record ProductUpdateRequest(
         @NotBlank(message = "상품명은 필수입니다.") String name,
         String description,
-        Long fileGroupId,
+        String fileId,
         @NotBlank(message = "판매자 ID는 필수입니다.") String sellerId,
         List<String> categoryIds
 ) {
@@ -15,7 +15,7 @@ public record ProductUpdateRequest(
         return new ProductUpdateCommand(
                 name,
                 description,
-                fileGroupId,
+                fileId,
                 sellerId,
                 categoryIds
         );
