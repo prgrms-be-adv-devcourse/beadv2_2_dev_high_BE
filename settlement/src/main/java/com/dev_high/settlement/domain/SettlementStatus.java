@@ -4,5 +4,6 @@ public enum SettlementStatus {
     WAITING,
     COMPLETED,
     FAILED,
-    CANCELLED
+    CANCELLED,
+    NOTIFIED
 }

@@ -4,18 +4,19 @@ import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
 import com.dev_high.settlement.presentation.dto.SettlementResponse;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "settlement", schema = "settlement")
 public class Settlement {
+
+    private final static double chargeRatio = 0.3;
 
     @Id
     @CustomGeneratedId(method = "settlement")
@@ -36,10 +37,10 @@ public class Settlement {
     @Column(name = "winning_amount", nullable = false)
     private Long winningAmount;
 
-    @Column(name = "charge", nullable = false)
+    @Column(name = "charge")
     private Long charge;
 
-    @Column(name = "final_amount", nullable = false)
+    @Column(name = "final_amount")
     private Long finalAmount;
 
     @Column(name = "due_date", nullable = false)
@@ -55,7 +56,7 @@ public class Settlement {
     @Column(name = "complete_date")
     private LocalDateTime completeDate;
 
-    @Column(name = "update_date")
+    @Column(name = "update_date", nullable = false)
     private LocalDateTime updateDate;
 
     @Column(name = "complete_yn", nullable = false, length = 1)
@@ -82,15 +83,25 @@ public class Settlement {
         this.updateDate = LocalDateTime.now();
     }
 
+    public Settlement makeComplete() {
+        this.completeYn = "Y";
+        this.charge = (long) (winningAmount * chargeRatio);
+        this.finalAmount = winningAmount - charge;
+        this.status = SettlementStatus.COMPLETED;
+        this.completeDate = LocalDateTime.now();
+
+        return this;
+    }
+
     public static Settlement fromRequest(SettlementRegisterRequest request) {
         return new Settlement(
-                request.orderId(),
+                request.id(),
                 request.sellerId(),
                 request.buyerId(),
                 request.auctionId(),
                 request.winningAmount(),
-                request.dueDate(),
-                request.status()
+                LocalDate.now().plusMonths(1).withDayOfMonth(3).atStartOfDay(),
+                SettlementStatus.WAITING
         );
     }
 

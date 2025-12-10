@@ -19,8 +19,18 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
+    public List<Settlement> findAllByOrderId(String sellerId) {
+        return settlementRepository.findAllByOrderId(sellerId);
+    }
+
+    @Override
     public List<Settlement> findAllBySellerId(String sellerId) {
         return settlementRepository.findAllBySellerId(sellerId);
+    }
+
+    @Override
+    public boolean existsSettlementsByOrderId(String orderId) {
+        return settlementRepository.existsSettlementsByOrderId(orderId);
     }
 
     @Override
