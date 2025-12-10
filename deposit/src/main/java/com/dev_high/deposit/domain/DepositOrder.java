@@ -51,6 +51,8 @@ public class DepositOrder {
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
+    private static final long MIN_ORDER_AMOUNT = 1L;
+
     @Builder
     public DepositOrder(String userId, long amount, DepositOrderStatus status) {
         this.userId = userId;
@@ -74,10 +76,19 @@ public class DepositOrder {
     }
 
     public static DepositOrder create(String userId, long amount) {
+        if (amount < MIN_ORDER_AMOUNT) {
+            throw new IllegalArgumentException(
+                    String.format("주문 금액은 %d원 이상이어야 합니다. (요청 금액: %d원)", MIN_ORDER_AMOUNT, amount)
+            );
+        }
         return DepositOrder.builder()
                 .userId(userId)
                 .amount(amount)
                 .status(DepositOrderStatus.PENDING) // default : PENDING
                 .build();
+    }
+
+    public void updateStatus(DepositOrderStatus status) {
+        this.status = status;
     }
 }
