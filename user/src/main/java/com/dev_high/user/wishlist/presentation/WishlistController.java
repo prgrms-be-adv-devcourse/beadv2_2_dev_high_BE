@@ -1,17 +1,16 @@
 package com.dev_high.user.wishlist.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.seller.application.SellerService;
-import com.dev_high.user.seller.application.dto.SellerInfo;
-import com.dev_high.user.seller.presentation.dto.SellerSignUpRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.dev_high.user.wishlist.application.WishlistService;
 import com.dev_high.user.wishlist.application.dto.WishlistInfo;
 import com.dev_high.user.wishlist.presentation.dto.WishlistAddRequest;
+import com.dev_high.user.wishlist.presentation.dto.WishlistDeleteRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users/wishlist")
@@ -21,7 +20,22 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @PostMapping
-    public ApiResponseDto<WishlistInfo> create(@RequestBody WishlistAddRequest request) {
+    public ApiResponseDto<WishlistInfo> create( @RequestBody WishlistAddRequest request) {
         return wishlistService.create(request.toCommand());
+    }
+
+    @GetMapping
+    public ApiResponseDto<Page<WishlistInfo>> getWishlist(Pageable pageable) {
+        return wishlistService.getWishlist(pageable);
+    }
+
+    @DeleteMapping
+    public ApiResponseDto<Void> delete(@RequestBody WishlistDeleteRequest request) {
+        return wishlistService.delete(request);
+    }
+
+    @GetMapping("/{productId}")
+    public ApiResponseDto<List<String>> getUserIdsByProductId(@PathVariable("productId") String productId) {
+        return wishlistService.getUserIdsByProductId(productId);
     }
 }

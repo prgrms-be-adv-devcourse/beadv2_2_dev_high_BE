@@ -1,6 +1,7 @@
 package com.dev_high.user.auth.jwt;
 
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.Jwts;
@@ -8,6 +9,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtProvider {
     private final String secretKey;
     private final long accessTokenExpiration;
@@ -35,6 +37,7 @@ public class JwtProvider {
                                 long expirationTime){
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expirationTime);
+        log.info(String.format("Expiration Time: %d ms, Now: %d ms, Expire Date: %s", expirationTime, now.getTime(), expireDate));
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("role", role)

@@ -1,7 +1,6 @@
 package com.dev_high.user.seller.application.dto;
 
-public record CreateSellerCommand(
-        String userId,
+public record SellerCommand(
         String bankName,
         String bankAccount
 ){

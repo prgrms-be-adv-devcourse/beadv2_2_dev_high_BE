@@ -1,6 +1,5 @@
 package com.dev_high.user.seller.infrastructure;
 
-import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.domain.Seller;
 import com.dev_high.user.seller.domain.SellerRepository;
 import org.springframework.stereotype.Repository;
@@ -22,6 +21,11 @@ public class SellerRepositoryAdapter implements SellerRepository {
     @Override
     public boolean existsByUserId(String userId) {
         return sellerJpaRepository.existsByUserId(userId);
+    }
+
+    @Override
+    public Seller findByUserId(String userId) {
+        return sellerJpaRepository.findByUserId(userId);
     }
 
 }
