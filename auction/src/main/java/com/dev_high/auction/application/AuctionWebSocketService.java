@@ -49,7 +49,7 @@ public class AuctionWebSocketService {
 
     users.add(sessionId);
     if (users != null && !users.isEmpty()) {
-      log.info("current user count: {}",users.size());
+      log.info("current user count: {}", users.size());
       Map<String, Object> payload = Map.of(
           "type", "USER_JOIN",
           "currentUsers", users.size()
@@ -65,7 +65,7 @@ public class AuctionWebSocketService {
     Set<String> users = auctionRooms.get(auctionId);
     if (users != null) {
       users.remove(sessionId);
-      log.info("current users count: {}",users.size());
+      log.info("current users count: {}", users.size());
       if (users.isEmpty()) {
         auctionRooms.remove(auctionId);
       }
@@ -83,11 +83,14 @@ public class AuctionWebSocketService {
   @EventListener
   public void handleDisconnect(SessionDisconnectEvent event) {
     String sessionId = event.getSessionId();
-    log.info("disconnect sessionId: {}",sessionId);
+    log.info("disconnect sessionId: {}", sessionId);
     auctionRooms.forEach((auctionId, users) -> {
       if (users.remove(sessionId)) {
+        log.info("cur user count: {}", users.size());
 
-        if (users.isEmpty()) auctionRooms.remove(auctionId);
+        if (users.isEmpty()) {
+          auctionRooms.remove(auctionId);
+        }
 
         if (users != null && !users.isEmpty()) {
           Map<String, Object> payload = Map.of(
