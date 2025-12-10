@@ -30,7 +30,7 @@ public class WebFluxSecurityConfig {
   private final static String USER_JOIN_ANTPATTERNS = "api/v1/user";
   private final static String AUTH_ANTPATTERNS = "api/v1/auth/**";
   private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
-      "/api/v1/auctions/*/participation", "/ws-auction/**"};
+      "/ws-auction/**"};
   private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*",
   };
 
