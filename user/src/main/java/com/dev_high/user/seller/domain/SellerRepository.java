@@ -4,4 +4,5 @@ public interface SellerRepository {
 
     Seller save(Seller seller);
     boolean existsByUserId(String userId);
+    Seller findByUserId(String userId);
 }
