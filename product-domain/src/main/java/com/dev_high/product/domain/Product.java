@@ -37,8 +37,8 @@ public class Product {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "file_grp_id")
-    private Long fileGroupId;
+    @Column(name = "file_id")
+    private String fileId;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -65,13 +65,13 @@ public class Product {
 
     private Product(String name,
                     String description,
-                    Long fileGroupId,
+                    String fileId,
                     String sellerId,
                     String createdBy) {
 
         this.name = name;
         this.description = description;
-        this.fileGroupId = fileGroupId;
+        this.fileId = fileId;
         this.sellerId = sellerId;
         this.createdBy = createdBy;
         this.updatedBy = createdBy;
@@ -83,10 +83,10 @@ public class Product {
 
     public static Product create(String name,
                                  String description,
-                                 Long fileGroupId,
+                                 String fileId,
                                  String sellerId,
                                  String createdBy) {
-        return new Product(name, description, fileGroupId, sellerId, createdBy);
+        return new Product(name, description, fileId, sellerId, createdBy);
     }
 
     public void ChangeStart(String updatedBy) {
@@ -99,10 +99,10 @@ public class Product {
         this.updatedBy = updatedBy;
     }
 
-    public void updateDetails(String name, String description, Long fileGroupId, String updatedBy) {
+    public void updateDetails(String name, String description, String fileId, String updatedBy) {
         this.name = name;
         this.description = description;
-        this.fileGroupId = fileGroupId;
+        this.fileId = fileId;
         this.updatedBy = updatedBy;
     }
 

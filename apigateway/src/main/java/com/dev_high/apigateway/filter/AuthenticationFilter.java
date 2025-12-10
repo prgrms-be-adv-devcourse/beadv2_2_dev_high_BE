@@ -14,26 +14,26 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
-  @Override
-  public int getOrder() {
-    return -1; // 인증 이후, 라우팅 전에
-  }
-
-  @Override
-  public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-    Object attribute = exchange.getAttribute("User");
-
-    if (attribute instanceof Claims claims) {
-      String userId = claims.getSubject();
-
-      ServerHttpRequest mutatedRequest = exchange.getRequest()
-          .mutate()
-          .header("X-User-Id", userId)
-          .build();
-
-      return chain.filter(exchange.mutate().request(mutatedRequest).build());
+    @Override
+    public int getOrder() {
+        return -1; // 인증 이후, 라우팅 전에
     }
 
-    return chain.filter(exchange);
-  }
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        Object attribute = exchange.getAttribute("User");
+
+        if (attribute instanceof Claims claims) {
+            String userId = claims.getSubject();
+
+            ServerHttpRequest mutatedRequest = exchange.getRequest()
+                    .mutate()
+                    .header("X-User-Id", userId)
+                    .build();
+
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+        }
+
+        return chain.filter(exchange);
+    }
 }
