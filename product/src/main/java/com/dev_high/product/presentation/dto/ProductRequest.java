@@ -7,7 +7,7 @@ import java.util.List;
 public record ProductRequest(
         @NotBlank(message = "상품명은 필수입니다.") String name,
         String description,
-        Long fileGroupId,
+        String fileId,
         @NotBlank(message = "판매자 ID는 필수입니다.") String sellerId,
         List<String> categoryIds
 ) {
@@ -15,7 +15,7 @@ public record ProductRequest(
         return new ProductCommand(
                 name,
                 description,
-                fileGroupId,
+                fileId,
                 sellerId,
                 sellerId, // 생성자/수정자를 판매자 ID로 사용
                 categoryIds
