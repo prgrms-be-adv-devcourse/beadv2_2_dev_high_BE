@@ -1,9 +1,6 @@
 package com.dev_high.settlement.presentation.dto;
 
-import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.settlement.domain.SettlementStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
 
