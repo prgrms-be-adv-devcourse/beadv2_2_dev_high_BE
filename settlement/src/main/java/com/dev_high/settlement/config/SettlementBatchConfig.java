@@ -4,6 +4,7 @@ import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.history.SettlementHistory;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -23,6 +24,7 @@ import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +38,7 @@ import java.util.*;
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig extends DefaultBatchConfiguration {
-    private final EntityManagerFactory entityManagerFactory;
+    @PersistenceContext private final EntityManagerFactory entityManagerFactory;
     private final SettlementRepository settlementRepository;
     private final RestTemplate restTemplate = new RestTemplate();
     private final AbstractItemCountingItemStreamItemReader registerItemReader;
@@ -97,7 +99,6 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .next(makeLogStep(jobRepository, transactionManager))
                 .build();
     }
-
     /**
      * Step 1: 예치금 서비스로 계좌 정산 처리 요청
      */
@@ -117,7 +118,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         return new JpaPagingItemReaderBuilder<Settlement>()
                 .name("sendRequestReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'PENDING'")
+                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'WAITING'")
                 .parameterValues(Map.of("targetDate", LocalDate.now()))
                 .pageSize(10)
                 .build();
@@ -135,11 +136,11 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
                 // Step Context에서 처리된 Settlement ID 목록 가져오기
                 @SuppressWarnings("unchecked")
-                List<String> processedIds = (List<String>) stepExecution.getExecutionContext()
+                List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
                         .get("settlementIds");
 
-                if (processedIds == null) {
-                    processedIds = new ArrayList<>();
+                if (settlementIds == null) {
+                    settlementIds = new ArrayList<>();
                 }
 
                 for (Settlement settlement : chunk) {
@@ -158,7 +159,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                         );
 
                         if (response.getStatusCode().is2xxSuccessful()) {
-                            processedIds.add(settlement.getId());
+                            settlementIds.add(settlement.getId());
                             log.info("정산 요청 성공 - Settlement ID: {}", settlement.getId());
                         } else {
                             log.error("정산 요청 실패 - Settlement ID: {}, Status: {}",
@@ -170,9 +171,9 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 }
 
                 // Step Context에 저장 (Job Context로 승격될 예정)
-                stepExecution.getExecutionContext().put("settlementIds", processedIds);
+                stepExecution.getExecutionContext().put("settlementIds", settlementIds);
 
-                log.info("Step 1 완료 - 처리된 Settlement 개수: {}", processedIds.size());
+                log.info("Step 1 완료 - 처리된 Settlement 개수: {}", settlementIds.size());
             }
         };
     }
@@ -194,7 +195,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public Step updateStatusStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("updateStatusStep", jobRepository)
                 .<Settlement, Settlement>chunk(10, transactionManager)
-                .reader(updateStatusReader())
+                .reader(updateStatusReader(null))
                 .processor(updateStatusProcessor())
                 .writer(updateStatusWriter())
                 .listener(updateStatusPromotionListener())
@@ -203,16 +204,13 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     @Bean
     @StepScope
-    public ItemReader<Settlement> updateStatusReader() {
-//        StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
-//        List<String> processedIds = (List<String>) stepExecution.getExecutionContext()
-//                .get("settlementIds");
-//
-//        if (processedIds == null || processedIds.isEmpty()) {
-//            log.warn("Step 2: 처리할 Settlement ID가 없습니다.");
-//            return () -> null;
-//        }
-//
+    public ItemReader<Settlement> updateStatusReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
+
+        if (updatedIds == null || updatedIds.isEmpty()) {
+            log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
+            return () -> null;
+        }
+
 //        log.info("Step 2: {} 개의 Settlement 상태 업데이트 시작", processedIds.size());
 //
 //        return new JpaPagingItemReaderBuilder<Settlement>()
@@ -226,7 +224,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         return new JpaPagingItemReaderBuilder<Settlement>()
                 .name("sendRequestReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'PENDING'")
+                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'WAITING'")
                 .parameterValues(Map.of("targetDate", LocalDate.now()))
                 .pageSize(10)
                 .build();
@@ -282,7 +280,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public Step makeLogStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("makeLogStep", jobRepository)
                 .<Settlement, SettlementHistory>chunk(10, transactionManager)
-                .reader(makeLogReader())
+                .reader(makeLogReader(null))
                 .processor(makeLogProcessor())
                 .writer(makeLogWriter())
                 .build();
@@ -290,11 +288,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     @Bean
     @StepScope
-    public ItemReader<Settlement> makeLogReader() {
-        StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
-        List<String> updatedIds = (List<String>) stepExecution.getExecutionContext()
-                .get("settlementIds");
-
+    public ItemReader<Settlement> makeLogReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
         if (updatedIds == null || updatedIds.isEmpty()) {
             log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
             return () -> null;
