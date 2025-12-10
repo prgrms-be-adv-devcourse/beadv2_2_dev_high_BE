@@ -7,8 +7,10 @@ import java.time.LocalDateTime;
 public record AuctionBidMessage(
     String type,
     String auctionId,
-    String userId,
+    String highestUserId,
     BigDecimal bidPrice,
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime timestamp,
     int currentUsers
-) {}
+) {
+
+}

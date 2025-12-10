@@ -34,8 +34,11 @@ public class AuctionParticipation {
   @JoinColumn(name = "auction_id", insertable = false, updatable = false)
   private Auction auction;
 
-  @Column(name = "bid_price", nullable = false)
+  @Column(name = "bid_price")
   private BigDecimal bidPrice;
+
+  @Column(name = "deposit_amount", nullable = false)
+  private BigDecimal depositAmount;
 
   @Column(name = "withdrawn_yn", length = 1, nullable = false)
   private String withdrawnYn;
@@ -62,15 +65,18 @@ public class AuctionParticipation {
   @Column(name = "deposit_refunded_at")
   private LocalDateTime depositRefundedAt;
 
-  protected AuctionParticipation() {}
+  protected AuctionParticipation() {
+  }
 
-  public AuctionParticipation(AuctionParticipationId ids){
+  public AuctionParticipation(AuctionParticipationId ids, BigDecimal depositAmount) {
     this.userId = ids.getUserId();
     this.auctionId = ids.getAuctionId();
-    this.createdBy= this.userId;
-    this.updatedBy= this.userId;
-    this.withdrawnYn="N";
-    this.depositRefundedYn="N";
+    this.createdBy = this.userId;
+    this.updatedBy = this.userId;
+    this.withdrawnYn = "N";
+    this.depositRefundedYn = "N";
+    this.bidPrice = BigDecimal.ZERO;
+    this.depositAmount = depositAmount;
   }
 
   @PrePersist
@@ -92,11 +98,13 @@ public class AuctionParticipation {
   public void markWithdraw() {
     this.withdrawnYn = "Y";
     this.withdrawnAt = LocalDateTime.now();
+    this.updatedBy = this.userId;
   }
+
   public void markDepositRefunded() {
     this.depositRefundedYn = "Y";
     depositRefundedAt = LocalDateTime.now();
-
+    this.updatedBy = "SYSTEM";
   }
 
 }

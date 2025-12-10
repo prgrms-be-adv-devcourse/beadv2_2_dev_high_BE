@@ -56,9 +56,10 @@ public class AuctionLiveState {
     this.updatedAt = LocalDateTime.now();
   }
 
-  public void update(String highestUserId , BigDecimal currentBid) {
+  public void update(String highestUserId, BigDecimal currentBid) {
     this.highestUserId = highestUserId;
     this.currentBid = currentBid;
+
 
   }
 
