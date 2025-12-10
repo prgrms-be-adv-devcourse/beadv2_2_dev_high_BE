@@ -29,6 +29,13 @@ dependencies {
     // Database
     runtimeOnly 'org.postgresql:postgresql'
 
+    //redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    //email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
     //security
     implementation 'org.springframework.boot:spring-boot-starter-security'
 

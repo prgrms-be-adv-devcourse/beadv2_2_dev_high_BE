@@ -10,17 +10,21 @@ import com.dev_high.user.auth.application.dto.TokenInfo;
 import com.dev_high.user.auth.presentation.dto.LoginRequest;
 import com.dev_high.user.auth.presentation.dto.TokenRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/api/v1/auth")
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
+
+    @GetMapping("/verify-email/{email}/{code}")
+    public ApiResponseDto<Void> verifyEmail(@PathVariable("email") String email, @PathVariable("code") String code){
+        return authService.verifyEmail(email, code);
+    }
 
     @PostMapping("/login")
     public ApiResponseDto<LoginInfo> login(@RequestBody LoginRequest request){
