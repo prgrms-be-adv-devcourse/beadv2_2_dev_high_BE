@@ -70,4 +70,14 @@ public class Seller {
         this.bankName = bankName;
         this.bankAccount = bankAccount;
     }
+
+    public void deleteSeller() {
+        this.sellerStatus = SellerStatus.INACTIVE;
+        this.deletedYn = "Y";
+    }
+
+    public void updateSeller(String bankName, String bankAccount) {
+        this.bankName = bankName;
+        this.bankAccount = bankAccount;
+    }
 }

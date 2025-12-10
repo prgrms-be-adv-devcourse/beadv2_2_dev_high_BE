@@ -26,15 +26,15 @@ public class AuthService {
     private final UserRepository userRepository;
 
     public ApiResponseDto<LoginInfo> login(LoginCommand command) {
-        User user = userRepository.findByEmail(command.email()).orElseThrow(() -> new UserNotFoundException());
+        User user = userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             throw new IncorrectPasswordException();
         }
         String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getUserRole().name());
         String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getUserRole().name());
 
-        log.warn("accessToken: {}", accessToken);
-        log.warn("refreshToken: {}", refreshToken);
+        log.info("accessToken: {}", accessToken);
+        log.info("refreshToken: {}", refreshToken);
 
         LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken);
         return ApiResponseDto.success(loginInfo);

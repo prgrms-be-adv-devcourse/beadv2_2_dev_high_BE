@@ -1,28 +1,34 @@
 package com.dev_high.user.seller.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.seller.application.dto.CreateSellerCommand;
+import com.dev_high.user.seller.application.dto.SellerCommand;
 import com.dev_high.user.seller.application.dto.SellerInfo;
 import com.dev_high.user.seller.domain.Seller;
 import com.dev_high.user.seller.domain.SellerRepository;
 import com.dev_high.user.seller.exception.SellerAlreadyExistsException;
-import com.dev_high.user.user.application.UserService;
+import com.dev_high.user.seller.exception.SellerNotFoundException;
+import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
-import com.dev_high.user.user.exception.UserNotFoundException;
+import com.dev_high.user.user.domain.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class SellerService {
 
     private final SellerRepository sellerRepository;
-    private final UserService userService;
+    private final UserDomainService userDomainService;
 
     @Transactional
-    public ApiResponseDto<SellerInfo> create(CreateSellerCommand command) {
-        User user = userService.findById(command.userId()).orElseThrow(() -> new UserNotFoundException());
+    public ApiResponseDto<SellerInfo> create(SellerCommand command) {
+        User user = userDomainService.getUser();
+        //일반 회원 seller로 변경
+        userDomainService.updateUserRole(user, UserRole.SELLER);
         if(sellerRepository.existsByUserId(user.getId())) {
             throw new SellerAlreadyExistsException();
         }
@@ -33,5 +39,38 @@ public class SellerService {
         );
         Seller saved = sellerRepository.save(seller);
         return ApiResponseDto.success(SellerInfo.from(saved));
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponseDto<SellerInfo> getProfile() {
+        Seller seller = getSeller();
+        return ApiResponseDto.success(SellerInfo.from(seller));
+    }
+
+    @Transactional
+    public ApiResponseDto<SellerInfo> updateProfile(SellerCommand command) {
+        Seller seller = getSeller();
+        seller.updateSeller(command.bankName(), command.bankAccount());
+        return ApiResponseDto.success(SellerInfo.from(seller));
+    }
+
+    @Transactional
+    public ApiResponseDto<Void> delete() {
+        deleteSeller();
+        User user = userDomainService.getUser();
+        userDomainService.updateUserRole(user, UserRole.USER);
+        return ApiResponseDto.success(null);
+    }
+
+    private Seller getSeller() {
+        String userId = UserContext.get().userId();
+        return Optional.ofNullable(sellerRepository.findByUserId(userId))
+                .filter(s -> !"Y".equals(s.getDeletedYn()))
+                .orElseThrow(SellerNotFoundException::new);
+    }
+
+    public void deleteSeller() {
+        Seller seller = getSeller();
+        seller.deleteSeller();
     }
 }
