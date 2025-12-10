@@ -6,11 +6,13 @@ import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
-public record AuctionFilterCondition(AuctionStatus status, BigDecimal startBid, LocalDateTime startAt,
+public record AuctionFilterCondition(List<AuctionStatus> status, BigDecimal startBid,
+                                     LocalDateTime startAt,
                                      LocalDateTime endAt, int pageNumber, int pageSize, Sort sort) {
 
 

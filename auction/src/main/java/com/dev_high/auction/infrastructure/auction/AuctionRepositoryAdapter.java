@@ -94,8 +94,8 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
   public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
     BooleanBuilder builder = new BooleanBuilder();
-    if (condition.status() != null) {
-      builder.and(qAuction.status.eq(condition.status()));
+    if (condition.status() != null && !condition.status().isEmpty()) {
+      builder.and(qAuction.status.in(condition.status()));
     }
 
     if (condition.startBid() != null) {
