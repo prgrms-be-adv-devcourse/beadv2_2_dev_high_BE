@@ -62,10 +62,10 @@ public class Settlement {
     @Column(name = "complete_yn", nullable = false, length = 1)
     private String completeYn ="N";
 
-    @Column(name = "retrial_cnt", nullable = false, length = 1)
-    private Long retrialCnt;
+    @Column(name = "try_cnt", nullable = false, length = 1)
+    private Long tryCnt;
 
-    public Settlement(String orderId, String sellerId, String buyerId, String auctionId, Long winningAmount, LocalDateTime dueDate, SettlementStatus status, Long retrialCnt) {
+    public Settlement(String orderId, String sellerId, String buyerId, String auctionId, Long winningAmount, LocalDateTime dueDate, SettlementStatus status, Long tryCnt) {
         this.orderId = orderId;
         this.sellerId = sellerId;
         this.buyerId = buyerId;
@@ -73,7 +73,7 @@ public class Settlement {
         this.winningAmount = winningAmount;
         this.status = status;
         this.dueDate = dueDate;
-        this.retrialCnt = retrialCnt;
+        this.tryCnt = tryCnt;
     }
 
     @PrePersist
@@ -94,17 +94,16 @@ public class Settlement {
             this.completeYn = "Y";
             this.completeDate = LocalDateTime.now();
         }
-        this.calculate();
+
+        this.ready(status ==  SettlementStatus.FAILED);
     }
 
-    public void retryCntUpdate() {
-        this.retrialCnt = this.retrialCnt + 1;
-    }
-
-    public void calculate() {
-        this.charge = (long) (winningAmount * chargeRatio);
-        this.finalAmount = winningAmount - charge;
-
+    public void ready(boolean isFirst) {
+        if (isFirst) {
+            this.charge = (long) (winningAmount * chargeRatio);
+            this.finalAmount = winningAmount - charge;
+        }
+        this.tryCnt = this.tryCnt + 1;
     }
 
     public static Settlement fromRequest(SettlementRegisterRequest request) {

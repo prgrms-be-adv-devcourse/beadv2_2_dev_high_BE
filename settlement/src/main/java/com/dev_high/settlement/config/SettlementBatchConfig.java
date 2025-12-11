@@ -1,7 +1,7 @@
 package com.dev_high.settlement.config;
 
+import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.settlement.config.dto.SettlementConfirmRequest;
-import com.dev_high.settlement.config.kafka.KafkaIssueProducer;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
@@ -41,11 +41,13 @@ import java.util.*;
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig extends DefaultBatchConfiguration {
+    private final RestTemplate restTemplate = new RestTemplate();
     private static final String SELLER_TOPIC = "settlement.confirm.seller";
-    private static final String BUYER_TOPIC  = "settlement.confirm.buyer";
-    private static final String ADMIN_TOPIC  = "settlement.confirm.admin";
+    private static final String BUYER_TOPIC = "settlement.confirm.buyer";
+    private static final String ADMIN_TOPIC = "settlement.confirm.admin";
+    private final String apiUrl = "http://localhost:8084/settlement/process";
 
-    private final KafkaIssueProducer publisher;
+    private final KafkaEventPublisher publisher;
     private final EntityManagerFactory entityManagerFactory;
     private final SettlementRepository settlementRepository;
     private final AbstractItemCountingItemStreamItemReader registerItemReader;
@@ -68,6 +70,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     /**
      * 2. 정산 처리 Job
+     *
      * Step 1: 예치금 서비스로 정산 요청
      * Step 2: 정산 상태 업데이트
      * Step 3: 정산 기록 저장
@@ -76,7 +79,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public Job processingJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new JobBuilder("processingJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-//                .start(sendRequestStep(jobRepository, transactionManager))
+//                .start(sendRequestStep(jobRepository, transactionManager)) // TODO API 요청 결과[status]에 따라 분기
                 .start(updateStatusStep(jobRepository, transactionManager))
                 .next(makeLogStep(jobRepository, transactionManager))
                 .build();
@@ -85,6 +88,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     /**
      * 3. 실패한 정산 재시도 Job
+     *
      * Step 1: 예치금 서비스로 정산 재시도 요청
      * Step 2: 정산 상태 업데이트
      * Step 3: 정산 기록 저장
@@ -93,12 +97,15 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public Job retryJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new JobBuilder("retryJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-//                .start(sendRetryStep(jobRepository, transactionManager))
+//                .start(sendRetryStep(jobRepository, transactionManager)) // TODO API 요청 결과[status]에 따라 분기
                 .start(updateRetryStatusStep(jobRepository, transactionManager))
                 .next(makeRetryLogStep(jobRepository, transactionManager))
                 .build();
     }
 
+    /**
+     * 4. 연속 실패한 정산 수동 처리 요청 Job[3회]
+     */
     @Bean
     public Job notificationJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new JobBuilder("notificationJob", jobRepository)
@@ -107,56 +114,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-    @Bean
-    public Step notificationStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("notificationStep", jobRepository)
-                .<Settlement, SettlementConfirmRequest>chunk(10, transactionManager)
-                .reader(notificationReader())
-                .processor(notificationProcessor())
-                .writer(notificationWriter())
-                .build();
-
-    }
-
-    @Bean
-    public ItemProcessor<Settlement, SettlementConfirmRequest> notificationProcessor() {
-        return SettlementConfirmRequest::fromSettlement;
-    }
-
-    @Bean
-    public ItemReader<Settlement> notificationReader() {
-        return new JpaPagingItemReaderBuilder<Settlement>()
-                .name("notificationReader")
-                .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.retrialCnt >= 3 AND s.status = 'FAILED'")
-                .pageSize(10)
-                .build();
-    }
-    @Bean
-    public ItemWriter<SettlementConfirmRequest> notificationWriter() {
-        return chunk ->  {
-
-            log.info("정산 확정 이벤트 발행 시작 - {}건", chunk.size());
-
-            chunk.forEach(request -> {
-                // 판매자
-                publisher.publish(
-                        SELLER_TOPIC,
-                        request.sellerId(),
-                        request
-                );
-
-//                // 관리자
-//                publisher.publish(
-//                        ADMIN_TOPIC,
-//                        request.getId(),
-//                        payload
-//                );
-            });
-
-            log.info("정산 확정 이벤트 발행 완료 - {}건 처리됨", chunk.size());
-        };
-    }
+// region 1. 정산 수집 및 등록 Job
 
     /**
      * 정산 수집 및 등록 Step
@@ -173,7 +131,6 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-// region 정산 수집 및 등록 Step reader writer processor
     @Bean
     public ItemProcessor<Settlement, Settlement> registerItemProcessor() {
         return item -> settlementRepository.existsByOrderId(item.getOrderId()) ? null : item;
@@ -186,10 +143,11 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .usePersist(true)
                 .build();
     }
-    // endregion 정산 수집 및 등록 Step reader writer processor
+// endregion 정산 수집 및 등록
 
+//region 2. 정산 Job Step
     /**
-     * 2. 정산 데이터
+     *
      * Step 1: 예치금 서비스로 계좌 정산 처리 요청
      */
     @Bean
@@ -202,7 +160,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-// region Step1. 정산 처리 요청 reader writer processor
+    // region Step1. 정산 처리 요청 reader writer listener processor
     @Bean
     @StepScope
     public ItemReader<Settlement> sendRequestReader() {
@@ -218,7 +176,6 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     @Bean
     public ItemWriter<Settlement> sendRequestWriter() {
         return new ItemWriter<>() {
-            private final RestTemplate restTemplate = new RestTemplate();
             private final String apiUrl = "http://localhost:8084/settlement/process";
 
             @Override
@@ -227,37 +184,14 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
                 // Step Context에서 처리된 Settlement ID 목록 가져오기
                 @SuppressWarnings("unchecked")
-                List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
-                        .get("settlementIds");
+                List<String> settlementIds = (List<String>) stepExecution.getExecutionContext().get("settlementIds");
 
-                if (settlementIds == null) settlementIds = new ArrayList<>();
-                List<Settlement> settlements = List.of(chunk.getItems().toArray(Settlement[]::new));
-                settlements.forEach(Settlement::calculate);
-                        List<String> ids = settlements.stream().map(Settlement::getId).toList();
-                try {
-                    ResponseEntity<Map> response = restTemplate.postForEntity(
-                            apiUrl,
-                            chunk.getItems().toArray(Settlement[]::new),
-                            Map.class
-                    );
+                if (settlementIds == null) settlementIds = new ArrayList<>(); // Step간 데이터 공유를 위한 설정을 id로
+                List<Settlement> settlements = List.of(chunk.getItems().toArray(Settlement[]::new)); // Context에 저장해 넘기고 얻어온다.
+                settlements.forEach(s -> s.ready(true)); // 처음일 경우 정산 요청 당시에 계산하고 보낸다
+                List<String> ids = settlements.stream().map(Settlement::getId).toList();
 
-                    if (response.getStatusCode().is2xxSuccessful()) {
-                        settlementIds.addAll(ids);
-                        log.info("정산 요청 성공 - Settlement ID: {}", ids);
-                    } else {
-                        log.error("정산 요청 실패 - Settlement ID: {}, Status: {}",
-                                ids, response.getStatusCode());
-                    }
-                } catch (Exception e) {
-                    settlements.forEach(settlement -> settlement.updateStatus(SettlementStatus.FAILED));
-                    settlementRepository.saveAll(settlements);
-                    log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
-                }
-
-                // Step Context에 저장 (Job Context로 승격될 예정)
-                stepExecution.getExecutionContext().put("settlementIds", settlementIds);
-
-                log.info("Step 1 완료 - 처리된 Settlement 개수: {}", settlementIds.size());
+                processSettleRequest(settlements, settlementIds, ids, stepExecution);
             }
         };
     }
@@ -271,7 +205,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         listener.setKeys(new String[]{"settlementIds"});
         return listener;
     }
-// endregion 정산 처리 요청 reader writer processor
+    // endregion 정산 처리 요청 reader writer listener processor
 
     /**
      * Step 2: 정산 완료를 확인하고 정산 상태 변경
@@ -287,7 +221,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-// region Step2. 정산 상태 변경 reader writer processor
+    // region Step2. 정산 상태 변경 reader writer listener processor
 
     @Bean
 //    @StepScope
@@ -325,25 +259,9 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
             StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
 
             // Step Context에서 업데이트된 Settlement ID 목록 가져오기
-            @SuppressWarnings("unchecked")
-            List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
-                    .get("settlementIds");
+            List<String> settlementIds = (List<String>) stepExecution.getExecutionContext().get("settlementIds");
 
-            if (settlementIds == null) {
-                settlementIds = new ArrayList<>();
-            }
-
-            // 정산 완료 처리
-            settlement.updateStatus(SettlementStatus.COMPLETED);
-            settlementIds.add(settlement.getId());
-
-            // Step Context에 저장
-            stepExecution.getExecutionContext().put("settlementIds", settlementIds);
-
-            log.info("정산 상태 업데이트 - Settlement ID: {}, Status: {}",
-                    settlement.getId(), settlement.getStatus());
-
-            return settlement;
+            return updateStatus(settlement, settlementIds, stepExecution);
         };
     }
 
@@ -361,7 +279,8 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         listener.setKeys(new String[]{"settlementIds"});
         return listener;
     }
-// endregion Step2. 정산 상태 변경 reader writer processor
+    // endregion Step2. 정산 상태 변경 reader writer listener processor
+
     /**
      * Step 3: 정산 기록 테이블에 INSERT
      */
@@ -374,20 +293,11 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-// region Step 3: 정산 기록 테이블에 INSERT
+    // region Step 3: 정산 기록 테이블에 INSERT reader writer listener processor
     @Bean
     @StepScope
     public ItemReader<SettlementHistory> makeLogReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
-        if (updatedIds == null || updatedIds.isEmpty()) {
-            log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
-            return () -> null;
-        }
-
-        log.info("Step 3: {} 개의 Settlement 로그 생성 시작", updatedIds.size());
-        List<Settlement> settlements = settlementRepository.findAllByIdIn(updatedIds);
-        Iterator<SettlementHistory> iterator = settlements.stream().map(SettlementHistory::fromSettlement).iterator();
-
-        return () -> iterator.hasNext() ? iterator.next() : null;
+        return readLogTargets(updatedIds);
     }
 
     @Bean
@@ -400,7 +310,9 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     // endregion Step 3: 정산 기록 테이블에 INSERT
 
+//endregion 2. 정산 처리 Job
 
+//region 3. 실패한 정산 재시도 Job
     /**
      * Step 1: 예치금 서비스로 계좌 정산 처리 요청
      */
@@ -413,7 +325,8 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .listener(sendRetryPromotionListener())
                 .build();
     }
-// region Step1. 정산 처리 요청 reader writer processor
+
+    // region Step1. 정산 처리 요청 reader writer processor
     @Bean
     @StepScope
     public ItemReader<Settlement> sendRetryReader() {
@@ -428,51 +341,20 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     @Bean
     public ItemWriter<Settlement> sendRetryWriter() {
-        return new ItemWriter<>() {
-            private final RestTemplate restTemplate = new RestTemplate();
-            private final String apiUrl = "http://localhost:8084/settlement/process";
+        return chunk -> {
+            StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
 
-            @Override
-            public void write(Chunk<? extends Settlement> chunk) {
-                StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
+            // Step Context에서 처리된 Settlement ID 목록 가져오기
+            @SuppressWarnings("unchecked")
+            List<String> settlementIds = (List<String>) stepExecution.getExecutionContext().get("settlementIds");
 
-                // Step Context에서 처리된 Settlement ID 목록 가져오기
-                @SuppressWarnings("unchecked")
-                List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
-                        .get("settlementIds");
+            if (settlementIds == null) settlementIds = new ArrayList<>();
 
-                if (settlementIds == null) settlementIds = new ArrayList<>();
-                List<Settlement> settlements = List.of(chunk.getItems().toArray(Settlement[]::new));
-                settlements.forEach(Settlement::calculate);
-                List<String> ids = settlements.stream().map(Settlement::getId).toList();
-                try {
-                    ResponseEntity<Map> response = restTemplate.postForEntity(
-                            apiUrl,
-                            chunk.getItems().toArray(Settlement[]::new),
-                            Map.class
-                    );
+            List<Settlement> settlements = List.of(chunk.getItems().toArray(Settlement[]::new));
+            settlements.forEach(s -> s.ready(false));
+            List<String> ids = settlements.stream().map(Settlement::getId).toList();
 
-                    if (response.getStatusCode().is2xxSuccessful()) {
-                        settlementIds.addAll(ids);
-                        log.info("정산 요청 성공 - Settlement ID: {}", ids);
-                    } else {
-                        log.error("정산 요청 실패 - Settlement ID: {}, Status: {}",
-                                ids, response.getStatusCode());
-                    }
-                } catch (Exception e) {
-                    settlements.forEach(settlement -> {
-                        settlement.retryCntUpdate();
-                        settlement.updateStatus(SettlementStatus.FAILED);
-                    });
-                    settlementRepository.saveAll(settlements);
-                    log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
-                }
-
-                // Step Context에 저장 (Job Context로 승격될 예정)
-                stepExecution.getExecutionContext().put("settlementIds", settlementIds);
-
-                log.info("Step 1 완료 - 처리된 Settlement 개수: {}", settlementIds.size());
-            }
+            processSettleRequest(settlements, settlementIds, ids, stepExecution);
         };
     }
 
@@ -485,7 +367,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         listener.setKeys(new String[]{"settlementIds"});
         return listener;
     }
-//endregion
+    //endregion
 
     /**
      * Step 2: 정산 완료를 확인하고 정산 상태 변경
@@ -500,7 +382,8 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .listener(updateRetryStatusPromotionListener())
                 .build();
     }
-//region Step 2: 정산 완료를 확인하고 정산 상태 변경
+
+    //region Step 2: 정산 완료를 확인하고 정산 상태 변경 reader writer listener processor
     @Bean
 //    @StepScope
     public ItemReader<Settlement> updateRetryStatusReader(
@@ -538,24 +421,9 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
             // Step Context에서 업데이트된 Settlement ID 목록 가져오기
             @SuppressWarnings("unchecked")
-            List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
-                    .get("settlementIds");
+            List<String> settlementIds = (List<String>) stepExecution.getExecutionContext().get("settlementIds");
 
-            if (settlementIds == null) {
-                settlementIds = new ArrayList<>();
-            }
-
-            // 정산 완료 처리
-            settlement.updateStatus(SettlementStatus.COMPLETED);
-            settlementIds.add(settlement.getId());
-
-            // Step Context에 저장
-            stepExecution.getExecutionContext().put("settlementIds", settlementIds);
-
-            log.info("정산 상태 업데이트 - Settlement ID: {}, Status: {}",
-                    settlement.getId(), settlement.getStatus());
-
-            return settlement;
+            return updateStatus(settlement, settlementIds, stepExecution);
         };
     }
 
@@ -573,7 +441,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         listener.setKeys(new String[]{"settlementIds"});
         return listener;
     }
-//endregion Step 2: 정산 완료를 확인하고 정산 상태 변경
+    //endregion Step 2: 정산 완료를 확인하고 정산 상태 변경
 
     /**
      * Step 3: 정산 기록 테이블에 INSERT
@@ -587,11 +455,127 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .build();
     }
 
-//region Step 3: 정산 기록 테이블에 INSERT
+    //region Step 3: 정산 기록 테이블에 INSERT reader writer listener processor
 
     @Bean
     @StepScope
     public ItemReader<SettlementHistory> makeRetryLogReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
+        return readLogTargets(updatedIds);
+    }
+
+    @Bean
+    public JpaItemWriter<SettlementHistory> makeRetryLogWriter() {
+        return new JpaItemWriterBuilder<SettlementHistory>()
+                .entityManagerFactory(entityManagerFactory)
+                .usePersist(true)
+                .build();
+    }
+    //endregion Step 3: 정산 기록 테이블에 INSERT  reader writer listener processor
+
+//endregion 3. 실패한 정산 재시도 Job
+
+//region 4. notificationStep
+    @Bean
+    public Step notificationStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("notificationStep", jobRepository)
+                .<Settlement, SettlementConfirmRequest>chunk(10, transactionManager)
+                .reader(notificationReader())
+                .processor(notificationProcessor())
+                .writer(sendNotifyWriter())
+                .build();
+
+    }
+
+    @Bean
+    public ItemReader<Settlement> notificationReader() {
+        return new JpaPagingItemReaderBuilder<Settlement>()
+                .name("notificationReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("SELECT s FROM Settlement s WHERE s.tryCnt >= 3 AND s.status = 'FAILED'")
+                .pageSize(10)
+                .build();
+    }
+
+    @Bean
+    public ItemProcessor<Settlement, SettlementConfirmRequest> notificationProcessor() {
+        return s -> {
+            s.setStatus(SettlementStatus.NOTIFIED);
+            return SettlementConfirmRequest.fromSettlement(s);
+        };
+    }
+
+    @Bean
+    public ItemWriter<SettlementConfirmRequest> sendNotifyWriter() {
+        return chunk -> {
+
+            log.info("정산 확정 이벤트 발행 시작 - {}건", chunk.size());
+
+            chunk.forEach(request -> {
+                // 판매자
+                publisher.publish(SELLER_TOPIC, request);
+
+//                // 관리자
+//                publisher.publish(
+//                        ADMIN_TOPIC,
+//                        request.getId(),
+//                        payload
+//                );
+            });
+
+            log.info("정산 확정 이벤트 발행 완료 - {}건 처리됨", chunk.size());
+        };
+    }
+//endregion
+
+    /**
+     * 정산 처리 요청(재요청 포함)하는 메소드 extracted - try 횟수
+     * @param settlements
+     * @param settlementIds
+     * @param ids
+     * @param stepExecution
+     */
+    private void processSettleRequest(List<Settlement> settlements, List<String> settlementIds, List<String> ids, StepExecution stepExecution) {
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, settlements, Map.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                settlementIds.addAll(ids);
+                log.info("정산 요청 성공 - Settlement ID: {}", ids);
+            } else {
+                settlements.forEach(settlement -> settlement.updateStatus(SettlementStatus.FAILED));
+                settlementRepository.saveAll(settlements);
+                log.error("정산 요청 실패 - Settlement ID: {}, Status: {}", ids, response.getStatusCode());
+            }
+        } catch (Exception e) {
+            settlements.forEach(settlement -> settlement.updateStatus(SettlementStatus.FAILED));
+            settlementRepository.saveAll(settlements);
+            log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
+        }
+
+        // Step Context에 저장 (Job Context로 승격될 예정)
+        stepExecution.getExecutionContext().put("settlementIds", settlementIds);
+
+        log.info("Step 1 완료 - 처리된 Settlement 개수: {}", settlementIds.size());
+    }
+
+    private static Settlement updateStatus(Settlement settlement, List<String> settlementIds, StepExecution stepExecution) {
+        if (settlementIds == null) {
+            settlementIds = new ArrayList<>();
+        }
+
+        // 정산 완료 처리
+        settlement.updateStatus(SettlementStatus.COMPLETED);
+        settlementIds.add(settlement.getId());
+
+        // Step Context에 저장
+        stepExecution.getExecutionContext().put("settlementIds", settlementIds);
+
+        log.info("정산 상태 업데이트 - Settlement ID: {}, Status: {}", settlement.getId(), settlement.getStatus());
+
+        return settlement;
+    }
+
+    private ItemReader<SettlementHistory> readLogTargets(List<String> updatedIds) {
         if (updatedIds == null || updatedIds.isEmpty()) {
             log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
             return () -> null;
@@ -604,12 +588,4 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         return () -> iterator.hasNext() ? iterator.next() : null;
     }
 
-    @Bean
-    public JpaItemWriter<SettlementHistory> makeRetryLogWriter() {
-        return new JpaItemWriterBuilder<SettlementHistory>()
-                .entityManagerFactory(entityManagerFactory)
-                .usePersist(true)
-                .build();
-    }
-//endregion Step 3: 정산 기록 테이블에 INSERT
 }

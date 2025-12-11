@@ -19,10 +19,10 @@ import java.util.List;
 public class OrderController {
     private final OrderService orderService;
 
-    @GetMapping("/all")
-    public ApiResponseDto<List<OrderResponse>> getAllOrders() {
-        return orderService.getAllOrders();
-    }
+//    @GetMapping("/all")
+//    public ApiResponseDto<List<OrderResponse>> getAllOrders() {
+//        return orderService.getAllOrders();
+//    }
 
     @GetMapping("/sold")
     public ApiResponseDto<List<OrderResponse>> soldList(@RequestParam(name = "sellerId") String sellerId) {

@@ -17,7 +17,7 @@ public class SettlementController {
     private final SettlementService settlementService;
 
     @GetMapping("/history")
-    public ApiResponseDto<List<SettlementResponse>> findAllHistory(@RequestParam String  sellerId) {
+    public ApiResponseDto<List<SettlementResponse>> findAllHistory(@RequestParam String sellerId) {
         return settlementService.findBySellerId(sellerId);
     }
 

@@ -72,7 +72,7 @@ public class SettlementScheduler {
      * 매일 5시 5분 5초 3회 이상 실패 정산 알림 발행 JOB
      */
 //    @Scheduled(cron = "5 5 5 * * *")
-    @Scheduled(cron = "1/5 1/5 * * * *")
+    @Scheduled(cron = "1/5 * * * * *")
     public void runNotificationJobJob() {
         try {
             runJob(notificationJob, "notificationJob");
