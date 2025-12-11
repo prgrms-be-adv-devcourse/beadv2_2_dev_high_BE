@@ -24,7 +24,7 @@ public class DepositHistoryController {
         return historyService.createHistory(request.toCommand());
     }
 
-    @Operation(summary = "예치금 계좌 생성", description = "예치금 계좌를 생성하고 저장")
+    @Operation(summary = "사용자 ID별 예치금 계좌 조회", description = "예치금 계좌를 사용자 ID로 조회")
     @GetMapping("{userId}")
     public Page<DepositHistoryInfo> findByUserId(@PathVariable String userId, Pageable pageable) {
         return historyService.findHistoriesByUserId(userId, pageable);
