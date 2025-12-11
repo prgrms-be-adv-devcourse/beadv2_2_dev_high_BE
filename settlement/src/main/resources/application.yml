@@ -38,9 +38,21 @@ spring:
         size: 5
 
   kafka:
-    bootstrap-servers: 3.39.162.115:30092
-    username: kafka
-    password: 1234
+    bootstrap-servers: ${KAFKA_URI}
+    properties:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: >
+        org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="kafka"
+        password="1234";
+    producer:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+    consumer:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+      group-id: ${SETTLEMENT_SERVICE}
 
 server:
   port: ${SERVER_PORT}
