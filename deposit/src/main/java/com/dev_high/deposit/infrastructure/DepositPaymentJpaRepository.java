@@ -1,7 +1,12 @@
 package com.dev_high.deposit.infrastructure;
 
 import com.dev_high.deposit.domain.DepositPayment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DepositPaymentJpaRepository extends JpaRepository<DepositPayment, String> {
+    Page<DepositPayment> findByUserId(String userId, Pageable pageable);
+
+    boolean existsByOrderId(String orderId);
 }

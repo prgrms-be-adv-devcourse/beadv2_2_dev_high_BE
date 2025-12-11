@@ -34,13 +34,16 @@ public class DepositPayment {
     private String userId;
 
     @Schema(description = "결제키")
-    @Column(name = "payment_key", nullable = false, length = 200)
+    @Column(name = "payment_key", length = 200)
     private String paymentKey;
 
     @Schema(description = "결제 수단")
-    @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)
-    private DepositPaymentMethod method;
+    private String method;
+
+    @Schema(description = "금액")
+    @Column(name = "amount", nullable = false)
+    private long amount;
 
     @Schema(description = "요청일시")
     @Column(name = "requested_at")
@@ -76,11 +79,12 @@ public class DepositPayment {
     private String updatedBy;
 
     @Builder
-    public DepositPayment(String orderId, String userId, String paymentKey, DepositPaymentMethod method, LocalDateTime requestedAt, DepositPaymentStatus status, String approvalNum, LocalDateTime approvedAt) {
+    public DepositPayment(String orderId, String userId, String paymentKey, String method, long amount, LocalDateTime requestedAt, DepositPaymentStatus status, String approvalNum, LocalDateTime approvedAt) {
         this.orderId = orderId;
         this.userId = userId;
         this.paymentKey = paymentKey;
         this.method = method;
+        this.amount = amount;
         this.requestedAt = requestedAt;
         this.status = status;
         this.approvalNum = approvalNum;
@@ -102,13 +106,31 @@ public class DepositPayment {
         this.updatedBy = id;
     }
 
-    public static DepositPayment create(String orderId, String userId, String paymentKey) {
+    public static DepositPayment create(String orderId, String userId, long amount) {
         return DepositPayment.builder()
                 .orderId(orderId)
                 .userId(userId)
-                .paymentKey(paymentKey)
-                .method(DepositPaymentMethod.CARD) // default : CARD 비즈니스 로직 상 추후 수정
+                .paymentKey("")
+                .method("")
+                .amount(amount)
                 .status(DepositPaymentStatus.READY) // default : READY
                 .build();
+    }
+
+    public void confirmPayment(String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
+        this.status = DepositPaymentStatus.CONFIRMED;
+        this.method = method;
+        this.approvedAt = approvedAt;
+        this.requestedAt = requestedAt;
+    }
+
+    public void failPayment() {
+        if (this.status != DepositPaymentStatus.IN_PROGRESS) {
+            throw new IllegalStateException(
+                    String.format("현재 결제 상태 (%s)에서는 실패 처리할 수 없습니다.", this.status.name())
+            );
+        }
+
+        this.status = DepositPaymentStatus.FAILED;
     }
 }
