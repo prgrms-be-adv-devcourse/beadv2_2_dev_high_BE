@@ -1,5 +1,7 @@
 package com.dev_high.user.user.application;
 
+import com.dev_high.common.context.UserContext;
+import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.user.application.dto.CreateUserCommand;
@@ -25,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SellerService sellerService;
+    private final AuthService authService;
     private final UserDomainService userDomainService;
 
     @Transactional
@@ -75,6 +78,14 @@ public class UserService {
             sellerService.deleteSeller(SellerStatus.WITHDRAWN);
         }
         user.deleteUser();
+        return ApiResponseDto.success(null);
+    }
+
+
+    @Transactional
+    public ApiResponseDto<Void> logout() {
+        String userId = UserContext.get().userId();
+        authService.logout(userId);
         return ApiResponseDto.success(null);
     }
 }
