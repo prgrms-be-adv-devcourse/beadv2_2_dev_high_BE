@@ -7,6 +7,7 @@ public interface SettlementRepository {
     Optional<Settlement> findById(String id);
     List<Settlement> findAllByOrderId(String sellerId);
     List<Settlement> findAllBySellerId(String sellerId);
-    boolean existsSettlementsByOrderId(String orderId);
+    boolean existsByOrderId(String orderId);
     Settlement save(Settlement settlement);
+    List<Settlement> findAllByIdIn(List<String> ids);
 }

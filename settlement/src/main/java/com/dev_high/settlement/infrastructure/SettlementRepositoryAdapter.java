@@ -29,12 +29,17 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
-    public boolean existsSettlementsByOrderId(String orderId) {
-        return settlementRepository.existsSettlementsByOrderId(orderId);
+    public boolean existsByOrderId(String orderId) {
+        return settlementRepository.existsByOrderId(orderId);
     }
 
     @Override
     public Settlement save(Settlement settlement) {
         return settlementRepository.save(settlement);
+    }
+
+    @Override
+    public List<Settlement> findAllByIdIn(List<String> ids) {
+        return settlementRepository.findAllByIdIn(ids);
     }
 }

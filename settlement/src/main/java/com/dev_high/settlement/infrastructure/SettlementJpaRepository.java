@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface SettlementJpaRepository extends JpaRepository<Settlement, String> {
     List<Settlement> findAllBySellerId(String sellerId);
-    boolean existsSettlementsByOrderId(String orderId);
+    boolean existsByOrderId(String orderId);
     List<Settlement> findAllByOrderId(String orderId);
+    List<Settlement> findAllByIdIn(List<String> ids);
 }

@@ -4,7 +4,6 @@ import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.history.SettlementHistory;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.*;
@@ -32,13 +31,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig extends DefaultBatchConfiguration {
-    @PersistenceContext private final EntityManagerFactory entityManagerFactory;
+    private final EntityManagerFactory entityManagerFactory;
     private final SettlementRepository settlementRepository;
     private final RestTemplate restTemplate = new RestTemplate();
     private final AbstractItemCountingItemStreamItemReader registerItemReader;
@@ -70,9 +70,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 
     @Bean
     public ItemProcessor<Settlement, Settlement> registerItemProcessor() {
-        return item
-                -> settlementRepository.existsSettlementsByOrderId(item.getOrderId()) ? null
-                : item;
+        return item ->  settlementRepository.existsByOrderId(item.getOrderId()) ? null : item;
     }
 
     @Bean
@@ -118,8 +116,8 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
         return new JpaPagingItemReaderBuilder<Settlement>()
                 .name("sendRequestReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'WAITING'")
-                .parameterValues(Map.of("targetDate", LocalDate.now()))
+                .queryString("SELECT s FROM Settlement s WHERE s.dueDate between :start and :end AND s.status = 'WAITING'")
+                .parameterValues(Map.of("start", LocalDate.now().atStartOfDay(), "end", LocalDate.now().atTime(LocalTime.MAX)))
                 .pageSize(10)
                 .build();
     }
@@ -139,35 +137,24 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 List<String> settlementIds = (List<String>) stepExecution.getExecutionContext()
                         .get("settlementIds");
 
-                if (settlementIds == null) {
-                    settlementIds = new ArrayList<>();
-                }
+                if (settlementIds == null) settlementIds = new ArrayList<>();
+                List<String> ids = chunk.getItems().stream().map(Settlement::getId).toList();
+                try {
+                    ResponseEntity<Map> response = restTemplate.postForEntity(
+                            apiUrl,
+                            chunk.getItems().toArray(Settlement[]::new),
+                            Map.class
+                    );
 
-                for (Settlement settlement : chunk) {
-                    try {
-                        Map<String, Object> request = Map.of(
-                                "settlementId", settlement.getId(),
-                                "orderId", settlement.getOrderId(),
-                                "sellerId", settlement.getSellerId(),
-                                "amount", settlement.getWinningAmount()
-                        );
-
-                        ResponseEntity<Map> response = restTemplate.postForEntity(
-                                apiUrl,
-                                request,
-                                Map.class
-                        );
-
-                        if (response.getStatusCode().is2xxSuccessful()) {
-                            settlementIds.add(settlement.getId());
-                            log.info("정산 요청 성공 - Settlement ID: {}", settlement.getId());
-                        } else {
-                            log.error("정산 요청 실패 - Settlement ID: {}, Status: {}",
-                                    settlement.getId(), response.getStatusCode());
-                        }
-                    } catch (Exception e) {
-                        log.error("정산 요청 중 오류 발생 - Settlement ID: {}", settlement.getId(), e);
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        settlementIds.addAll(ids);
+                        log.info("정산 요청 성공 - Settlement ID: {}", ids);
+                    } else {
+                        log.error("정산 요청 실패 - Settlement ID: {}, Status: {}",
+                                ids, response.getStatusCode());
                     }
+                } catch (Exception e) {
+                    log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
                 }
 
                 // Step Context에 저장 (Job Context로 승격될 예정)
@@ -195,7 +182,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public Step updateStatusStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("updateStatusStep", jobRepository)
                 .<Settlement, Settlement>chunk(10, transactionManager)
-                .reader(updateStatusReader(null))
+                .reader(updateStatusReader())//(null))
                 .processor(updateStatusProcessor())
                 .writer(updateStatusWriter())
                 .listener(updateStatusPromotionListener())
@@ -203,13 +190,15 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     }
 
     @Bean
-    @StepScope
-    public ItemReader<Settlement> updateStatusReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
+//    @StepScope
+    public ItemReader<Settlement> updateStatusReader(
+//            @Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds
+    ) {
 
-        if (updatedIds == null || updatedIds.isEmpty()) {
-            log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
-            return () -> null;
-        }
+//        if (updatedIds == null || updatedIds.isEmpty()) {
+//            log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
+//            return () -> null;
+//        }
 
 //        log.info("Step 2: {} 개의 Settlement 상태 업데이트 시작", processedIds.size());
 //
@@ -222,10 +211,10 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
 //                .build();
 
         return new JpaPagingItemReaderBuilder<Settlement>()
-                .name("sendRequestReader")
+                .name("updateStatusReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.dueDate = :targetDate AND s.status = 'WAITING'")
-                .parameterValues(Map.of("targetDate", LocalDate.now()))
+                .queryString("SELECT s FROM Settlement s WHERE s.dueDate between :start and :end AND s.status = 'WAITING'")
+                .parameterValues(Map.of("start", LocalDate.now().atStartOfDay(), "end", LocalDate.now().atTime(LocalTime.MAX)))
                 .pageSize(10)
                 .build();
     }
@@ -262,7 +251,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     public JpaItemWriter<Settlement> updateStatusWriter() {
         return new JpaItemWriterBuilder<Settlement>()
                 .entityManagerFactory(entityManagerFactory)
-                .usePersist(false)  // merge 사용 (업데이트)
+                .usePersist(false)
                 .build();
     }
 
@@ -279,35 +268,25 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
     @Bean
     public Step makeLogStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("makeLogStep", jobRepository)
-                .<Settlement, SettlementHistory>chunk(10, transactionManager)
+                .<SettlementHistory, SettlementHistory>chunk(10, transactionManager)
                 .reader(makeLogReader(null))
-                .processor(makeLogProcessor())
                 .writer(makeLogWriter())
                 .build();
     }
 
     @Bean
     @StepScope
-    public ItemReader<Settlement> makeLogReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
+    public ItemReader<SettlementHistory> makeLogReader(@Value("#{jobExecutionContext['settlementIds']}") List<String> updatedIds) {
         if (updatedIds == null || updatedIds.isEmpty()) {
             log.warn("Step 3: 기록할 Settlement ID가 없습니다.");
             return () -> null;
         }
 
         log.info("Step 3: {} 개의 Settlement 로그 생성 시작", updatedIds.size());
+        List<Settlement> settlements = settlementRepository.findAllByIdIn(updatedIds);
+        Iterator<SettlementHistory> iterator = settlements.stream().map(SettlementHistory::fromSettlement).iterator();
 
-        return new JpaPagingItemReaderBuilder<Settlement>()
-                .name("makeLogReader")
-                .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT s FROM Settlement s WHERE s.id IN :ids")
-                .parameterValues(Map.of("ids", updatedIds))
-                .pageSize(10)
-                .build();
-    }
-
-    @Bean
-    public ItemProcessor<Settlement, SettlementHistory> makeLogProcessor() {
-        return SettlementHistory::fromSettlement;
+        return () -> iterator.hasNext() ? iterator.next() : null;
     }
 
     @Bean

@@ -83,14 +83,12 @@ public class Settlement {
         this.updateDate = LocalDateTime.now();
     }
 
-    public Settlement makeComplete() {
+    public void makeComplete() {
         this.completeYn = "Y";
         this.charge = (long) (winningAmount * chargeRatio);
         this.finalAmount = winningAmount - charge;
         this.status = SettlementStatus.COMPLETED;
         this.completeDate = LocalDateTime.now();
-
-        return this;
     }
 
     public static Settlement fromRequest(SettlementRegisterRequest request) {
