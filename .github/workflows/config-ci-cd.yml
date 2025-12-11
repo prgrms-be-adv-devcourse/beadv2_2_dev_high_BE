@@ -116,4 +116,4 @@ jobs:
         run: |
           kubectl apply -f config/k8s --namespace ${{ env.NAMESPACE }}
           kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }} --env="VERSION=$IMAGE_TAG"
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
