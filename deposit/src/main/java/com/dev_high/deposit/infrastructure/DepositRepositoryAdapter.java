@@ -21,4 +21,9 @@ public class DepositRepositoryAdapter implements DepositRepository {
     public Deposit save(Deposit deposit) {
         return repository.save(deposit);
     }
+
+    @Override
+    public Optional<Deposit> findByUserIdWithLock(String userId) {
+        return repository.findByUserIdWithLock(userId);
+    }
 }
