@@ -1,4 +1,4 @@
-package com.dev_high.settlement.config.register;
+package com.dev_high.settlement.config.reader;
 
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;

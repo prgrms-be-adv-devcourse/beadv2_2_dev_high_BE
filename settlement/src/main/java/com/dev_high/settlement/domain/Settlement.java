@@ -85,10 +85,15 @@ public class Settlement {
 
     public void makeComplete() {
         this.completeYn = "Y";
-        this.charge = (long) (winningAmount * chargeRatio);
-        this.finalAmount = winningAmount - charge;
         this.status = SettlementStatus.COMPLETED;
         this.completeDate = LocalDateTime.now();
+        this.calculate();
+    }
+
+    public void calculate() {
+        this.charge = (long) (winningAmount * chargeRatio);
+        this.finalAmount = winningAmount - charge;
+
     }
 
     public static Settlement fromRequest(SettlementRegisterRequest request) {
