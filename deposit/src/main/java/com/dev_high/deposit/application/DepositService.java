@@ -37,6 +37,18 @@ public class DepositService {
     }
 
     /*
+     * 사용자 ID로 예치금 계좌를 조회
+     * @param userId 예치금 계정 ID (사용자 ID와 동일)
+     * @return 조회된 Deposit 엔티티
+     * */
+    @Transactional(readOnly = true)
+    public DepositInfo findDepositAccountById(String userId) {
+        Deposit deposit = depositRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("예치금 계좌를 찾을 수 없습니다: " + userId));
+        return DepositInfo.from(deposit);
+    }
+
+    /*
      * 사용자의 예치금 잔액을 업데이트하고 새로운 잔액을 반환합니다.
      * 이 메서드는 동시성 문제를 방지하기 위해 비관적 락(쓰기 락)을 사용합니다.
      * @param userId 사용자 ID

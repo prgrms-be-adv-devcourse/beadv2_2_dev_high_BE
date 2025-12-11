@@ -22,4 +22,10 @@ public class DepositController {
             @RequestBody @Validated DepositCreateRequest request) {
         return depositService.createDepositAccount(request.toCommand());
     }
+
+    @Operation(summary = "예치금 계좌 ID별 조회", description = "예치금 계좌ID로 예치금 계좌를 조회")
+    @GetMapping("/{userId}")
+    public DepositInfo findDepositAccountById(@PathVariable String userId) {
+        return depositService.findDepositAccountById(userId);
+    }
 }
