@@ -34,7 +34,7 @@ public class SettlementHistory {
     private String message;
 
     @Column(name = "created_by", length = 50)
-    private String createdBy;
+    private String createdBy = "SYSTEM";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
