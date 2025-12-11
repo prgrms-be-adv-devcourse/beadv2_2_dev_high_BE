@@ -23,8 +23,8 @@ public class SettlementScheduler {
 
     private final Job processingJob;
 
-    private final Job retryJob;
-
+//    private final Job retryJob;
+//
 //    private final Job notificationJob;
 
     /**
@@ -52,19 +52,19 @@ public class SettlementScheduler {
     }
 
 
-    /**
-     * 매일 4시 4분 4초 정산 재시도 JOB
-     */
-    @Scheduled(cron = "4 4 4 * * *")
-    public void runRetryJob() {
-        try {
-            runJob(retryJob, "retryJob");
-        } catch (JobExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
+//    /**
+//     * 매일 4시 4분 4초 정산 재시도 JOB
+//     */
+//    @Scheduled(cron = "4 4 4 * * *")
+//    public void runRetryJob() {
+//        try {
+//            runJob(retryJob, "retryJob");
+//        } catch (JobExecutionException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
+//
 //    /**
 //     * 매일 5시 5분 5초 3회 이상 실패 정산 알림 발행 JOB
 //     */
