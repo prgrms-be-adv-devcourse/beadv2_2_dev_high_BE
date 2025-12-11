@@ -78,7 +78,8 @@ class BidConcurrentTest {
         BigDecimal.valueOf(5000),
         LocalDateTime.now(),
         LocalDateTime.now().plusMinutes(10),
-        "TEST"
+        "TEST",
+        "PR"
     );
     try {
       Field idField = Auction.class.getDeclaredField("id");
@@ -89,7 +90,7 @@ class BidConcurrentTest {
     }
 
     // --- AuctionLiveState 초기값 ---
-    AuctionLiveState initialState = new AuctionLiveState(auction, auction.getStartBid());
+    AuctionLiveState initialState = new AuctionLiveState(auction);
     liveStates.put(auctionId, initialState);
 
     // --- Mock Repository 설정 ---
@@ -130,7 +131,7 @@ class BidConcurrentTest {
             new Auction(BigDecimal.valueOf(5000),
                 LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(10),
-                "TEST")
+                "TEST", "PR")
         ));
   }
 

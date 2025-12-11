@@ -40,7 +40,7 @@ public class GatewayConfig {
 
         // Product Service
         .route("product-service", r -> r
-            .path("/api/v1/products/**")
+            .path("/api/v1/products/**", "/api/v1/categories/**")
             .uri("lb://PRODUCT-SERVICE"))
 
         // Search Service
@@ -57,6 +57,11 @@ public class GatewayConfig {
         .route("user-service", r -> r
             .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**")
             .uri("lb://USER-SERVICE"))
+
+        // File Service
+        .route("file-service", r -> r
+            .path("/api/v1/files/**")
+            .uri("lb://FILE-SERVICE"))
 
         .build();
   }
@@ -75,7 +80,9 @@ public class GatewayConfig {
         "product-service", "lb://PRODUCT-SERVICE",
         "search-service", "lb://SEARCH-SERVICE",
         "settlement-service", "lb://SETTLEMENT-SERVICE",
-        "user-service", "lb://USER-SERVICE"
+        "user-service", "lb://USER-SERVICE",
+        "file-service", "lb://FILE-SERVICE"
+
     );
 
     services.forEach((name, uri) -> {
