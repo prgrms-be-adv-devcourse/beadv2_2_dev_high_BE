@@ -7,8 +7,4 @@ public class IncorrectPasswordException extends CustomException {
     public IncorrectPasswordException() {
         super(HttpStatus.UNAUTHORIZED, "잘못된 비밀번호입니다.");
     }
-
-    public IncorrectPasswordException(String errorCode, String message) {
-        super(HttpStatus.UNAUTHORIZED, message, errorCode);
-    }
 }

@@ -10,9 +10,6 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,7 +24,6 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(title);
         Context context = new Context();
-        context.setVariable("email", URLEncoder.encode(to, StandardCharsets.UTF_8));
         context.setVariable("code", code);
         String html = templateEngine.process("email-template", context);
         helper.setText(html, true);

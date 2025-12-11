@@ -26,6 +26,8 @@ public class UserContextInterceptor implements HandlerInterceptor {
     String role = request.getHeader("X-Role");
 
     log.info("uesrId >>> {}", userId);
+    log.info("role >>> {}", role);
+
     String authHeader = request.getHeader("Authorization");
     String token = null;
     if (authHeader != null) {

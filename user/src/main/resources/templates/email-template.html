@@ -34,28 +34,20 @@
 
         .code-wrapper {
             text-align: center;
-            margin: 20px 0;
+            margin: 25px 0;
         }
 
-        .code-button {
+        .code-box {
             display: inline-block;
-            padding: 15px 25px;
-            font-size: 24px;
+            padding: 18px 28px;
+            font-size: 28px;
             font-weight: bold;
             color: #007BFF;
-            background-color: transparent;
+            background-color: #f0f7ff;
             border: 2px solid #007BFF;
-            border-radius: 6px;
-            text-decoration: none;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .code-button:hover {
-            background-color: #007BFF;
-            color: #ffffff;
-            text-decoration: none;
+            border-radius: 8px;
+            letter-spacing: 4px;
+            text-align: center;
         }
 
         .footer {
@@ -75,9 +67,9 @@
             p {
                 font-size: 14px;
             }
-            .code-button {
-                font-size: 20px;
-                padding: 12px 20px;
+            .code-box {
+                font-size: 22px;
+                padding: 14px 20px;
             }
         }
     </style>
@@ -86,12 +78,11 @@
 <div class="email-container">
     <h1>More 이메일 인증 코드</h1>
     <p>안녕하세요,</p>
-    <p>아래 인증 코드를 클릭하여 이메일 인증을 완료해주세요.</p>
+    <p>아래 인증 코드를 확인해주세요.</p>
     <div class="code-wrapper">
-        <!-- Todo 이메일 인증 엔드 포인트 수정-->
-        <a th:href="@{'http://localhost:8000/api/v1/auth/verify-email/' + ${email} + '/' + ${code}}" class="code-button" th:text="${code}"></a>
+        <div class="code-box" th:text="${code}"></div>
     </div>
-    <p>인증 코드는 <strong>5분간 유효</strong>합니다. 다른 사람과 공유하지 마세요.</p>
+    <p>인증 코드는 <strong>5분간 유효</strong>합니다.<br>다른 사람과 공유하지 마세요.</p>
     <div class="footer">
         © 2025 More. All rights reserved.
     </div>

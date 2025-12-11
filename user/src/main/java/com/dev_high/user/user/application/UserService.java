@@ -1,7 +1,7 @@
 package com.dev_high.user.user.application;
 
-import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
+import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.user.application.dto.CreateUserCommand;
 import com.dev_high.user.user.application.dto.UpdatePasswordCommand;
 import com.dev_high.user.user.application.dto.UpdateUserCommand;
@@ -26,7 +26,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final SellerService sellerService;
     private final UserDomainService userDomainService;
-    private final AuthService authService;
 
     @Transactional
     public ApiResponseDto<UserInfo> create(CreateUserCommand command){
@@ -45,7 +44,6 @@ public class UserService {
                 command.detail()
         );
         User saved = userRepository.save(user);
-        authService.sendEmail(saved.getEmail());
         return ApiResponseDto.success(UserInfo.from(saved));
     }
 
@@ -74,7 +72,7 @@ public class UserService {
     public ApiResponseDto<Void> delete() {
         User user = userDomainService.getUser();
         if(user.getUserRole() == UserRole.SELLER) {
-            sellerService.deleteSeller();
+            sellerService.deleteSeller(SellerStatus.WITHDRAWN);
         }
         user.deleteUser();
         return ApiResponseDto.success(null);

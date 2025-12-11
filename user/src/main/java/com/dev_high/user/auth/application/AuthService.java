@@ -1,18 +1,15 @@
 package com.dev_high.user.auth.application;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.auth.application.dto.LoginCommand;
-import com.dev_high.user.auth.application.dto.LoginInfo;
-import com.dev_high.user.auth.application.dto.TokenCommand;
-import com.dev_high.user.auth.application.dto.TokenInfo;
+import com.dev_high.user.auth.application.dto.*;
 import com.dev_high.user.auth.domain.EmailVerificationCodeRepository;
+import com.dev_high.user.auth.exception.EmailCodeMismatchException;
+import com.dev_high.user.auth.exception.EmailMismatchException;
 import com.dev_high.user.auth.exception.IncorrectPasswordException;
 import com.dev_high.user.auth.exception.MailSendFailedException;
 import com.dev_high.user.auth.jwt.JwtProvider;
-import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
-import com.dev_high.user.user.domain.UserStatus;
 import com.dev_high.user.user.exception.UserNotFoundException;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
@@ -33,10 +30,9 @@ public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final EmailService mailService;
     private final UserRepository userRepository;
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
-    private final EmailService mailService;
-    private final UserDomainService userDomainService;
 
     public ApiResponseDto<LoginInfo> login(LoginCommand command) {
         User user = userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
@@ -61,7 +57,8 @@ public class AuthService {
         return ApiResponseDto.success(tokenInfo);
     }
 
-    public void sendEmail(String email) {
+    public ApiResponseDto<Void> sendEmail(SendEmailCommand command) {
+        String email = command.email();
         String title = "More 이메일 인증 번호";
         String authCode = this.createEmailVerificationCode();
         log.info(authCode);
@@ -71,18 +68,22 @@ public class AuthService {
         } catch (MessagingException e) {
             throw new MailSendFailedException();
         }
-
+        return null;
     }
 
     @Transactional
-    public ApiResponseDto<Void> verifyEmail(String email, String code) {
-        Optional<String> emailVerificationCode = emailVerificationCodeRepository.findByEmail(email);
+    public ApiResponseDto<Void> verifyEmail(VerifyEmailCommand command) {
+        Optional<String> emailVerificationCode = emailVerificationCodeRepository.findByEmail(command.email());
+        log.info("emailVerificationCode: {}", emailVerificationCode);
         if (emailVerificationCode.isPresent()) {
             String savedCode = emailVerificationCode.get();
-            if (savedCode.equals(code)) {
-                userDomainService.updateUserStatus(email, UserStatus.ACTIVE);
-                emailVerificationCodeRepository.deleteCode(email);
+            if (savedCode.equals(command.code())) {
+                emailVerificationCodeRepository.deleteCode(command.email());
+            } else {
+                throw new EmailCodeMismatchException();
             }
+        } else {
+            throw new EmailMismatchException();
         }
         return ApiResponseDto.success(null);
     }
