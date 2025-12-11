@@ -11,4 +11,6 @@ public interface DepositOrderRepository {
     Optional<DepositOrder> findById(String orderId);
 
     Page<DepositOrder> findByUserId(String userId, Pageable pageable);
+
+    boolean existsById(String orderId);
 }

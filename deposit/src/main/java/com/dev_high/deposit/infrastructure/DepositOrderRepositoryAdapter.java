@@ -28,4 +28,9 @@ public class DepositOrderRepositoryAdapter implements DepositOrderRepository {
     public Page<DepositOrder> findByUserId(String userId, Pageable pageable) {
         return repository.findByUserId(userId, pageable);
     }
+
+    @Override
+    public boolean existsById(String orderId) {
+        return repository.existsById(orderId);
+    }
 }
