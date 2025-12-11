@@ -107,4 +107,4 @@ jobs:
         run: |
           kubectl apply -f product/k8s --namespace ${{ env.NAMESPACE }}
           kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }} --env="DATASOURCE_DRIVER=${{secrets.DATASOURCE_DRIVER}}" --env="DATASOURCE_PASSWORD=${{secrets.DATASOURCE_PASSWORD}}" --env="DATASOURCE_URL=${{secrets.DATASOURCE_URL}}" --env="DATASOURCE_USERNAME=${{secrets.DATASOURCE_USERNAME}}" --env="JWT_ACCESS_TOKEN_EXPIRATION=${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" --env="JWT_SECRET=${{secrets.JWT_SECRET}}"

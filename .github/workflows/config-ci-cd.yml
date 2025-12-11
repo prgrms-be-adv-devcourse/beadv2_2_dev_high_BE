@@ -19,7 +19,7 @@ on:
       - '.dockerignore'
   workflow_dispatch:
 
-env:
+env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/config
   SERVICE_NAME: config
@@ -71,8 +71,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.GITHUB_ACTOR }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GIT_ACTOR }}
+          password: ${{ secrets.GIT_TOKEN }}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
@@ -107,4 +107,4 @@ jobs:
         run: |
           kubectl apply -f config/k8s --namespace ${{ env.NAMESPACE }}
           kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }} --env="VERSION=$IMAGE_TAG"

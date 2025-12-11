@@ -1,6 +1,6 @@
 jwt:
-  secret: ${secrets.JWT_SECRET}
-  access-token-expiration: ${secret.JWT_ACCESS_TOKEN_EXPIRATION:3000}
+  secret: ${env.JWT_SECRET}
+  access-token-expiration: ${env.JWT_ACCESS_TOKEN_EXPIRATION:3000}
 
 springdoc:
   swagger-ui:
