@@ -71,8 +71,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.GITHUB_ACTOR }} #username 고정
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GIT_ACTOR }} #username 고정
+          password: ${{ secrets.GIT_TOKEN }}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
