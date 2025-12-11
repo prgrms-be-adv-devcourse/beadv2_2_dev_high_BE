@@ -14,6 +14,8 @@ spec:
       labels:
         app: apigateway
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: apigateway
           image: ghcr.io/prgrms-be-adv-devcourse/apigateway:latest
@@ -35,7 +37,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8000
-            initialDelaySeconds: 60
+            initialDelaySeconds: 300
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 12
@@ -44,7 +46,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8000
-            initialDelaySeconds: 60
+            initialDelaySeconds: 300
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 6

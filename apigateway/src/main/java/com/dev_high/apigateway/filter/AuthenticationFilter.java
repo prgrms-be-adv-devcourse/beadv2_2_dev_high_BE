@@ -25,10 +25,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         if (attribute instanceof Claims claims) {
             String userId = claims.getSubject();
-
+            String usrRole = claims.get("role", String.class);
             ServerHttpRequest mutatedRequest = exchange.getRequest()
                     .mutate()
                     .header("X-User-Id", userId)
+                    .header("X-Role", usrRole)
                     .build();
 
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
