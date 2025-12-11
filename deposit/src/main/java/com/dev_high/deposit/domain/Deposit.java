@@ -68,4 +68,15 @@ public class Deposit {
                 .balance(0L)
                 .build();
     }
+
+    public void increaseBalance(long amount) {
+        this.balance += amount;
+    }
+
+    public void decreaseBalance(long amount) {
+        if (this.balance < amount) {
+            throw new IllegalArgumentException(String.format("잔액이 부족합니다. (현재 잔액: %d, 요청 금액: %d)", this.balance, amount));
+        }
+        this.balance -= amount;
+    }
 }

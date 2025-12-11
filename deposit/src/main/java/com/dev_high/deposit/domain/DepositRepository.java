@@ -6,4 +6,6 @@ public interface DepositRepository {
     Optional<Deposit> findById(String userId);
 
     Deposit save(Deposit deposit);
+
+    Optional<Deposit> findByUserIdWithLock(String userId);
 }
