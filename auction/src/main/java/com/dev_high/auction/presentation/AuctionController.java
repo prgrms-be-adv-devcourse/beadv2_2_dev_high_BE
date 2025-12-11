@@ -1,10 +1,10 @@
 package com.dev_high.auction.presentation;
 
 import com.dev_high.auction.application.AuctionService;
+import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class AuctionController {
 
   @Operation(summary = "경매 상세 조회", description = "경매 ID로 상세 정보를 조회합니다.")
   @GetMapping("{auctionId}")
-  public ApiResponseDto<AuctionResponse> getAuctionDetail(@PathVariable String auctionId) {
+  public ApiResponseDto<AuctionDetailResponse> getAuctionDetail(@PathVariable String auctionId) {
     return ApiResponseDto.success(auctionService.getAuctionDetail(auctionId));
   }
 
@@ -48,7 +48,7 @@ public class AuctionController {
   @PostMapping
   public ApiResponseDto<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
     AuctionResponse res = auctionService.createAuction(request);
-    return ApiResponseDto.of("CREATED","성공적으로 저장하였습니다.",res);
+    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
 
   }
 

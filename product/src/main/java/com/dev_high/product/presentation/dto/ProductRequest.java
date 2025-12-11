@@ -2,34 +2,23 @@ package com.dev_high.product.presentation.dto;
 
 import com.dev_high.product.application.dto.ProductCommand;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import java.util.List;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProductRequest {
-    @NotBlank(message = "상품명은 필수입니다.")
-    private String name;
-
-    private String description;
-
-    private Long fileGroupId;
-
-    @NotBlank(message = "판매자 ID는 필수입니다.")
-    private String sellerId;
-
-    @NotBlank(message = "생성자 ID는 필수입니다.")
-    private String createdBy;
-
+public record ProductRequest(
+        @NotBlank(message = "상품명은 필수입니다.") String name,
+        String description,
+        String fileId,
+        @NotBlank(message = "판매자 ID는 필수입니다.") String sellerId,
+        List<String> categoryIds
+) {
     public ProductCommand toCommand() {
-        return ProductCommand.builder()
-                .name(name)
-                .description(description)
-                .fileGroupId(fileGroupId)
-                .sellerId(sellerId)
-                .createdBy(createdBy)
-                .build();
+        return new ProductCommand(
+                name,
+                description,
+                fileId,
+                sellerId,
+                sellerId, // 생성자/수정자를 판매자 ID로 사용
+                categoryIds
+        );
     }
 }

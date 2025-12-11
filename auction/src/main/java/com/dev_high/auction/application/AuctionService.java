@@ -1,19 +1,22 @@
 package com.dev_high.auction.application;
 
+import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.auction.exception.AuctionModifyForbiddenException;
 import com.dev_high.auction.exception.AuctionNotFoundException;
 import com.dev_high.auction.exception.AuctionStatusInvalidException;
 import com.dev_high.auction.exception.DuplicateAuctionException;
-import com.dev_high.auction.infrastructure.auction.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.common.context.UserContext;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
+import com.dev_high.product.domain.Product;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +33,6 @@ public class AuctionService {
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
 
-
   public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
     AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
@@ -38,16 +40,21 @@ public class AuctionService {
 
     Page<AuctionResponse> responsePage = page.map(AuctionResponse::fromEntity);
 
+//    eventPublisher.publish(KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
+//        new AuctionNotificationRequestEvent("ACT1", List.of("TSETUSER"), "start"));
     return responsePage;
   }
 
 
-  public AuctionResponse getAuctionDetail(String auctionId) {
+  public AuctionDetailResponse getAuctionDetail(String auctionId) {
 
     Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
+    AuctionLiveState live = auction.getLiveState();
 
-    return AuctionResponse.fromEntity(auction);
+    Product product = auction.getProduct();
+
+    return AuctionDetailResponse.fromEntity(auction, product, live);
   }
 
   @Transactional
@@ -57,11 +64,11 @@ public class AuctionService {
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
+
     LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
+
     validateAuctionTime(start, end);
 
     // 대기중, 진행중 ,완료된 경매가 있으면 throw
@@ -88,19 +95,18 @@ public class AuctionService {
 
   @Transactional
   public AuctionResponse modifyAuction(AuctionRequest request) {
-    String userId = "TEST";
+    String userId = UserContext.get().userId();
     validateAuction(request);
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
-    ;
     LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
         .withSecond(0)
         .withNano(0);
     validateAuctionTime(start, end);
 
     Auction auction = auctionRepository.findById(request.auctionId())
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
 
     if (!userId.equals(auction.getProduct().getSellerId())) {
       throw new AuctionModifyForbiddenException();
@@ -112,19 +118,19 @@ public class AuctionService {
     }
 
     // 경매시작전에 시작가격을 변경했을때.
-    if (auction.getStartBid() != request.startBid()) {
+    if (auction.getStartBid().compareTo(request.startBid()) != 0) {
       AuctionLiveState state = auction.getLiveState();
 
-      if(state==null){
-        state =new AuctionLiveState(auction, auction.getStartBid());
-      }else{
+      if (state == null) {
+        state = new AuctionLiveState(auction, auction.getStartBid());
+      } else {
         state.update(null, auction.getStartBid());
 
       }
       auctionLiveStateRepository.save(state);
     }
 
-    auction.modify(request.startBid(), start, end);
+    auction.modify(request.startBid(), start, end, userId);
 
     //dirty check
     return AuctionResponse.fromEntity(auction);
@@ -135,7 +141,7 @@ public class AuctionService {
   @Transactional
   public void removeAuction(String auctionId) {
     Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(() -> new AuctionNotFoundException());
+        .orElseThrow(AuctionNotFoundException::new);
 
     auction.remove();
 

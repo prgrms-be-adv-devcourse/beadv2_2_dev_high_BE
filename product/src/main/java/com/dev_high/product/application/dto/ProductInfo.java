@@ -1,43 +1,51 @@
 package com.dev_high.product.application.dto;
 
+import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductStatus;
 import com.dev_high.product.domain.Product.DeleteStatus;
-import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Getter
-@Builder
-public class ProductInfo {
-    private final String id;
-    private final ProductStatus status;
-    private final String name;
-    private final String description;
-    private final Long fileGroupId;
-    private final String sellerId;
-    private final DeleteStatus deletedYn;
-    private final LocalDateTime deletedAt;
-    private final LocalDateTime createdAt;
-    private final String createdBy;
-    private final LocalDateTime updatedAt;
-    private final String updatedBy;
-
+public record ProductInfo(
+        String id,
+        ProductStatus status,
+        String name,
+        String description,
+        String fileId,
+        String sellerId,
+        DeleteStatus deletedYn,
+        LocalDateTime deletedAt,
+        LocalDateTime createdAt,
+        String createdBy,
+        LocalDateTime updatedAt,
+        String updatedBy,
+        List<CategoryInfo> categories
+) {
     public static ProductInfo from(Product product) {
-        return ProductInfo.builder()
-                .id(product.getId())
-                .status(product.getStatus())
-                .name(product.getName())
-                .description(product.getDescription())
-                .fileGroupId(product.getFileGroupId())
-                .sellerId(product.getSellerId())
-                .deletedYn(product.getDeletedYn())
-                .deletedAt(product.getDeletedAt())
-                .createdAt(product.getCreatedAt())
-                .createdBy(product.getCreatedBy())
-                .updatedAt(product.getUpdatedAt())
-                .updatedBy(product.getUpdatedBy())
-                .build();
+        return from(product, List.of());
+    }
+
+    public static ProductInfo from(Product product, List<Category> categories) {
+        List<CategoryInfo> categoryInfos = categories == null
+                ? List.of()
+                : categories.stream().map(CategoryInfo::from).toList();
+
+        return new ProductInfo(
+                product.getId(),
+                product.getStatus(),
+                product.getName(),
+                product.getDescription(),
+                product.getFileId(),
+                product.getSellerId(),
+                product.getDeletedYn(),
+                product.getDeletedAt(),
+                product.getCreatedAt(),
+                product.getCreatedBy(),
+                product.getUpdatedAt(),
+                product.getUpdatedBy(),
+                categoryInfos
+        );
     }
 }

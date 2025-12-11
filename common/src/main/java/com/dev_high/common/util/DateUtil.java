@@ -6,9 +6,11 @@ import java.time.format.DateTimeFormatter;
 public class DateUtil {
 
   private static final String DEFAULT_PATTERN = "yyyy-MM-dd HH:mm:ss";
-  private static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
+  public static final DateTimeFormatter DEFAULT_FORMATTER =
+      DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
 
-  private DateUtil() {}
+  private DateUtil() {
+  }
 
   // 현재 날짜/시간
   public static LocalDateTime now() {

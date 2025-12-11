@@ -6,18 +6,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.dev_high.auction.application.AuctionWebSocketService;
+import com.dev_high.auction.application.BidRecordService;
 import com.dev_high.auction.application.BidService;
 import com.dev_high.auction.application.dto.BidResponse;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionBidHistory;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionParticipation;
+import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.idclass.AuctionParticipationId;
-import com.dev_high.auction.infrastructure.auction.AuctionRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionBidHistoryJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
+import com.dev_high.common.kafka.KafkaEventPublisher;
 import jakarta.persistence.OptimisticLockException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -58,16 +60,17 @@ class BidConcurrentTest {
         AuctionBidHistoryJpaRepository.class);
     AuctionRepository auctionRepository = mock(AuctionRepository.class);
     AuctionWebSocketService auctionWebSocketService = mock(AuctionWebSocketService.class);
-
+    KafkaEventPublisher eventPublisher = mock(KafkaEventPublisher.class);
+    BidRecordService bidRecordService = mock(BidRecordService.class);
     participations = new ConcurrentHashMap<>();
     bidHistories = Collections.synchronizedList(new ArrayList<>());
 
     bidService = new BidService(
-        auctionBidHistoryJpaRepository,
         auctionLiveStateJpaRepository,
-        auctionParticipationJpaRepository,
         auctionRepository,
-        auctionWebSocketService
+        auctionWebSocketService,
+        eventPublisher,
+        bidRecordService
     );
 
     // --- Auction 생성 ---
