@@ -62,7 +62,10 @@ public class Settlement {
     @Column(name = "complete_yn", nullable = false, length = 1)
     private String completeYn ="N";
 
-    public Settlement(String orderId, String sellerId, String buyerId, String auctionId, Long winningAmount, LocalDateTime dueDate, SettlementStatus status) {
+    @Column(name = "retrial_cnt", nullable = false, length = 1)
+    private Long retrialCnt;
+
+    public Settlement(String orderId, String sellerId, String buyerId, String auctionId, Long winningAmount, LocalDateTime dueDate, SettlementStatus status, Long retrialCnt) {
         this.orderId = orderId;
         this.sellerId = sellerId;
         this.buyerId = buyerId;
@@ -70,6 +73,7 @@ public class Settlement {
         this.winningAmount = winningAmount;
         this.status = status;
         this.dueDate = dueDate;
+        this.retrialCnt = retrialCnt;
     }
 
     @PrePersist
@@ -83,11 +87,18 @@ public class Settlement {
         this.updateDate = LocalDateTime.now();
     }
 
-    public void makeComplete() {
-        this.completeYn = "Y";
-        this.status = SettlementStatus.COMPLETED;
-        this.completeDate = LocalDateTime.now();
+    public void updateStatus(SettlementStatus status) {
+        this.status = status;
+
+        if (status == SettlementStatus.COMPLETED) {
+            this.completeYn = "Y";
+            this.completeDate = LocalDateTime.now();
+        }
         this.calculate();
+    }
+
+    public void retryCntUpdate() {
+        this.retrialCnt = this.retrialCnt + 1;
     }
 
     public void calculate() {
@@ -104,7 +115,8 @@ public class Settlement {
                 request.auctionId(),
                 request.winningAmount(),
                 LocalDate.now().plusMonths(1).withDayOfMonth(3).atStartOfDay(),
-                SettlementStatus.WAITING
+                SettlementStatus.WAITING,
+                0L
         );
     }
 

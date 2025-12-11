@@ -23,14 +23,15 @@ public class SettlementScheduler {
 
     private final Job processingJob;
 
-//    private final Job retryJob;
-//
-//    private final Job notificationJob;
+    private final Job retryJob;
+
+    private final Job notificationJob;
 
     /**
      * 매일 2시 2분 2초 정산 수집 JOB
      */
-    @Scheduled(cron = "1/30 * * * * *")
+    @Scheduled(cron = "2 2 2 * * *")
+//    @Scheduled(cron = "1/10 * * * * *")
     public void runRegisterJob() {
         try {
             runJob(registrationJob, "registrationJob");
@@ -42,7 +43,8 @@ public class SettlementScheduler {
     /**
      * 매달 3일 3시 3분 3초 정산 처리 JOB
      */
-    @Scheduled(cron = "1/40 * * * * *")
+    @Scheduled(cron = "3 3 3 3 * *")
+//    @Scheduled(cron = "1/15 * * * * *")
     public void runProcessingJob() {
         try {
             runJob(processingJob, "processingJob");
@@ -52,30 +54,32 @@ public class SettlementScheduler {
     }
 
 
-//    /**
-//     * 매일 4시 4분 4초 정산 재시도 JOB
-//     */
-//    @Scheduled(cron = "4 4 4 * * *")
-//    public void runRetryJob() {
-//        try {
-//            runJob(retryJob, "retryJob");
-//        } catch (JobExecutionException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-//
-//
-//    /**
-//     * 매일 5시 5분 5초 3회 이상 실패 정산 알림 발행 JOB
-//     */
+    /**
+     * 매일 4시 4분 4초 정산 재시도 JOB
+     */
+    @Scheduled(cron = "4 4 4 * * *")
+//    @Scheduled(cron = "1/20 * * * * *")
+    public void runRetryJob() {
+        try {
+            runJob(retryJob, "retryJob");
+        } catch (JobExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    /**
+     * 매일 5시 5분 5초 3회 이상 실패 정산 알림 발행 JOB
+     */
 //    @Scheduled(cron = "5 5 5 * * *")
-//    public void runNotifyJob() {
-//        try {
-//            runJob(notificationJob, "notifyJob");
-//        } catch (JobExecutionException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    @Scheduled(cron = "1/5 1/5 * * * *")
+    public void runNotificationJobJob() {
+        try {
+            runJob(notificationJob, "notificationJob");
+        } catch (JobExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     /**

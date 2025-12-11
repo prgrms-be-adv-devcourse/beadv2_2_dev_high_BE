@@ -1,7 +1,10 @@
 package com.dev_high.settlement.config;
 
+import com.dev_high.settlement.config.dto.SettlementConfirmRequest;
+import com.dev_high.settlement.config.kafka.KafkaIssueProducer;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
+import com.dev_high.settlement.domain.SettlementStatus;
 import com.dev_high.settlement.domain.history.SettlementHistory;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,11 @@ import java.util.*;
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig extends DefaultBatchConfiguration {
+    private static final String SELLER_TOPIC = "settlement.confirm.seller";
+    private static final String BUYER_TOPIC  = "settlement.confirm.buyer";
+    private static final String ADMIN_TOPIC  = "settlement.confirm.admin";
+
+    private final KafkaIssueProducer publisher;
     private final EntityManagerFactory entityManagerFactory;
     private final SettlementRepository settlementRepository;
     private final AbstractItemCountingItemStreamItemReader registerItemReader;
@@ -89,6 +97,65 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                 .start(updateRetryStatusStep(jobRepository, transactionManager))
                 .next(makeRetryLogStep(jobRepository, transactionManager))
                 .build();
+    }
+
+    @Bean
+    public Job notificationJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new JobBuilder("notificationJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(notificationStep(jobRepository, transactionManager))
+                .build();
+    }
+
+    @Bean
+    public Step notificationStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("notificationStep", jobRepository)
+                .<Settlement, SettlementConfirmRequest>chunk(10, transactionManager)
+                .reader(notificationReader())
+                .processor(notificationProcessor())
+                .writer(notificationWriter())
+                .build();
+
+    }
+
+    @Bean
+    public ItemProcessor<Settlement, SettlementConfirmRequest> notificationProcessor() {
+        return SettlementConfirmRequest::fromSettlement;
+    }
+
+    @Bean
+    public ItemReader<Settlement> notificationReader() {
+        return new JpaPagingItemReaderBuilder<Settlement>()
+                .name("notificationReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("SELECT s FROM Settlement s WHERE s.retrialCnt >= 3 AND s.status = 'FAILED'")
+                .pageSize(10)
+                .build();
+    }
+    @Bean
+    public ItemWriter<SettlementConfirmRequest> notificationWriter() {
+        return chunk ->  {
+
+            log.info("정산 확정 이벤트 발행 시작 - {}건", chunk.size());
+
+            chunk.forEach(request -> {
+                // 판매자
+                publisher.publish(
+                        SELLER_TOPIC,
+                        request.sellerId(),
+                        request
+                );
+
+//                // 관리자
+//                publisher.publish(
+//                        ADMIN_TOPIC,
+//                        request.getId(),
+//                        payload
+//                );
+            });
+
+            log.info("정산 확정 이벤트 발행 완료 - {}건 처리됨", chunk.size());
+        };
     }
 
     /**
@@ -182,6 +249,8 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                                 ids, response.getStatusCode());
                     }
                 } catch (Exception e) {
+                    settlements.forEach(settlement -> settlement.updateStatus(SettlementStatus.FAILED));
+                    settlementRepository.saveAll(settlements);
                     log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
                 }
 
@@ -265,7 +334,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
             }
 
             // 정산 완료 처리
-            settlement.makeComplete();
+            settlement.updateStatus(SettlementStatus.COMPLETED);
             settlementIds.add(settlement.getId());
 
             // Step Context에 저장
@@ -391,6 +460,11 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
                                 ids, response.getStatusCode());
                     }
                 } catch (Exception e) {
+                    settlements.forEach(settlement -> {
+                        settlement.retryCntUpdate();
+                        settlement.updateStatus(SettlementStatus.FAILED);
+                    });
+                    settlementRepository.saveAll(settlements);
                     log.error("정산 요청 중 오류 발생 - Settlement ID: {}", ids, e);
                 }
 
@@ -472,7 +546,7 @@ public class SettlementBatchConfig extends DefaultBatchConfiguration {
             }
 
             // 정산 완료 처리
-            settlement.makeComplete();
+            settlement.updateStatus(SettlementStatus.COMPLETED);
             settlementIds.add(settlement.getId());
 
             // Step Context에 저장
