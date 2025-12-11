@@ -1,8 +1,11 @@
 package com.dev_high.auction.application;
 
+import static java.util.stream.Collectors.toMap;
+
 import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
+import com.dev_high.auction.application.dto.FileDto;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionRepository;
@@ -14,34 +17,113 @@ import com.dev_high.auction.exception.DuplicateAuctionException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
+import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuctionService {
 
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
+  private final RestTemplate restTemplate;
+  private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
+
+  public ApiResponseDto<List<FileDto>> getFileList(List<String> fileIds) {
+
+    try {
+      Map<String, Object> body = new HashMap<>();
+      body.put("fileIds", fileIds);
+//      HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(body);
+      HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
+
+      ResponseEntity<ApiResponseDto<List<FileDto>>> response;
+      response = restTemplate.exchange(
+          GATEWAY_URL + "/files",
+          HttpMethod.GET,
+          entity,
+          new ParameterizedTypeReference<>() {
+          }
+      );
+      if (response.getBody() != null) {
+        log.info("");
+        return response.getBody();
+
+      }
+    } catch (Exception e) {
+      log.error("실패: {}", e);
+
+    }
+    return ApiResponseDto.success(List.of());
+  }
+
+  public ApiResponseDto<FileDto> getFile(String fileId) {
+    try {
+
+      HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
+
+      ResponseEntity<ApiResponseDto<FileDto>> response;
+      response = restTemplate.exchange(
+          GATEWAY_URL + "/files/" + fileId,
+          HttpMethod.POST,
+          entity,
+          new ParameterizedTypeReference<>() {
+          }
+      );
+      if (response.getBody() != null) {
+
+        return response.getBody();
+
+      }
+    } catch (Exception e) {
+      log.error("실패: {}", e);
+
+    }
+    return ApiResponseDto.success(null);
+
+  }
 
   public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
     AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
     Page<Auction> page = auctionRepository.filterAuctions(filter);
 
-    Page<AuctionResponse> responsePage = page.map(AuctionResponse::fromEntity);
+    List<String> fileIds = page.stream()
+        .map(a -> a.getProduct().getFileId())
+        .filter(Objects::nonNull)
+        .distinct()
+        .toList();
 
-//    eventPublisher.publish(KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
-//        new AuctionNotificationRequestEvent("ACT1", List.of("TSETUSER"), "start"));
+    List<FileDto> fileDtoList = getFileList(fileIds).getData();
+    Map<String, String> fileMap = fileDtoList.stream()
+        .collect(toMap(FileDto::fileId, FileDto::filePath));
+
+    Page<AuctionResponse> responsePage = page.map(auction -> AuctionResponse.fromEntity(
+        auction,
+        fileMap.get(auction.getProduct().getFileId())
+    ));
+
     return responsePage;
   }
 
@@ -60,6 +142,18 @@ public class AuctionService {
   @Transactional
   public AuctionResponse createAuction(AuctionRequest request) {
     /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
+    String userId = UserContext.get().userId();
+    String role = UserContext.get().role();
+
+    if ("USER".equals(role)) {
+      throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
+    } else if ("SELLER".equals(role)) {
+      if (!userId.equals(request.sellerId())) {
+        throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
+
+      }
+    }
+
     validateAuction(request);
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
@@ -82,11 +176,11 @@ public class AuctionService {
 
     Auction auction = auctionRepository.save(
         new Auction(request.startBid(), start,
-            end, "TESTUSER"), request.productId());
+            end, userId, request.productId()));
 
     // @TODO 저장안되면 flush후 시도
     // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
-    auctionLiveStateRepository.save(new AuctionLiveState(auction, auction.getStartBid()));
+    auctionLiveStateRepository.save(new AuctionLiveState(auction));
 
     return AuctionResponse.fromEntity(auction);
 
@@ -94,8 +188,26 @@ public class AuctionService {
 
 
   @Transactional
-  public AuctionResponse modifyAuction(AuctionRequest request) {
+  public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
     String userId = UserContext.get().userId();
+    String role = UserContext.get().role();
+
+    if ("USER".equals(role)) {
+      throw new AuctionModifyForbiddenException();
+    } else if ("SELLER".equals(role)) {
+      if (!userId.equals(request.sellerId())) {
+        throw new AuctionModifyForbiddenException();
+      }
+    }
+
+    Auction auction = auctionRepository.findById(auctionId)
+        .orElseThrow(AuctionNotFoundException::new);
+
+    if (auction.getStatus() != AuctionStatus.READY) {
+      throw new AuctionStatusInvalidException(
+      );
+    }
+
     validateAuction(request);
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
@@ -104,31 +216,6 @@ public class AuctionService {
         .withSecond(0)
         .withNano(0);
     validateAuctionTime(start, end);
-
-    Auction auction = auctionRepository.findById(request.auctionId())
-        .orElseThrow(AuctionNotFoundException::new);
-
-    if (!userId.equals(auction.getProduct().getSellerId())) {
-      throw new AuctionModifyForbiddenException();
-    }
-
-    if (auction.getStatus() != AuctionStatus.READY) {
-      throw new AuctionStatusInvalidException(
-      );
-    }
-
-    // 경매시작전에 시작가격을 변경했을때.
-    if (auction.getStartBid().compareTo(request.startBid()) != 0) {
-      AuctionLiveState state = auction.getLiveState();
-
-      if (state == null) {
-        state = new AuctionLiveState(auction, auction.getStartBid());
-      } else {
-        state.update(null, auction.getStartBid());
-
-      }
-      auctionLiveStateRepository.save(state);
-    }
 
     auction.modify(request.startBid(), start, end, userId);
 
@@ -140,10 +227,28 @@ public class AuctionService {
 
   @Transactional
   public void removeAuction(String auctionId) {
+    String userId = UserContext.get().userId();
+    String role = UserContext.get().role();
+
+    if ("USER".equals(role)) {
+      throw new AuctionModifyForbiddenException();
+    }
+
     Auction auction = auctionRepository.findById(auctionId)
         .orElseThrow(AuctionNotFoundException::new);
 
-    auction.remove();
+    if (auction.getStatus() != AuctionStatus.READY) {
+      throw new AuctionStatusInvalidException();
+    }
+
+    if ("SELLER".equals(role)) {
+      if (!auction.getProduct().getSellerId().equals(userId)) {
+        throw new AuctionModifyForbiddenException();
+      }
+
+    }
+
+    auction.remove(userId);
 
     // dirty check 자동저장
   }
@@ -183,8 +288,8 @@ public class AuctionService {
     }
 
     // 3. 등록 가능한 분 체크
-    int currentMinute = now.getMinute();
-    if (currentMinute == 59) {
+    int currentSecond = now.getSecond();
+    if (currentSecond > 30) {
       LocalDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
       if (start.isBefore(earliest)) {
         throw new CustomException(DateUtil.format(earliest, "HH:mm") + " 이후에 다시 시도해주세요.");
@@ -192,4 +297,9 @@ public class AuctionService {
     }
   }
 
+  public List<AuctionResponse> getAuctionListByProductId(String productId) {
+
+    return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity)
+        .toList();
+  }
 }

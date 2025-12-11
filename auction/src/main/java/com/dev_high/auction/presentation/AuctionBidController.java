@@ -2,8 +2,6 @@ package com.dev_high.auction.presentation;
 
 import com.dev_high.auction.application.BidRecordService;
 import com.dev_high.auction.application.BidService;
-import com.dev_high.auction.application.dto.AuctionParticipationResponse;
-import com.dev_high.auction.application.dto.BidResponse;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
 import com.dev_high.auction.presentation.dto.RefundCompleteRequest;
 import com.dev_high.common.dto.ApiResponseDto;
@@ -11,6 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,10 +51,10 @@ public class AuctionBidController {
       @Parameter(description = "경매 ID", required = true) @PathVariable String auctionId,
       @RequestBody AuctionBidRequest request
   ) {
-    AuctionParticipationResponse res = bidRecordService.createParticipation(auctionId,
-        request.depositAmount());
 
-    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
+    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.",
+        bidRecordService.createParticipation(auctionId,
+            request.toDepositCommand()));
   }
 
 
@@ -63,8 +64,9 @@ public class AuctionBidController {
   public ApiResponseDto<?> upsertAuctionBid(
       @Parameter(description = "경매 ID", required = true) @PathVariable String auctionId,
       @RequestBody AuctionBidRequest request) {
-    BidResponse res = bidService.createOrUpdateAuctionBid(auctionId, request);
-    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
+
+    return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.",
+        bidService.createOrUpdateAuctionBid(auctionId, request.toBidCommand()));
   }
 
   @Operation(summary = "경매 입찰 포기", description = "auctionId에 해당하는 경매에서 본인의 입찰을 포기합니다. 보증금은 즉시 환급")
@@ -78,16 +80,24 @@ public class AuctionBidController {
 
 
   //
-  @Operation(summary = "보증금 환불 처리(여러명)", description = "예치금 서비스에서 보증금 환급 완료후 호출하여 상태를 업데이트합니다.")
+  @Operation(summary = "보증금 환불완료 처리(여러명)", description = "예치금 서비스에서 보증금 환급 완료후 호출하여 상태를 업데이트합니다.")
   @PutMapping("{auctionId}/refund-complete")
   public ApiResponseDto<?> markRefundComplete(
       @Parameter(description = "환불 완료 처리할 경매 ID", required = true) @PathVariable String auctionId,
       @RequestBody RefundCompleteRequest request
   ) {
-
-    bidRecordService.markDepositRefunded(auctionId, request.userIds());
     // 이력 기록
-    return ApiResponseDto.success("환불 완료 처리되었습니다.", null);
+    return ApiResponseDto.success("환불 완료 처리되었습니다.",
+        bidRecordService.markDepositRefunded(auctionId, request.userIds()));
+  }
+
+  @GetMapping("{auctionId}/bids/history")
+  public ApiResponseDto<?> getBidHistory(
+      @PathVariable String auctionId,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+      Pageable pageable) {
+
+    return ApiResponseDto.success(bidRecordService.getBidHistory(auctionId, pageable));
   }
 }
 

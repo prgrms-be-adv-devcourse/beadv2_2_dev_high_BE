@@ -47,9 +47,8 @@ public class BatchHelper {
   private List<String> getWishlistUserIds(String productId) {
 
     try {
-      org.springframework.http.HttpHeaders headers = HttpUtil.createAdminHttpHeaders();
-      HttpEntity<Void> entity;
-      entity = new HttpEntity<>(headers);
+      HttpEntity<Void> entity = HttpUtil.createDirectEntity(null);
+
       String url = "http://USER-SERVICE/api/v1/users/wishlist/" + productId;
 
       ResponseEntity<ApiResponseDto<List<String>>> response;
@@ -156,66 +155,79 @@ public class BatchHelper {
     });
 
     if (targetIds != null && !targetIds.isEmpty()) {
-      List<Auction> auctions = auctionRepository.findByIdIn(targetIds);
 
-      for (Auction auction : auctions) {
-        process(auction);
+      for (String auctionId : targetIds) {
+
       }
     }
     return RepeatStatus.FINISHED;
   }
 
-  public void process(Auction auction) {
+  public void process(String targetId) {
+
+    Auction auction = auctionRepository.findById(targetId).orElse(null);
     AuctionLiveState state = auction.getLiveState();
-    if (state.getHighestUserId() == null) {
+    if (auction == null || state == null) {
+      return;
+    }
+    Product product = auction.getProduct();
+    String sellerId = product.getSellerId();
+
+    String highestUserId = state.getHighestUserId();
+
+    if (highestUserId == null) {
       // 유찰 처리
       auction.changeStatus(AuctionStatus.FAILED, "SYSTEM");
+      // TODO: 판매자한테 알림
+
       return;
     }
 
-    if (state.getHighestUserId() != null) {
+    /* TODO: chunk */
+    List<String> userIds = auctionParticipationJpaRepository.findByAuctionId(
+        targetId).stream().map(AuctionParticipation::getUserId).toList();
 
-      Product product = auction.getProduct();
-      String auctionId = auction.getId();
+    // 이벤트 발행
+    if (!userIds.isEmpty()) {
 
-      List<String> participationList = auctionParticipationJpaRepository.findByAuctionId(auctionId)
-          .stream()
-          .filter(p -> "N".equals(p.getWithdrawnYn()) && !"Y".equals(p.getDepositRefundedYn()))
-          .map(AuctionParticipation::getUserId).toList();
+      try {
+        eventPublisher.publish(
+            KafkaTopics.NOTIFICATION_REQUEST,
+            new NotificationRequestEvent(userIds, product.getName() + " 경매가 종료되었습니다.",
+                "/auctions/" + auction.getId()));
 
-      if (participationList != null && !participationList.isEmpty()) {
-        try {
-          String productName = product.getName();
+      } catch (Exception e) {
+        log.error("경매 종료 알림 실패: auctionId={}", targetId, e);
 
-          eventPublisher.publish(
-              KafkaTopics.NOTIFICATION_REQUEST,
-              new NotificationRequestEvent(participationList, productName + " 경매가 종료되었습니다.",
-                  "/auctions/" + auction.getId()));
-
-          eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
-              new AuctionDepositRefundRequestEvent(participationList, auctionId,
-                  auction.getDepositAmount()));
-
-
-        } catch (Exception e) {
-          log.error("경매 종료 이벤트 발행 실패: auctionId={}", auctionId, e);
-
-        }
       }
 
       try {
-        String sellerId = product.getSellerId();
-        String winnerId = state.getHighestUserId();
-        BigDecimal bid = state.getCurrentBid();
 
-        // 주문생성 요청 kafka  ,
-        eventPublisher.publish(
-            KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
-            new AuctionCreateOrderRequestEvent(auctionId, product.getId(), winnerId, sellerId,
-                bid, LocalDateTime.now()));
+        // deposit service에 해당 유저들 환불요청 (kafka or rest)
+        // highestUserId 은 제외하고 환불요청을함.
+        List<String> refundUserIds = userIds.stream()
+            .filter(id -> !id.equals(highestUserId))
+            .toList();
+        eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
+            new AuctionDepositRefundRequestEvent(refundUserIds, targetId,
+                auction.getDepositAmount()));
+
       } catch (Exception e) {
-        log.error("주문 이벤트 발행 실패: auctionId={}", auctionId, e);
+        log.error("환불 요청 실패: auctionId={}", targetId, e);
+
       }
+    }
+
+    try {
+      BigDecimal bid = state.getCurrentBid();
+
+      // 주문생성 요청 kafka  ,
+      eventPublisher.publish(
+          KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
+          new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
+              bid, LocalDateTime.now()));
+    } catch (Exception e) {
+      log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
     }
   }
 }

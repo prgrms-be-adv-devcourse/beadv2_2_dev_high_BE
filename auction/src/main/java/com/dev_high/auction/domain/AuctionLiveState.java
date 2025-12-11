@@ -49,10 +49,10 @@ public class AuctionLiveState {
   protected AuctionLiveState() {
   }
 
-  public AuctionLiveState(Auction auction, BigDecimal currentBid) {
+  public AuctionLiveState(Auction auction) {
     this.auction = auction;
     this.auctionId = auction.getId();
-    this.currentBid = currentBid;
+    this.currentBid = BigDecimal.ZERO;
     this.updatedAt = LocalDateTime.now();
   }
 
