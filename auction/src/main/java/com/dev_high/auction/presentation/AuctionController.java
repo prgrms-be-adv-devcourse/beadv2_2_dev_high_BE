@@ -38,6 +38,14 @@ public class AuctionController {
     return ApiResponseDto.success(res);
   }
 
+  @Operation(summary = "경매 목록 조회", description = "페이지네이션과 필터를 통해 경매 목록을 조회합니다.")
+  @GetMapping("product/{productId}")
+  public ApiResponseDto<?> getAuctionListByProductId(@PathVariable String productId) {
+
+    return ApiResponseDto.success(auctionService.getAuctionListByProductId(productId));
+  }
+
+
   @Operation(summary = "경매 상세 조회", description = "경매 ID로 상세 정보를 조회합니다.")
   @GetMapping("{auctionId}")
   public ApiResponseDto<AuctionDetailResponse> getAuctionDetail(@PathVariable String auctionId) {
@@ -53,9 +61,10 @@ public class AuctionController {
   }
 
   @Operation(summary = "경매 수정", description = "기존 경매 정보를 수정합니다.")
-  @PutMapping
-  public ApiResponseDto<AuctionResponse> modifyAuction(@RequestBody AuctionRequest request) {
-    AuctionResponse res = auctionService.modifyAuction(request);
+  @PutMapping("{auctionId}")
+  public ApiResponseDto<AuctionResponse> modifyAuction(@PathVariable String auctionId,
+      @RequestBody AuctionRequest request) {
+    AuctionResponse res = auctionService.modifyAuction(auctionId, request);
     return ApiResponseDto.success(res);
   }
 

@@ -1,6 +1,7 @@
 package com.dev_high.auction.application;
 
-import com.dev_high.auction.application.dto.BidResponse;
+import com.dev_high.auction.application.dto.AuctionBidMessage;
+import com.dev_high.auction.application.dto.AuctionParticipationResponse;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionBidHistory;
 import com.dev_high.auction.domain.AuctionLiveState;
@@ -16,7 +17,6 @@ import com.dev_high.auction.exception.BidPriceTooLowException;
 import com.dev_high.auction.exception.OptimisticLockBidException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
-import com.dev_high.auction.presentation.dto.AuctionBidRequest;
 import com.dev_high.common.context.UserContext;
 import jakarta.persistence.OptimisticLockException;
 import java.math.BigDecimal;
@@ -31,106 +31,120 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class BidService {
 
-
   private final AuctionLiveStateJpaRepository auctionLiveStateJpaRepository;
   private final AuctionRepository auctionRepository;
-  private final AuctionWebSocketService auctionWebSocketService;
   private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
-
   private final BidRecordService bidRecordService;
+  private final AuctionWebSocketService auctionWebSocketService;
 
+  private static final int MAX_ATTEMPTS = 2;
 
-  public BidResponse createOrUpdateAuctionBid(String auctionId, AuctionBidRequest request) {
-    BigDecimal bidPrice = request.bidPrice();
+  public AuctionParticipationResponse createOrUpdateAuctionBid(String auctionId,
+      BigDecimal bidPrice) {
     String userId = UserContext.get().userId();
 
     AuctionParticipation participation = auctionParticipationJpaRepository.findById(
-        new AuctionParticipationId(userId,
-            auctionId)).orElseThrow(AuctionParticipationNotFoundException::new);
+            new AuctionParticipationId(userId, auctionId))
+        .orElseThrow(AuctionParticipationNotFoundException::new);
 
     // 이미 포기한 사용자면 입찰 불가
     if ("Y".equals(participation.getWithdrawnYn())) {
       throw new AlreadyWithdrawnException();
     }
 
-    int attempts = 2; // 최초 시도 + 재시도 1회
+    AuctionBidHistory history = null;
+    int attempts = MAX_ATTEMPTS;
 
     try {
       while (attempts-- > 0) {
         try {
-          AuctionLiveState liveState = auctionLiveStateJpaRepository.findById(auctionId)
-              .orElseGet(() -> {
-                // 1. 경매 엔티티 조회
-                Auction auction = auctionRepository.findById(auctionId)
-                    .orElseThrow(AuctionNotFoundException::new);
+          AuctionLiveState liveState = getOrCreateLiveState(participation.getAuction());
 
-                // 2. 최초 라이브 상태 생성
-                AuctionLiveState newLiveState = new AuctionLiveState(auction,
-                    auction.getStartBid());
+          validateBid(participation, bidPrice, liveState);
 
-                try {
-                  // 3. 저장 및 즉시 flush (동시 접근 대비)
-                  return auctionLiveStateJpaRepository.saveAndFlush(newLiveState);
-                } catch (DataIntegrityViolationException e) {
-                  // 동시 접근 시 다른 쓰레드가 먼저 생성했으면 재조회
-                  return auctionLiveStateJpaRepository.findById(auctionId)
-                      .orElseThrow(AuctionNotFoundException::new);
-                }
-              });
+          history = placeBid(participation, liveState, bidPrice);
 
-          LocalDateTime now = LocalDateTime.now();
-          if (now.isBefore(liveState.getAuction().getAuctionStartAt()) || now.isAfter(
-              liveState.getAuction().getAuctionEndAt())) {
-            // 참여현황 남기고 실패 처리
-            bidRecordService.recordHistory(
-                new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_FAIL_TIME));
-            throw new AuctionTimeOutOfRangeException();
-          }
-
-          // 입찰가가 현재가보다 낮으면 실패 처리
-          BigDecimal currentBid =
-              liveState.getCurrentBid() != null ? liveState.getCurrentBid() : BigDecimal.ZERO;
-
-          if (bidPrice.compareTo(currentBid) <= 0) {
-            // 실패 이력 기록
-            bidRecordService.recordHistory(
-                new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_FAIL_LOW_PRICE));
-            throw new BidPriceTooLowException();
-          }
-
-          // 실시간 상태 업데이트
-          liveState.update(userId, bidPrice);
-          auctionLiveStateJpaRepository.save(liveState);
-
-          // 참여현황 업데이트 (최신 입찰가만)
-          participation.placeBid(bidPrice);
-          // 성공 이력 기록
-          bidRecordService.recordHistory(
-              new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_SUCCESS));
           break; // 성공 시 루프 종료
         } catch (OptimisticLockException e) {
           if (attempts == 0) {
-            // 최종 재시도 실패 시 기록
             bidRecordService.recordHistory(
                 new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_FAIL_LOCK));
             throw new OptimisticLockBidException();
           }
         }
-        // 재시도
       }
     } finally {
       // 참여현황은 성공/실패 상관없이 항상 저장
       bidRecordService.saveParticipation(participation);
     }
-    //웹소켓 전파
+
+    // 웹소켓 전파
     try {
-      auctionWebSocketService.broadcastBidSuccess(auctionId, userId, bidPrice);
+      if (history != null) {
+        broadcastBid(history);
+      }
     } catch (Exception e) {
       log.warn("WebSocket broadcast failed: {}", e.getMessage());
     }
-    return new BidResponse(bidPrice, userId);
+
+    return AuctionParticipationResponse.isParticipated(participation);
   }
 
+  // ----------------- helper methods -----------------
+  private AuctionLiveState getOrCreateLiveState(Auction auction) {
+    return auctionLiveStateJpaRepository.findById(auction.getId())
+        .orElseGet(() -> {
 
+          AuctionLiveState newLiveState = new AuctionLiveState(auction);
+
+          try {
+            return auctionLiveStateJpaRepository.saveAndFlush(newLiveState);
+          } catch (DataIntegrityViolationException e) {
+            // 동시 접근 시 다른 쓰레드가 먼저 생성했으면 재조회
+            return auctionLiveStateJpaRepository.findById(auction.getId())
+                .orElseThrow(AuctionNotFoundException::new);
+          }
+        });
+  }
+
+  private void validateBid(AuctionParticipation participation, BigDecimal bidPrice,
+      AuctionLiveState liveState) {
+    LocalDateTime now = LocalDateTime.now();
+    if (now.isBefore(liveState.getAuction().getAuctionStartAt()) ||
+        now.isAfter(liveState.getAuction().getAuctionEndAt())) {
+      bidRecordService.recordHistory(
+          new AuctionBidHistory(liveState.getAuction().getId(), bidPrice, participation.getUserId(),
+              BidType.BID_FAIL_TIME));
+      throw new AuctionTimeOutOfRangeException();
+    }
+
+    BigDecimal currentBid =
+        liveState.getCurrentBid() != null ? liveState.getCurrentBid() : BigDecimal.ZERO;
+    if (bidPrice.compareTo(currentBid) <= 0) {
+      bidRecordService.recordHistory(
+          new AuctionBidHistory(liveState.getAuction().getId(), bidPrice, participation.getUserId(),
+              BidType.BID_FAIL_LOW_PRICE));
+      throw new BidPriceTooLowException();
+    }
+  }
+
+  private AuctionBidHistory placeBid(AuctionParticipation participation, AuctionLiveState liveState,
+      BigDecimal bidPrice) {
+    // 실시간 상태 업데이트
+    liveState.update(participation.getUserId(), bidPrice);
+    auctionLiveStateJpaRepository.save(liveState);
+
+    // 참여현황 업데이트
+    participation.placeBid(bidPrice);
+
+    // 성공 이력 기록
+    return bidRecordService.recordHistory(
+        new AuctionBidHistory(liveState.getAuction().getId(), bidPrice, participation.getUserId(),
+            BidType.BID_SUCCESS));
+  }
+
+  private void broadcastBid(AuctionBidHistory history) {
+    auctionWebSocketService.broadcastBidSuccess(AuctionBidMessage.fromEntity(history));
+  }
 }
 

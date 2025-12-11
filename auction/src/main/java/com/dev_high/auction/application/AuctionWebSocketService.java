@@ -1,8 +1,6 @@
 package com.dev_high.auction.application;
 
 import com.dev_high.auction.application.dto.AuctionBidMessage;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -28,17 +26,10 @@ public class AuctionWebSocketService {
   /**
    * 입찰 성공 시 웹소켓으로 실시간 전파
    */
-  public void broadcastBidSuccess(String auctionId, String highestUserId, BigDecimal bidPrice) {
-    AuctionBidMessage message = new AuctionBidMessage(
-        "BID_SUCCESS",
-        auctionId,
-        highestUserId,   // 실제 최고가 입찰자
-        bidPrice,
-        LocalDateTime.now(),
-        getCurrentUserCount(auctionId)
-    );
+  public void broadcastBidSuccess(AuctionBidMessage message) {
+    message.withCurrentUsers(getCurrentUserCount(message.auctionId()));
 
-    messagingTemplate.convertAndSend("/topic/auction." + auctionId, message);
+    messagingTemplate.convertAndSend("/topic/auction." + message.auctionId(), message);
   }
 
   /**

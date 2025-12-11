@@ -16,15 +16,14 @@ public record AuctionParticipationResponse(boolean isParticipated, boolean isWit
   public static AuctionParticipationResponse isParticipated(AuctionParticipation participation) {
     boolean withdrawn = "Y".equals(participation.getWithdrawnYn());
     boolean refund = "Y".equals(participation.getDepositRefundedYn());
-
     return new AuctionParticipationResponse(true, withdrawn, refund,
         participation.getDepositAmount(), participation.getWithdrawnAt(),
         participation.getDepositRefundedAt(), participation.getBidPrice());
   }
 
-  public static AuctionParticipationResponse isNotParticipated(BigDecimal depositAmount) {
+  public static AuctionParticipationResponse isNotParticipated() {
     return new AuctionParticipationResponse(
-        false, false, false, depositAmount, null, null, null
+        false, false, false, BigDecimal.ZERO, null, null, null
     );
   }
 

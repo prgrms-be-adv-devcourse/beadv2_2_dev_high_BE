@@ -1,5 +1,6 @@
 package com.dev_high.auction.application;
 
+import com.dev_high.auction.application.dto.AuctionBidMessage;
 import com.dev_high.auction.application.dto.AuctionParticipationResponse;
 import com.dev_high.auction.domain.AuctionBidHistory;
 import com.dev_high.auction.domain.AuctionLiveState;
@@ -16,12 +17,16 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.util.HttpUtil;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -41,8 +46,8 @@ public class BidRecordService {
   private final EntityManager entityManager;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void recordHistory(AuctionBidHistory history) {
-    auctionBidHistoryJpaRepository.save(history);
+  public AuctionBidHistory recordHistory(AuctionBidHistory history) {
+    return auctionBidHistoryJpaRepository.save(history);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -71,7 +76,7 @@ public class BidRecordService {
 
     if (!isExist) {
 
-      return AuctionParticipationResponse.isNotParticipated(BigDecimal.ZERO);
+      return AuctionParticipationResponse.isNotParticipated();
     }
 
     AuctionParticipationId participationId = new AuctionParticipationId(userId, auctionId);
@@ -108,10 +113,13 @@ public class BidRecordService {
 
     try {
 
-      HttpHeaders headers = HttpUtil.createBearerHttpHeaders(UserContext.get().token());
+      Map<String, Object> map = new HashMap<>();
+      map.put("userId", userId);
+      map.put("type", "CHARGE");
+      map.put("amount", participation.getDepositAmount());
 
-      HttpEntity<Void> entity = new HttpEntity<>(headers);
-      //임시
+      HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(map);
+
       String url = "http://APIGATEWAY/api/v1/deposit/" + userId;
 
       ResponseEntity<ApiResponseDto<?>> response;
@@ -123,7 +131,7 @@ public class BidRecordService {
           }
       );
       if (response.getBody() != null) {
-        log.info("deposit response >>>{}", response.getBody().toString());
+        log.info("deposit response >>>{}", response.getBody().getData().toString());
         processRefundComplete(participation);
 
       }
@@ -136,17 +144,23 @@ public class BidRecordService {
 
 
   // 환불완료
-  public void markDepositRefunded(String auctionId, List<String> userIds) {
+  public long markDepositRefunded(String auctionId, List<String> userIds) {
 
     List<AuctionParticipation> participations = auctionParticipationJpaRepository.findByAuctionIdAndUserIdIn(
         auctionId,
         userIds);
 
+    long count = 0;
     for (AuctionParticipation participation : participations) {
       // 환불 완료로 상태 변경
-      processRefundComplete(participation);
+      if (participation.getDepositRefundedYn().equals("N")) {
+        processRefundComplete(participation);
+        count++;
+      }
 
     }
+
+    return count;
 
   }
 
@@ -162,10 +176,13 @@ public class BidRecordService {
   }
 
 
-  public List<AuctionParticipation> getAllMyParticipations() {
+  public List<AuctionParticipationResponse> getAllMyParticipations() {
     String userId = UserContext.get().userId();
 
-    return auctionParticipationJpaRepository.findByUserId(userId);
+    //TODO: 추가로 조회할 정보 (경매상태 ,최종낙찰여부)
+
+    return auctionParticipationJpaRepository.findByUserId(userId).stream()
+        .map(AuctionParticipationResponse::isParticipated).toList();
   }
 
   public AuctionParticipationResponse createParticipation(String auctionId, BigDecimal decimal) {
@@ -178,5 +195,20 @@ public class BidRecordService {
         new AuctionParticipation(id, decimal));
     auctionParticipationJpaRepository.save(participation);
     return AuctionParticipationResponse.isParticipated(participation);
+  }
+
+
+  public Page<AuctionBidMessage> getBidHistory(String auctionId, Pageable pageable) {
+    Page<AuctionBidHistory> page = auctionBidHistoryJpaRepository
+        .findByAuctionIdAndType(auctionId, BidType.BID_SUCCESS, pageable);
+
+    // DTO 변환
+    List<AuctionBidMessage> dtoList = page.getContent()
+        .stream()
+        .map(AuctionBidMessage::fromEntity)
+        .toList();
+
+    return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+
   }
 }

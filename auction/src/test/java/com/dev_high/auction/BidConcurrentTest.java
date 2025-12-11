@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import com.dev_high.auction.application.AuctionWebSocketService;
 import com.dev_high.auction.application.BidRecordService;
 import com.dev_high.auction.application.BidService;
-import com.dev_high.auction.application.dto.BidResponse;
+import com.dev_high.auction.application.dto.AuctionParticipationResponse;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionBidHistory;
 import com.dev_high.auction.domain.AuctionLiveState;
@@ -68,9 +68,9 @@ class BidConcurrentTest {
     bidService = new BidService(
         auctionLiveStateJpaRepository,
         auctionRepository,
-        auctionWebSocketService,
-        eventPublisher,
-        bidRecordService
+        auctionParticipationJpaRepository,
+        bidRecordService,
+        auctionWebSocketService
     );
 
     // --- Auction 생성 ---
@@ -180,9 +180,10 @@ class BidConcurrentTest {
 
           // --- 입찰가를 충분히 높게 설정 ---
           BigDecimal bidPrice = BigDecimal.valueOf(6000L + userIndex * 100L);
-          AuctionBidRequest request = new AuctionBidRequest(bidPrice);
+          AuctionBidRequest request = new AuctionBidRequest(bidPrice, BigDecimal.ZERO);
 
-          BidResponse response = bidService.createOrUpdateAuctionBid(auctionId, request);
+          AuctionParticipationResponse response = bidService.createOrUpdateAuctionBid(auctionId,
+              request.toBidCommand());
           System.out.println("User " + userIndex + " success: " + response);
 
         } catch (Exception e) {
