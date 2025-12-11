@@ -127,9 +127,10 @@ public class Auction {
     this.updatedBy = updatedBy;
   }
 
-  public void remove() {
+  public void remove(String userId) {
     this.deletedYn = "Y";
     this.deletedAt = DateUtil.now();
+    this.updatedBy = userId;
 
   }
 

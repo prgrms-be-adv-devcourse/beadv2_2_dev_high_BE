@@ -227,10 +227,28 @@ public class AuctionService {
 
   @Transactional
   public void removeAuction(String auctionId) {
+    String userId = UserContext.get().userId();
+    String role = UserContext.get().role();
+
+    if ("USER".equals(role)) {
+      throw new AuctionModifyForbiddenException();
+    }
+
     Auction auction = auctionRepository.findById(auctionId)
         .orElseThrow(AuctionNotFoundException::new);
 
-    auction.remove();
+    if (auction.getStatus() != AuctionStatus.READY) {
+      throw new AuctionStatusInvalidException();
+    }
+
+    if ("SELLER".equals(role)) {
+      if (!auction.getProduct().getSellerId().equals(userId)) {
+        throw new AuctionModifyForbiddenException();
+      }
+
+    }
+
+    auction.remove(userId);
 
     // dirty check 자동저장
   }

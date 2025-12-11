@@ -53,6 +53,7 @@ public class AuctionLiveState {
     this.auction = auction;
     this.auctionId = auction.getId();
     this.currentBid = BigDecimal.ZERO;
+    this.updatedAt = LocalDateTime.now();
   }
 
   public void update(String highestUserId, BigDecimal currentBid) {
