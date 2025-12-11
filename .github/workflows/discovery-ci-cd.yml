@@ -74,7 +74,7 @@ jobs:
           username: ${{ secrets.GIT_ACTOR }} #username 고정
           password: ${{ secrets.GIT_TOKEN }}
 
-      - name: Build and push image
+      - name: Build and push image #이미지 빌드 후 ghcr에 push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -96,10 +96,20 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
 
+#kubectl에게 k8s의 권한을 주는 과정
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Ensure GHCR imagePullSecret exists
+        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성(dry-run yaml을 생성해서-> apply로 자동저장)
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy discovery
         env:
