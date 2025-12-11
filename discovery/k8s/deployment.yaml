@@ -34,19 +34,19 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 12
+            initialDelaySeconds: 200
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 20
 
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 60
+            initialDelaySeconds: 200
             periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 6
+            timeoutSeconds: 5
+            failureThreshold: 10
 
           resources:
             requests:
