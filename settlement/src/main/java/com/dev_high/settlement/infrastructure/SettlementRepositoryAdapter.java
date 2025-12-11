@@ -39,6 +39,11 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
+    public List<Settlement> saveAll(List<Settlement> settlements) {
+        return settlementRepository.saveAll(settlements);
+    }
+
+    @Override
     public List<Settlement> findAllByIdIn(List<String> ids) {
         return settlementRepository.findAllByIdIn(ids);
     }

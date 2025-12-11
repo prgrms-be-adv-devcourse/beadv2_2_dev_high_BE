@@ -29,16 +29,18 @@ spring:
   batch:
     jdbc:
       initialize-schema: never
-    job:
-      myJob:
-        reader:
-          pageSize: 1000 # Example page size
+    chunk:
+      page-size: 1000 # Reader에서 @Value("${spring.batch.chunk.page-size}")로 주입
 
   task:
     scheduling:
       pool:
         size: 5
 
+  kafka:
+    bootstrap-servers: 3.39.162.115:30092
+    username: kafka
+    password: 1234
 
 server:
   port: ${SERVER_PORT}
