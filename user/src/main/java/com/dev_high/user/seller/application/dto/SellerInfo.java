@@ -4,13 +4,11 @@ import com.dev_high.user.seller.domain.Seller;
 
 public record SellerInfo(
         String userId,
-        String sellerId,
         String bankName,
         String bankAccount
 ) {
     public static SellerInfo from(Seller seller) {
         return new SellerInfo(
-                seller.getUser().getId(),
                 seller.getId(),
                 seller.getBankName(),
                 seller.getBankAccount()

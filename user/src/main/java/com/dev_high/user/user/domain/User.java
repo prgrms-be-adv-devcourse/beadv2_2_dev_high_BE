@@ -75,7 +75,7 @@ public class User {
     public void prePersist() {
         createdBy = id;
         updatedBy = id;
-        this.userStatus = UserStatus.PENDING_VERIFICATION;
+        this.userStatus = UserStatus.ACTIVE;
         this.userRole = UserRole.USER;
         this.deletedYn = "N";
         createdAt = LocalDateTime.now();

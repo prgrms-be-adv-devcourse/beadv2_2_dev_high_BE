@@ -7,8 +7,4 @@ public class MailSendFailedException extends CustomException {
     public MailSendFailedException() {
         super(HttpStatus.SERVICE_UNAVAILABLE, "가입 인증 코드 메일 전송에 실패했습니다.");
     }
-
-    public MailSendFailedException(String errorCode, String message) {
-        super(HttpStatus.SERVICE_UNAVAILABLE, message, errorCode);
-    }
 }
