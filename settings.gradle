@@ -6,7 +6,6 @@ include 'common'
 include 'config'
 include 'apigateway'
 include 'discovery'
-include 'auth'
 
 // service module
 include 'notification'
@@ -18,3 +17,4 @@ include 'product-domain'
 include 'search'
 include 'settlement'
 include 'user'
+include 'file-service'

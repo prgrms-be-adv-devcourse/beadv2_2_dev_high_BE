@@ -28,14 +28,17 @@ public class Order {
     @Column(name = "auction_id", nullable = false, length = 50)
     private String auctionId;
 
-    @Column(name = "confirm_amount", nullable = false)
-    private Integer confirmAmount; // DB에 맞춰 통일
+    @Column(name = "winning_amount", nullable = false)
+    private Long winningAmount; // DB에 맞춰 통일
 
-    @Column(name = "confirm_date", nullable = false)
-    private LocalDateTime confirmDate;
+    @Column(name = "winning_date", nullable = false)
+    private LocalDateTime winningDate;
 
     @Column(name = "pay_complete_date")
     private LocalDateTime payCompleteDate; // NULL 허용
+
+    @Column(nullable = false, length = 1)
+    private String payYn = "N";
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -61,13 +64,13 @@ public class Order {
     }
 
     public Order(String sellerId, String buyerId, String auctionId,
-                 Integer confirmAmount, LocalDateTime confirmDate,
+                 Long winningAmount, LocalDateTime winningDate,
                  OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
         this.auctionId = auctionId;
-        this.confirmAmount = confirmAmount;
-        this.confirmDate = confirmDate;
+        this.winningAmount = winningAmount;
+        this.winningDate = winningDate;
         this.status = status;
     }
 
@@ -76,8 +79,8 @@ public class Order {
                 request.sellerId(),
                 request.buyerId(),
                 request.auctionId(),
-                request.confirmAmount(),
-                request.confirmDate(),
+                request.winningAmount(),
+                request.winningDate(),
                 request.status()
         );
     }
@@ -88,8 +91,8 @@ public class Order {
                 sellerId,
                 buyerId,
                 auctionId,
-                confirmAmount,
-                confirmDate,
+                winningAmount,
+                winningDate,
                 status,
                 payCompleteDate,
                 createdAt,

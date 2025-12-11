@@ -1,5 +1,6 @@
 package com.dev_high.auction.application;
 
+import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.domain.Auction;
@@ -12,9 +13,10 @@ import com.dev_high.auction.exception.AuctionStatusInvalidException;
 import com.dev_high.auction.exception.DuplicateAuctionException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.common.context.UserContext;
 import com.dev_high.common.exception.CustomException;
-import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.util.DateUtil;
+import com.dev_high.product.domain.Product;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +32,6 @@ public class AuctionService {
 
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
-  private final KafkaEventPublisher eventPublisher;
 
   public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
@@ -39,17 +40,21 @@ public class AuctionService {
 
     Page<AuctionResponse> responsePage = page.map(AuctionResponse::fromEntity);
 
-//    eventPublisher.publish("TEST", "TEST 입니다.");
+//    eventPublisher.publish(KafkaTopics.AUCTION_NOTIFICATION_REQUESTED,
+//        new AuctionNotificationRequestEvent("ACT1", List.of("TSETUSER"), "start"));
     return responsePage;
   }
 
 
-  public AuctionResponse getAuctionDetail(String auctionId) {
+  public AuctionDetailResponse getAuctionDetail(String auctionId) {
 
     Auction auction = auctionRepository.findById(auctionId)
         .orElseThrow(AuctionNotFoundException::new);
+    AuctionLiveState live = auction.getLiveState();
 
-    return AuctionResponse.fromEntity(auction);
+    Product product = auction.getProduct();
+
+    return AuctionDetailResponse.fromEntity(auction, product, live);
   }
 
   @Transactional
@@ -90,7 +95,7 @@ public class AuctionService {
 
   @Transactional
   public AuctionResponse modifyAuction(AuctionRequest request) {
-    String userId = "TEST";
+    String userId = UserContext.get().userId();
     validateAuction(request);
     LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
         .withSecond(0)
@@ -125,7 +130,7 @@ public class AuctionService {
       auctionLiveStateRepository.save(state);
     }
 
-    auction.modify(request.startBid(), start, end);
+    auction.modify(request.startBid(), start, end, userId);
 
     //dirty check
     return AuctionResponse.fromEntity(auction);

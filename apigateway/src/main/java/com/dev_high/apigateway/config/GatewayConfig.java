@@ -1,13 +1,16 @@
 package com.dev_high.apigateway.config;
 
 
+import java.util.Map;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class GatewayConfig {
+
 
   @Bean
   public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
@@ -29,11 +32,6 @@ public class GatewayConfig {
         .route("deposit-service", r -> r
             .path("/api/v1/deposit/**")
             .uri("lb://DEPOSIT-SERVICE"))
-
-        // Auth Service
-        .route("auth-service", r -> r
-            .path("/api/v1/auth/**")
-            .uri("lb://AUTH"))
 
         // Order Service
         .route("order-service", r -> r
@@ -57,9 +55,38 @@ public class GatewayConfig {
 
         // User Service
         .route("user-service", r -> r
-            .path("/api/v1/user/**")
+            .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**")
             .uri("lb://USER-SERVICE"))
 
         .build();
+  }
+
+  @Bean
+  @Profile("!prod")
+  public RouteLocator swaggerRoutes(RouteLocatorBuilder builder) {
+    RouteLocatorBuilder.Builder routesBuilder = builder.routes();
+
+    // 서비스 이름과 lb URI를 맵으로 관리
+    Map<String, String> services = Map.of(
+        "auction-service", "lb://AUCTION-SERVICE",
+        "notice-service", "lb://NOTICE-SERVICE",
+        "deposit-service", "lb://DEPOSIT-SERVICE",
+        "order-service", "lb://ORDER-SERVICE",
+        "product-service", "lb://PRODUCT-SERVICE",
+        "search-service", "lb://SEARCH-SERVICE",
+        "settlement-service", "lb://SETTLEMENT-SERVICE",
+        "user-service", "lb://USER-SERVICE"
+    );
+
+    services.forEach((name, uri) -> {
+      routesBuilder.route(name + "-swagger", r -> r
+          .path("/swagger/" + name + "/**")
+          .filters(f -> f.rewritePath("/swagger/" + name + "(/(?<segment>.*))?",
+              "/v3/api-docs${segment}"))
+          .uri(uri)
+      );
+    });
+
+    return routesBuilder.build();
   }
 }

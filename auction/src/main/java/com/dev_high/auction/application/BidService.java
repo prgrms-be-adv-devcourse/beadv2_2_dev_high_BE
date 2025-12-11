@@ -7,18 +7,17 @@ import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionParticipation;
 import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.BidType;
+import com.dev_high.auction.domain.idclass.AuctionParticipationId;
 import com.dev_high.auction.exception.AlreadyWithdrawnException;
 import com.dev_high.auction.exception.AuctionNotFoundException;
 import com.dev_high.auction.exception.AuctionParticipationNotFoundException;
 import com.dev_high.auction.exception.AuctionTimeOutOfRangeException;
 import com.dev_high.auction.exception.BidPriceTooLowException;
-import com.dev_high.auction.exception.CannotWithdrawHighestBidderException;
 import com.dev_high.auction.exception.OptimisticLockBidException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
+import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
-import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
-import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.context.UserContext;
 import jakarta.persistence.OptimisticLockException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,19 +35,18 @@ public class BidService {
   private final AuctionLiveStateJpaRepository auctionLiveStateJpaRepository;
   private final AuctionRepository auctionRepository;
   private final AuctionWebSocketService auctionWebSocketService;
+  private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
 
-  private final KafkaEventPublisher eventPublisher;
   private final BidRecordService bidRecordService;
 
 
   public BidResponse createOrUpdateAuctionBid(String auctionId, AuctionBidRequest request) {
     BigDecimal bidPrice = request.bidPrice();
-    // 임시
-    String userId = "TEST";
-    // 참여 여부 조회, 없으면 새로 생성
+    String userId = UserContext.get().userId();
 
-    AuctionParticipation participation = bidRecordService.getOrCreateParticipation(userId,
-        auctionId);
+    AuctionParticipation participation = auctionParticipationJpaRepository.findById(
+        new AuctionParticipationId(userId,
+            auctionId)).orElseThrow(AuctionParticipationNotFoundException::new);
 
     // 이미 포기한 사용자면 입찰 불가
     if ("Y".equals(participation.getWithdrawnYn())) {
@@ -91,7 +88,10 @@ public class BidService {
           }
 
           // 입찰가가 현재가보다 낮으면 실패 처리
-          if (bidPrice.compareTo(liveState.getCurrentBid()) <= 0) {
+          BigDecimal currentBid =
+              liveState.getCurrentBid() != null ? liveState.getCurrentBid() : BigDecimal.ZERO;
+
+          if (bidPrice.compareTo(currentBid) <= 0) {
             // 실패 이력 기록
             bidRecordService.recordHistory(
                 new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_FAIL_LOW_PRICE));
@@ -129,56 +129,6 @@ public class BidService {
       log.warn("WebSocket broadcast failed: {}", e.getMessage());
     }
     return new BidResponse(bidPrice, userId);
-  }
-
-
-  @Transactional
-  public void withdrawAuctionBid(String auctionId) {
-    String userId = "TEST";
-    AuctionParticipation participation = bidRecordService.findParticipation(userId, auctionId)
-        .orElseThrow(AuctionParticipationNotFoundException::new);
-
-    if ("Y".equals(participation.getWithdrawnYn())) {
-      throw new AlreadyWithdrawnException();
-    }
-    AuctionLiveState liveState = participation.getAuction().getLiveState();
-
-    if (liveState.getHighestUserId().equals(userId)) {
-      throw new CannotWithdrawHighestBidderException();
-    }
-
-    // 포기 처리
-    participation.markWithdraw();
-
-    // 이력 기록
-    bidRecordService.recordHistory(
-        new AuctionBidHistory(auctionId, participation.getBidPrice(), userId,
-            BidType.BID_WITHDRAW));
-
-    // 보증금 환불 요청 (kafka or 비동기 api호출)
-    BigDecimal deposit = liveState.getAuction().getDepositAmount();
-
-    eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
-        new AuctionDepositRefundRequestEvent(userId, auctionId, deposit));
-
-
-  }
-
-
-  @Transactional
-  public void markDepositRefunded(String auctionId) {
-    String userId = "TEST";
-
-    AuctionParticipation participation = bidRecordService.findParticipation(userId, auctionId)
-        .orElseThrow(AuctionParticipationNotFoundException::new);
-
-    // 환불 완료처리
-    participation.markDepositRefunded(); //더티체킹으로 저장
-
-    // 이력 기록
-    bidRecordService.recordHistory(
-        new AuctionBidHistory(auctionId, participation.getBidPrice(), userId,
-            BidType.WITHDRAW_COMPLETE));
   }
 
 
