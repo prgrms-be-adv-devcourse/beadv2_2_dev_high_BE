@@ -41,7 +41,6 @@ public class BatchHelper {
   private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
   private final KafkaEventPublisher eventPublisher;
   private final ObjectMapper objectMapper;
-
   private final RestTemplate restTemplate;
 
   private List<String> getWishlistUserIds(String productId) {
@@ -75,6 +74,7 @@ public class BatchHelper {
 
     List<String> targetIds = auctionRepository
         .bulkUpdateStartStatus();
+    log.info("auction start target>> {}", targetIds.size());
 
     chunkContext.getStepContext()
         .getStepExecution()
@@ -157,7 +157,7 @@ public class BatchHelper {
     if (targetIds != null && !targetIds.isEmpty()) {
 
       for (String auctionId : targetIds) {
-
+        process(auctionId);
       }
     }
     return RepeatStatus.FINISHED;
@@ -178,7 +178,15 @@ public class BatchHelper {
     if (highestUserId == null) {
       // 유찰 처리
       auction.changeStatus(AuctionStatus.FAILED, "SYSTEM");
-      // TODO: 판매자한테 알림
+      try {
+        eventPublisher.publish(
+            KafkaTopics.NOTIFICATION_REQUEST,
+            new NotificationRequestEvent(List.of(sellerId),
+                "상품명 " + product.getName() + " 경매가 유찰되었습니다.",
+                "/auctions/" + auction.getId()));
+      } catch (Exception e) {
+        log.error("kafka send failed :{}", e);
+      }
 
       return;
     }
@@ -193,7 +201,7 @@ public class BatchHelper {
       try {
         eventPublisher.publish(
             KafkaTopics.NOTIFICATION_REQUEST,
-            new NotificationRequestEvent(userIds, product.getName() + " 경매가 종료되었습니다.",
+            new NotificationRequestEvent(userIds, "상품명 " + product.getName() + " 경매가 종료되었습니다.",
                 "/auctions/" + auction.getId()));
 
       } catch (Exception e) {
