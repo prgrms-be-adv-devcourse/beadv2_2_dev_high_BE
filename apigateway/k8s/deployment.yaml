@@ -26,6 +26,16 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: JWT_SECRET
+            - name: JWT_ACCESS_TOKEN_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: JWT_ACCESS_TOKEN_EXPIRATION
           resources:
             requests:
               cpu: "100m"

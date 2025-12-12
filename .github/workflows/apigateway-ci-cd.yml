@@ -102,13 +102,22 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
       - name: Ensure GHCR imagePullSecret exists
-        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성(dry-run yaml을 생성해서-> apply로 자동저장)
+        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성. 도커 레지스트리(secret)에 ghcr 접근관련 정보제공, --dry-run=client -o yaml은 리소스 안남김
           kubectl create secret docker-registry ghcr-secret \
             --namespace ${{ env.NAMESPACE }} \
             --docker-server=${{ env.REGISTRY }} \
             --docker-username=${{ secrets.GIT_ACTOR }} \
             --docker-password=${{ secrets.GIT_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create or update apigateway secret
+        run: | #jwt 제공
+          kubectl create secret generic apigateway-secret \
+          --namespace ${{ env.NAMESPACE }} \
+          --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION }}" \
+          --dry-run=client -o yaml | kubectl apply -f -
+    
 
       - name: Deploy apigateway
         env:
