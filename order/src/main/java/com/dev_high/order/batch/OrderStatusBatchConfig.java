@@ -19,13 +19,11 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@EnableScheduling
 public class OrderStatusBatchConfig {
 
   private final OrderService orderService;
@@ -71,23 +69,22 @@ public class OrderStatusBatchConfig {
 
           log.info("{} → {} : {}건", oldStatus, newStatus, buyers.size());
 
-          if (message != null && redirect != null && !buyers.isEmpty()) {
-            List<String> distinctBuyers = buyers.stream().distinct().toList();
-
-            try {
-              publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-                  new NotificationRequestEvent(distinctBuyers,
-                      message, redirect
-                  ));
-            } catch (Exception e) {
-              log.error("앎림 이벤트 실패 :{}", e.getMessage());
-            }
-
-          }
+          notifyBuyers(buyers, message, redirect);
 
           return RepeatStatus.FINISHED;
         }, txManager)
         .build();
   }
 
+  private void notifyBuyers(List<String> buyers, String message, String redirect) {
+    if (buyers.isEmpty() || message == null || redirect == null) {
+      return;
+    }
+    try {
+      publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
+          new NotificationRequestEvent(buyers.stream().distinct().toList(), message, redirect));
+    } catch (Exception e) {
+      log.error("알림 이벤트 실패: {}", e.getMessage());
+    }
+  }
 }
