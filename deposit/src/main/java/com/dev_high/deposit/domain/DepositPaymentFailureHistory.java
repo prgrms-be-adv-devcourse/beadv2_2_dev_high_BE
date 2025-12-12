@@ -1,5 +1,6 @@
 package com.dev_high.deposit.domain;
 
+import com.dev_high.common.annotation.CustomGeneratedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,6 +19,7 @@ public class DepositPaymentFailureHistory {
     @Schema(description = "예치금 결제 실패 이력 ID")
     @Id
     @Column(name = "id")
+    @CustomGeneratedId(method = "deposit_payment_failure_history")
     private Long id;
 
     /*
@@ -53,6 +55,7 @@ public class DepositPaymentFailureHistory {
         this.userId = userId;
         this.code = code;
         this.message = message;
+        this.createdBy = userId;
     }
 
     @PrePersist

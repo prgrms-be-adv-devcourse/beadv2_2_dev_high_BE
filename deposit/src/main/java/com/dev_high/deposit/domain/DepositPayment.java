@@ -89,6 +89,8 @@ public class DepositPayment {
         this.status = status;
         this.approvalNum = approvalNum;
         this.approvedAt = approvedAt;
+        this.createdBy = userId;
+        this.updatedBy = userId;
     }
 
     @PrePersist
@@ -96,14 +98,11 @@ public class DepositPayment {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        this.createdBy = id;
-        this.updatedBy = id;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
-        this.updatedBy = id;
     }
 
     public static DepositPayment create(String orderId, String userId, long amount) {
