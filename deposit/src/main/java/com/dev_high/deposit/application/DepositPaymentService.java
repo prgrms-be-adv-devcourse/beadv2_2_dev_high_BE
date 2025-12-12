@@ -1,5 +1,6 @@
 package com.dev_high.deposit.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentCreateCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentInfo;
@@ -38,10 +39,13 @@ public class DepositPaymentService {
             throw new IllegalStateException("해당 주문 ID에 대한 결제 기록이 이미 존재합니다: " + command.orderId());
         }
 
+        String userId = UserContext.get().userId();
+
         DepositPayment payment = DepositPayment.create(
                 command.orderId(),
-                command.userId(),
-                command.amount()
+                userId,
+                command.amount(),
+                ""  // 결제 승인 이전 paymentKey
                 //command.method() 엔티티 내부에 CARD로 초기화 중
         );
 
@@ -50,7 +54,9 @@ public class DepositPaymentService {
 
     // 사용자 ID별 예치금 결제 내역 조회
     @Transactional(readOnly = true)
-    public Page<DepositPaymentInfo> findPaymentsByUserId(String userId, Pageable pageable) {
+    public Page<DepositPaymentInfo> findPaymentsByUserId(Pageable pageable) {
+        String userId = UserContext.get().userId();
+
         return depositPaymentRepository.findByUserId(userId, pageable)
                 .map(DepositPaymentInfo::from);
     }
@@ -59,10 +65,13 @@ public class DepositPaymentService {
     public DepositPaymentInfo confirmPayment(DepositPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
+        String userId = UserContext.get().userId();
+
         DepositPayment payment = DepositPayment.create(
-                tossPayment.paymentKey(),
                 tossPayment.orderId(),
-                tossPayment.totalAmount()
+                userId,
+                tossPayment.totalAmount(),
+                tossPayment.paymentKey()
         );
         LocalDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toLocalDateTime() : null;
         LocalDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toLocalDateTime() : null;

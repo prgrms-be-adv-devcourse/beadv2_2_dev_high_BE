@@ -7,7 +7,6 @@ import com.dev_high.deposit.domain.DepositPaymentMethod;
  * */
 public record DepositPaymentCreateCommand(
         String orderId,
-        String userId,
         DepositPaymentMethod method,
         long amount
 ) {
