@@ -4,6 +4,7 @@ spring:
       enabled: false
     jdbc:
       table-prefix: public.batch_
+      isolation-level-for-create: read_committed
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost}:${KAFKA_BOOT_PORT:29092}
     username: ${KAFKA_USER:}
@@ -36,3 +37,6 @@ logging:
 
 log:
   path: ${LOG_PATH:./logs}
+
+api:
+  v1: /api/v1
