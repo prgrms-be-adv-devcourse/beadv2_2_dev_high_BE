@@ -58,6 +58,8 @@ public class DepositOrder {
         this.userId = userId;
         this.amount = amount;
         this.status = status;
+        this.createdBy = userId;
+        this.updatedBy = userId;
     }
 
     @PrePersist
@@ -65,14 +67,11 @@ public class DepositOrder {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        this.createdBy = id;
-        this.updatedBy = id;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
-        this.updatedBy = id;
     }
 
     public static DepositOrder create(String userId, long amount) {
