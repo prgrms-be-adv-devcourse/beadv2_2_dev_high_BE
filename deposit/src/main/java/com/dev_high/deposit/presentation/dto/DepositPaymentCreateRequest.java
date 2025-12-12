@@ -21,10 +21,6 @@ public record DepositPaymentCreateRequest(
         @NotBlank(message = "주문 ID는 필수입니다.")
         String orderId,
 
-        @Schema(description = "사용자 ID")
-        @NotBlank(message = "사용자 ID는 필수입니다.")
-        String userId,
-
         @Schema(description = "결제 수단")
         @NotNull(message = "결제 수단은 필수입니다.")
         DepositPaymentMethod method,
@@ -35,6 +31,6 @@ public record DepositPaymentCreateRequest(
         long amount
 ) {
     public DepositPaymentCreateCommand toCommand() {
-        return new DepositPaymentCreateCommand(orderId, userId, method, amount);
+        return new DepositPaymentCreateCommand(orderId, method, amount);
     }
 }

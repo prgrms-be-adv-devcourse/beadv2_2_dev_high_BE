@@ -1,5 +1,6 @@
 package com.dev_high.deposit.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.DepositOrderCreateCommand;
 import com.dev_high.deposit.application.dto.DepositOrderInfo;
 import com.dev_high.deposit.application.dto.DepositOrderUpdateCommand;
@@ -23,8 +24,9 @@ public class DepositOrderService {
     public DepositOrderInfo createOrder(DepositOrderCreateCommand command) {
         DepositOrder order;
         try {
+            String userId = UserContext.get().userId();
             order = DepositOrder.create(
-                    command.userId(),
+                    userId,
                     command.amount()
             );
         } catch (IllegalArgumentException exception) {
@@ -35,7 +37,9 @@ public class DepositOrderService {
 
     // userId별 주문 내역 조회
     @Transactional(readOnly = true)
-    public Page<DepositOrderInfo> findByUserId(String userId, Pageable pageable) {
+    public Page<DepositOrderInfo> findByUserId(Pageable pageable) {
+        String userId = UserContext.get().userId();
+
         return orderRepository.findByUserId(userId, pageable)
                 .map(DepositOrderInfo::from);
     }

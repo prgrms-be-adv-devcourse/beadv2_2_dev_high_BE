@@ -13,12 +13,9 @@ import jakarta.validation.constraints.NotNull;
  * @param amount 주문 금액
  * */
 public record DepositOrderCreateRequest(
-        @NotBlank(message = "사용자 ID는 필수 입니다.")
-        String userId,
-
         @NotNull(message = "금액은 필수입니다.")
         @Min(value = 1, message = "최소 주문 금액은 1원 입니다.")
         long amount
 ) {
-    public DepositOrderCreateCommand toCommand() { return new DepositOrderCreateCommand(userId, amount); }
+    public DepositOrderCreateCommand toCommand() { return new DepositOrderCreateCommand(amount); }
 }
