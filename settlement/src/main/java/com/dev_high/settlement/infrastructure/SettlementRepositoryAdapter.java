@@ -2,49 +2,64 @@ package com.dev_high.settlement.infrastructure;
 
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
+import com.dev_high.settlement.domain.SettlementStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
 public class SettlementRepositoryAdapter implements SettlementRepository {
-    private final SettlementJpaRepository settlementRepository;
 
-    @Override
-    public Optional<Settlement> findById(String id) {
-        return settlementRepository.findById(id);
-    }
+  private final SettlementJpaRepository settlementRepository;
 
-    @Override
-    public List<Settlement> findAllByOrderId(String sellerId) {
-        return settlementRepository.findAllByOrderId(sellerId);
-    }
 
-    @Override
-    public List<Settlement> findAllBySellerId(String sellerId) {
-        return settlementRepository.findAllBySellerId(sellerId);
-    }
+  @Override
+  public List<Settlement> saveAll(List<Settlement> settlements) {
+    return settlementRepository.saveAll(settlements);
+  }
 
-    @Override
-    public boolean existsByOrderId(String orderId) {
-        return settlementRepository.existsByOrderId(orderId);
-    }
+  @Override
+  public Optional<Settlement> findById(String id) {
+    return settlementRepository.findById(id);
+  }
 
-    @Override
-    public Settlement save(Settlement settlement) {
-        return settlementRepository.save(settlement);
-    }
+  @Override
+  public List<Settlement> findAllByOrderId(String sellerId) {
+    return settlementRepository.findAllByOrderId(sellerId);
+  }
 
-    @Override
-    public List<Settlement> saveAll(List<Settlement> settlements) {
-        return settlementRepository.saveAll(settlements);
-    }
+  @Override
+  public List<Settlement> findAllBySellerId(String sellerId) {
+    return settlementRepository.findAllBySellerId(sellerId);
+  }
 
-    @Override
-    public List<Settlement> findAllByIdIn(List<String> ids) {
-        return settlementRepository.findAllByIdIn(ids);
-    }
+  @Override
+  public boolean existsByOrderId(String orderId) {
+    return settlementRepository.existsByOrderId(orderId);
+  }
+
+  @Override
+  public Settlement save(Settlement settlement) {
+    return settlementRepository.save(settlement);
+  }
+
+  @Override
+  public Set<String> findAllOrderIdsByDueDateAndStatus(LocalDateTime nextMonth3rd,
+      SettlementStatus status) {
+    return settlementRepository.findAllOrderIdsByDueDateAndStatus(nextMonth3rd, status);
+  }
+
+  @Override
+  public Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status,
+      LocalDateTime nextMonth3rd, Pageable pageable) {
+    return settlementRepository.findByStatusAndDueDateBefore(status, nextMonth3rd, pageable);
+  }
+
+
 }
