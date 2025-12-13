@@ -53,3 +53,5 @@ management:
         include: refresh, health, beans, info
 
 
+api:
+  v1: /api/v1
