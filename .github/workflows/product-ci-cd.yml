@@ -100,6 +100,26 @@ jobs:
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+      
+
+      - name: Ensure GHCR imagePullSecret exists
+        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성. 도커 레지스트리(secret)에 ghcr 접근관련 정보제공, --dry-run=client -o yaml은 리소스 안남김
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create or update product secret
+        run: | #jwt 제공
+          kubectl create secret generic product-secret \
+          --namespace ${{ env.NAMESPACE }} \
+          --from-literal=JWT_SECRET="${{ secrets.DATASOURCE_DRIVER }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_PASSWORD }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_URL }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_USERNAME }}" \
+          --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy product
         env:

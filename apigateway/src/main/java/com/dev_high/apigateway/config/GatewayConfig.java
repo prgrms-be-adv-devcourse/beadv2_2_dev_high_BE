@@ -67,7 +67,7 @@ public class GatewayConfig {
   }
 
   @Bean
-  @Profile("!prod")
+//  @Profile("!prod")
   public RouteLocator swaggerRoutes(RouteLocatorBuilder builder) {
     RouteLocatorBuilder.Builder routesBuilder = builder.routes();
 
