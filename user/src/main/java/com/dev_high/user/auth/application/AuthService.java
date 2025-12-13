@@ -9,6 +9,7 @@ import com.dev_high.user.auth.exception.*;
 import com.dev_high.user.auth.jwt.JwtProvider;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
+import com.dev_high.user.user.exception.UserAlreadyExistsException;
 import com.dev_high.user.user.exception.UserNotFoundException;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
@@ -38,39 +39,11 @@ public class AuthService {
     private long refreshTokenExpiration;
 
     @Transactional
-    public ApiResponseDto<LoginInfo> login(LoginCommand command) {
-        User user = userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
-        if (!passwordEncoder.matches(command.password(), user.getPassword())) {
-            throw new IncorrectPasswordException();
-        }
-        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getUserRole().name());
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getUserRole().name());
-
-        log.info("accessToken: {}", accessToken);
-        log.info("refreshToken: {}", refreshToken);
-
-        refreshTokenRepository.save(user.getId(), refreshToken, refreshTokenExpiration);
-        LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken, user.getNickname(), user.getUserRole().name());
-        return ApiResponseDto.success(loginInfo);
-    }
-
-    public ApiResponseDto<TokenInfo> refreshToken(TokenCommand command) {
-        Claims claims = jwtProvider.parseToken(command.refreshToken());
-        String userId = claims.getSubject();
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(RefreshTokenNotFoundException::new);
-
-        if(refreshToken.getToken().equals(command.refreshToken())) {
-            String newAccess = jwtProvider.generateAccessToken(userId, claims.get("role", String.class));
-            TokenInfo tokenInfo = new TokenInfo(newAccess);
-            return ApiResponseDto.success(tokenInfo);
-        } else {
-            throw new RefreshTokenMismatchException();
-        }
-    }
-
-    @Transactional
     public ApiResponseDto<Void> sendEmail(SendEmailCommand command) {
         String email = command.email();
+        if(userRepository.existsByEmail(command.email())) {
+            throw new UserAlreadyExistsException();
+        }
         String title = "More 이메일 인증 번호";
         String authCode = this.createEmailVerificationCode();
         log.info(authCode);
@@ -87,6 +60,7 @@ public class AuthService {
     public ApiResponseDto<Void> verifyEmail(VerifyEmailCommand command) {
         Optional<String> emailVerificationCode = emailVerificationCodeRepository.findByEmail(command.email());
         log.info("emailVerificationCode: {}", emailVerificationCode);
+
         if (emailVerificationCode.isPresent()) {
             String savedCode = emailVerificationCode.get();
             if (savedCode.equals(command.code())) {
@@ -97,11 +71,13 @@ public class AuthService {
         } else {
             throw new EmailMismatchException();
         }
+
         return ApiResponseDto.success(null);
     }
 
     private String createEmailVerificationCode() {
         int length = 6;
+
         try {
             Random random = SecureRandom.getInstanceStrong();
             StringBuilder builder = new StringBuilder();
@@ -111,6 +87,40 @@ public class AuthService {
             return builder.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException();
+        }
+    }
+
+    @Transactional
+    public ApiResponseDto<LoginInfo> login(LoginCommand command) {
+        User user = userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
+
+        if (!passwordEncoder.matches(command.password(), user.getPassword())) {
+            throw new IncorrectPasswordException();
+        }
+
+        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getUserRole().name());
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getUserRole().name());
+
+        log.info("accessToken: {}", accessToken);
+        log.info("refreshToken: {}", refreshToken);
+
+        refreshTokenRepository.save(user.getId(), refreshToken, refreshTokenExpiration);
+        LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken, user.getNickname(), user.getUserRole().name());
+
+        return ApiResponseDto.success(loginInfo);
+    }
+
+    public ApiResponseDto<TokenInfo> refreshToken(TokenCommand command) {
+        Claims claims = jwtProvider.parseToken(command.refreshToken());
+        String userId = claims.getSubject();
+
+        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(RefreshTokenNotFoundException::new);
+        if(refreshToken.getToken().equals(command.refreshToken())) {
+            String newAccess = jwtProvider.generateAccessToken(userId, claims.get("role", String.class));
+            TokenInfo tokenInfo = new TokenInfo(newAccess);
+            return ApiResponseDto.success(tokenInfo);
+        } else {
+            throw new RefreshTokenMismatchException();
         }
     }
 
