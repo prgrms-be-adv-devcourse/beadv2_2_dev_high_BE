@@ -32,7 +32,7 @@ public class CustomException extends RuntimeException {
   }
 
   // 전부변경
-  public CustomException( HttpStatus status,String message,String errorCode) {
+  public CustomException(HttpStatus status,String message,String errorCode) {
     super(message);
     this.status = status;
     this.errorCode=errorCode;

@@ -11,6 +11,7 @@ import com.dev_high.user.user.application.dto.UserInfo;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.domain.UserRole;
+import com.dev_high.user.user.exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import com.dev_high.common.dto.ApiResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,10 @@ public class UserService {
 
     @Transactional
     public ApiResponseDto<UserInfo> create(CreateUserCommand command){
+        if(userRepository.existsByEmail(command.email())) {
+            throw new UserAlreadyExistsException();
+        }
+
         User user = new User(
                 command.email(),
                 passwordEncoder.encode(command.password()),

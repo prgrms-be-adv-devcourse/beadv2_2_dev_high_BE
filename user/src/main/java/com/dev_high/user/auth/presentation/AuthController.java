@@ -8,6 +8,7 @@ import com.dev_high.user.auth.presentation.dto.LoginRequest;
 import com.dev_high.user.auth.presentation.dto.SendEmailRequest;
 import com.dev_high.user.auth.presentation.dto.TokenRequest;
 import com.dev_high.user.auth.presentation.dto.VerifyEmailRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/send/email")
-    public ApiResponseDto<Void> sendEmail(@RequestBody SendEmailRequest request) {
+    public ApiResponseDto<Void> sendEmail(@Valid @RequestBody SendEmailRequest request) {
         return authService.sendEmail(request.toCommand());
     }
 
