@@ -6,21 +6,19 @@ on:
       - feat/#46-ci-cd
     paths:
       - 'config/**'
+      - '!config/config/**' # ignore data-only changes
       - '.github/workflows/config-ci-cd.yml'
       - 'build.gradle'
       - 'settings.gradle'
       - '.dockerignore'
-    paths-ignore:
-      - 'config/config/**' # exclude config data-only changes from triggering build/deploy
   pull_request:
     paths:
       - 'config/**'
+      - '!config/config/**' # ignore data-only changes
       - '.github/workflows/config-ci-cd.yml'
       - 'build.gradle'
       - 'settings.gradle'
       - '.dockerignore'
-    paths-ignore:
-      - 'config/config/**' # exclude config data-only changes from triggering build/deploy
   workflow_dispatch:
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
