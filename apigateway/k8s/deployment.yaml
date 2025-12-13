@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway
+  labels:
+    app: apigateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apigateway
+  template:
+    metadata:
+      labels:
+        app: apigateway
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: apigateway
+          image: ghcr.io/prgrms-be-adv-devcourse/apigateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: JWT_SECRET
+            - name: JWT_ACCESS_TOKEN_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: JWT_ACCESS_TOKEN_EXPIRATION
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 300
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 300
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6

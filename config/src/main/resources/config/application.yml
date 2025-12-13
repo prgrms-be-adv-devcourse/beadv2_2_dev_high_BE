@@ -37,6 +37,3 @@ logging:
 
 log:
   path: ${LOG_PATH:./logs}
-
-api:
-  v1: /api/v1

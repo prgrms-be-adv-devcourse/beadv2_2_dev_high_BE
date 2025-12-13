@@ -105,11 +105,11 @@ public class DepositPayment {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static DepositPayment create(String orderId, String userId, long amount) {
+    public static DepositPayment create(String orderId, String userId, long amount, String paymentKey) {
         return DepositPayment.builder()
                 .orderId(orderId)
                 .userId(userId)
-                .paymentKey("")
+                .paymentKey(paymentKey)
                 .method("")
                 .amount(amount)
                 .status(DepositPaymentStatus.READY) // default : READY

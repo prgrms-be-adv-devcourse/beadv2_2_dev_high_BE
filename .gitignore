@@ -42,7 +42,6 @@ out/
 product/.env
 product/.env.*
 .productSQL.sql
-ex.sql
 
 ### file env ###
 ex.sql
@@ -54,3 +53,4 @@ user/.env
 
 ### apigateway env ###
 apigateway/.env
+

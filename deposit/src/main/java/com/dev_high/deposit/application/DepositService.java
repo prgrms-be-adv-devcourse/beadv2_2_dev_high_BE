@@ -1,5 +1,6 @@
 package com.dev_high.deposit.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.DepositCreateCommand;
 import com.dev_high.deposit.application.dto.DepositInfo;
 import com.dev_high.deposit.domain.Deposit;
@@ -42,7 +43,9 @@ public class DepositService {
      * @return 조회된 Deposit 엔티티
      * */
     @Transactional(readOnly = true)
-    public DepositInfo findDepositAccountById(String userId) {
+    public DepositInfo findDepositAccountById() {
+        String userId = UserContext.get().userId();
+
         Deposit deposit = depositRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("예치금 계좌를 찾을 수 없습니다: " + userId));
         return DepositInfo.from(deposit);
