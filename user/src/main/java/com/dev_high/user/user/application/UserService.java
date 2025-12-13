@@ -33,8 +33,9 @@ public class UserService {
     @Transactional
     public ApiResponseDto<UserInfo> create(CreateUserCommand command){
         if(userRepository.existsByEmail(command.email())) {
-         throw new UserAlreadyExistsException();
+            throw new UserAlreadyExistsException();
         }
+
         User user = new User(
                 command.email(),
                 passwordEncoder.encode(command.password()),
@@ -46,6 +47,7 @@ public class UserService {
                 command.city(),
                 command.detail()
         );
+
         User saved = userRepository.save(user);
         return ApiResponseDto.success(UserInfo.from(saved));
     }
@@ -74,9 +76,11 @@ public class UserService {
     @Transactional
     public ApiResponseDto<Void> delete() {
         User user = userDomainService.getUser();
+
         if(user.getUserRole() == UserRole.SELLER) {
             sellerService.deleteSeller(SellerStatus.WITHDRAWN);
         }
+
         user.deleteUser();
         return ApiResponseDto.success(null);
     }
