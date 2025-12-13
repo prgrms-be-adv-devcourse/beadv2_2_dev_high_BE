@@ -1,0 +1,130 @@
+name: Product CI/CD
+
+on:
+#  push:
+#    branches:
+#      - feat/#46-ci-cd
+#    paths:
+#      - 'product/**'
+#      - '.github/workflows/product-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'product/**'
+#      - '.github/workflows/product-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/product
+  SERVICE_NAME: product
+  NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
+
+jobs:
+#  test:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 17
+#          cache: gradle
+#
+#      - name: Run product tests
+#        run: |
+#          chmod +x gradlew
+#          ./gradlew :product:test
+
+  build-and-push:
+#    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Build product bootJar
+        run: |
+          chmod +x gradlew
+          ./gradlew :product:bootJar
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GIT_ACTOR }}
+          password: ${{ secrets.GIT_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: product/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/feat/#46-ci-cd'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+      
+
+      - name: Ensure GHCR imagePullSecret exists
+        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성. 도커 레지스트리(secret)에 ghcr 접근관련 정보제공, --dry-run=client -o yaml은 리소스 안남김
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create or update product secret
+        run: | #jwt 제공
+          kubectl create secret generic product-secret \
+          --namespace ${{ env.NAMESPACE }} \
+          --from-literal=JWT_SECRET="${{ secrets.DATASOURCE_DRIVER }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_PASSWORD }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_URL }}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.DATASOURCE_USERNAME }}" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy product
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          kubectl apply -f product/k8s --namespace ${{ env.NAMESPACE }}
+          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }} --env="DATASOURCE_DRIVER=${{secrets.DATASOURCE_DRIVER}}" --env="DATASOURCE_PASSWORD=${{secrets.DATASOURCE_PASSWORD}}" --env="DATASOURCE_URL=${{secrets.DATASOURCE_URL}}" --env="DATASOURCE_USERNAME=${{secrets.DATASOURCE_USERNAME}}" --env="JWT_ACCESS_TOKEN_EXPIRATION=${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" --env="JWT_SECRET=${{secrets.JWT_SECRET}}"

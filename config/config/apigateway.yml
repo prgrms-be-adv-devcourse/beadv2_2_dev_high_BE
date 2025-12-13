@@ -1,0 +1,23 @@
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3000}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Auction
+        url: /swagger/auction-service
+      - name: Notice
+        url: /swagger/notice-service
+      - name: Deposit
+        url: /swagger/deposit-service
+      - name: Order
+        url: /swagger/order-service
+      - name: Product
+        url: /swagger/product-service
+      - name: Search
+        url: /swagger/search-service
+      - name: Settlement
+        url: /swagger/settlement-service
+      - name: User
+        url: /swagger/user-service
