@@ -49,16 +49,17 @@ public class AuctionLiveState {
   protected AuctionLiveState() {
   }
 
-  public AuctionLiveState(Auction auction, BigDecimal currentBid) {
+  public AuctionLiveState(Auction auction) {
     this.auction = auction;
     this.auctionId = auction.getId();
-    this.currentBid = currentBid;
+    this.currentBid = BigDecimal.ZERO;
     this.updatedAt = LocalDateTime.now();
   }
 
-  public void update(String highestUserId , BigDecimal currentBid) {
+  public void update(String highestUserId, BigDecimal currentBid) {
     this.highestUserId = highestUserId;
     this.currentBid = currentBid;
+
 
   }
 

@@ -1,8 +1,6 @@
 package com.dev_high.auction.application;
 
 import com.dev_high.auction.application.dto.AuctionBidMessage;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -28,17 +26,10 @@ public class AuctionWebSocketService {
   /**
    * 입찰 성공 시 웹소켓으로 실시간 전파
    */
-  public void broadcastBidSuccess(String auctionId, String highestUserId, BigDecimal bidPrice) {
-    AuctionBidMessage message = new AuctionBidMessage(
-        "BID_SUCCESS",
-        auctionId,
-        highestUserId,   // 실제 최고가 입찰자
-        bidPrice,
-        LocalDateTime.now(),
-        getCurrentUserCount(auctionId)
-    );
+  public void broadcastBidSuccess(AuctionBidMessage message) {
+    message.withCurrentUsers(getCurrentUserCount(message.auctionId()));
 
-    messagingTemplate.convertAndSend("/topic/auction." + auctionId, message);
+    messagingTemplate.convertAndSend("/topic/auction." + message.auctionId(), message);
   }
 
   /**
@@ -49,7 +40,7 @@ public class AuctionWebSocketService {
 
     users.add(sessionId);
     if (users != null && !users.isEmpty()) {
-      log.info("current user count: {}",users.size());
+      log.info("current user count: {}", users.size());
       Map<String, Object> payload = Map.of(
           "type", "USER_JOIN",
           "currentUsers", users.size()
@@ -65,7 +56,7 @@ public class AuctionWebSocketService {
     Set<String> users = auctionRooms.get(auctionId);
     if (users != null) {
       users.remove(sessionId);
-      log.info("current users count: {}",users.size());
+      log.info("current users count: {}", users.size());
       if (users.isEmpty()) {
         auctionRooms.remove(auctionId);
       }
@@ -83,11 +74,14 @@ public class AuctionWebSocketService {
   @EventListener
   public void handleDisconnect(SessionDisconnectEvent event) {
     String sessionId = event.getSessionId();
-    log.info("disconnect sessionId: {}",sessionId);
+    log.info("disconnect sessionId: {}", sessionId);
     auctionRooms.forEach((auctionId, users) -> {
       if (users.remove(sessionId)) {
+        log.info("cur user count: {}", users.size());
 
-        if (users.isEmpty()) auctionRooms.remove(auctionId);
+        if (users.isEmpty()) {
+          auctionRooms.remove(auctionId);
+        }
 
         if (users != null && !users.isEmpty()) {
           Map<String, Object> payload = Map.of(

@@ -4,11 +4,14 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.domain.UserRole;
+import com.dev_high.user.user.domain.UserStatus;
 import com.dev_high.user.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserDomainService {
@@ -18,11 +21,18 @@ public class UserDomainService {
     public User getUser() {
         String userId = UserContext.get().userId();
         return userRepository.findById(userId)
-                .filter(user -> !"Y".equals(user.getDeletedYn())) // 삭제 여부 필터
+                .filter(user -> !"Y".equals(user.getDeletedYn()))
                 .orElseThrow(UserNotFoundException::new);
     }
 
     public void updateUserRole(User user, UserRole role) {
         user.updateRole(role);
+    }
+
+
+    @Transactional
+    public void updateUserStatus(String email, UserStatus status) {
+        User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
+        user.updateStatus(status);
     }
 }

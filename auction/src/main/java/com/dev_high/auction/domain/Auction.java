@@ -27,9 +27,12 @@ public class Auction {
 
   @Id
   @Column(length = 20)
-  // db 테이블명을 넣어줌 > public.idgenerator_meta 테이블에 정보 등록되어있어야함.
   @CustomGeneratedId(method = "auction")
   private String id;
+
+
+  @Column(name = "product_id", nullable = false)
+  private String productId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false, insertable = false, updatable = false)
@@ -56,7 +59,7 @@ public class Auction {
   private BigDecimal depositAmount;
 
 
-  @Column(name = "deleted_yn",  nullable = false)
+  @Column(name = "deleted_yn", nullable = false)
   private String deletedYn;
 
   @Column(name = "deleted_at")
@@ -92,11 +95,12 @@ public class Auction {
   }
 
   public Auction(BigDecimal startBid, LocalDateTime auctionStartAt,
-      LocalDateTime auctionEndAt, String creatorId) {
+      LocalDateTime auctionEndAt, String creatorId, String productId) {
 
-    this.status =AuctionStatus.READY;
+    this.status = AuctionStatus.READY;
+    this.productId = productId;
     this.startBid = startBid;
-    this.depositAmount =  startBid
+    this.depositAmount = startBid
         .multiply(new BigDecimal("0.05"))       // 5% 계산
         .divide(new BigDecimal("10"), 0, RoundingMode.CEILING) // 10으로 나눈 후 올림
         .multiply(new BigDecimal("10"));
@@ -107,27 +111,30 @@ public class Auction {
     this.deletedYn = "N";
 
   }
-  public void modify(BigDecimal startBid , LocalDateTime auctionStartAt ,LocalDateTime auctionEndAt) {
 
-    this.startBid= startBid;
+  public void modify(BigDecimal startBid, LocalDateTime auctionStartAt,
+      LocalDateTime auctionEndAt, String updatedBy) {
+
+    this.startBid = startBid;
     this.auctionStartAt = auctionStartAt;
     this.auctionEndAt = auctionEndAt;
+    this.updatedBy = updatedBy;
 
   }
 
+  public void changeStatus(AuctionStatus status, String updatedBy) {
+    this.status = status;
+    this.updatedBy = updatedBy;
+  }
+
+  public void remove(String userId) {
+    this.deletedYn = "Y";
+    this.deletedAt = DateUtil.now();
+    this.updatedBy = userId;
+
+  }
 
   public void setProduct(Product product) {
     this.product = product;
-  }
-
-
-  public void changeStatus(AuctionStatus status) {
-    this.status = status;
-  }
-
-  public void remove(){
-    this.deletedYn="Y";
-    this.deletedAt = DateUtil.now();
-
   }
 }

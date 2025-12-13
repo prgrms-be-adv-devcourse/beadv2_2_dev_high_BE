@@ -22,6 +22,10 @@ public class DepositOrder {
     @CustomGeneratedId(method = "deposit_order")
     private String id;
 
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false)
+    private String userId;
+
     @Schema(description = "금액")
     @Column(name = "amount", nullable = false)
     private long amount;
@@ -47,10 +51,15 @@ public class DepositOrder {
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
+    private static final long MIN_ORDER_AMOUNT = 1L;
+
     @Builder
-    public DepositOrder(long amount, DepositOrderStatus status) {
+    public DepositOrder(String userId, long amount, DepositOrderStatus status) {
+        this.userId = userId;
         this.amount = amount;
         this.status = status;
+        this.createdBy = userId;
+        this.updatedBy = userId;
     }
 
     @PrePersist
@@ -58,20 +67,27 @@ public class DepositOrder {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        this.createdBy = id;
-        this.updatedBy = id;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
-        this.updatedBy = id;
     }
 
-    public static DepositOrder create(long amount) {
+    public static DepositOrder create(String userId, long amount) {
+        if (amount < MIN_ORDER_AMOUNT) {
+            throw new IllegalArgumentException(
+                    String.format("주문 금액은 %d원 이상이어야 합니다. (요청 금액: %d원)", MIN_ORDER_AMOUNT, amount)
+            );
+        }
         return DepositOrder.builder()
+                .userId(userId)
                 .amount(amount)
                 .status(DepositOrderStatus.PENDING) // default : PENDING
                 .build();
+    }
+
+    public void updateStatus(DepositOrderStatus status) {
+        this.status = status;
     }
 }

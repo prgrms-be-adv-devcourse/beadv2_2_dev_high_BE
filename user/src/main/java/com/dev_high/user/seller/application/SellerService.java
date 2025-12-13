@@ -6,6 +6,7 @@ import com.dev_high.user.seller.application.dto.SellerCommand;
 import com.dev_high.user.seller.application.dto.SellerInfo;
 import com.dev_high.user.seller.domain.Seller;
 import com.dev_high.user.seller.domain.SellerRepository;
+import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.seller.exception.SellerAlreadyExistsException;
 import com.dev_high.user.seller.exception.SellerNotFoundException;
 import com.dev_high.user.user.application.UserDomainService;
@@ -56,10 +57,16 @@ public class SellerService {
 
     @Transactional
     public ApiResponseDto<Void> delete() {
-        deleteSeller();
+        deleteSeller(SellerStatus.INACTIVE);
         User user = userDomainService.getUser();
         userDomainService.updateUserRole(user, UserRole.USER);
         return ApiResponseDto.success(null);
+    }
+
+    @Transactional
+    public void deleteSeller(SellerStatus status) {
+        Seller seller = getSeller();
+        seller.deleteSeller(status);
     }
 
     private Seller getSeller() {
@@ -67,10 +74,5 @@ public class SellerService {
         return Optional.ofNullable(sellerRepository.findByUserId(userId))
                 .filter(s -> !"Y".equals(s.getDeletedYn()))
                 .orElseThrow(SellerNotFoundException::new);
-    }
-
-    public void deleteSeller() {
-        Seller seller = getSeller();
-        seller.deleteSeller();
     }
 }

@@ -17,7 +17,7 @@ public interface AuctionRepository {
   // 상품아이디로 경매를 조회
   List<Auction> findByProductId(String productId);
 
-  Auction save(Auction auction, String productId);
+  Auction save(Auction auction);
 
 
   List<String> bulkUpdateStartStatus(); // READY -> IN_PROGRESS

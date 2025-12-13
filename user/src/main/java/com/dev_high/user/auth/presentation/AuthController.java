@@ -2,25 +2,33 @@ package com.dev_high.user.auth.presentation;
 
 
 import com.dev_high.user.auth.application.AuthService;
-import com.dev_high.user.auth.application.dto.LoginCommand;
-import com.dev_high.user.auth.application.dto.LoginInfo;
+import com.dev_high.user.auth.application.dto.*;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.auth.application.dto.TokenCommand;
-import com.dev_high.user.auth.application.dto.TokenInfo;
 import com.dev_high.user.auth.presentation.dto.LoginRequest;
+import com.dev_high.user.auth.presentation.dto.SendEmailRequest;
 import com.dev_high.user.auth.presentation.dto.TokenRequest;
+import com.dev_high.user.auth.presentation.dto.VerifyEmailRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/api/v1/auth")
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
+
+    @PostMapping("/send/email")
+    public ApiResponseDto<Void> sendEmail(@RequestBody SendEmailRequest request) {
+        return authService.sendEmail(request.toCommand());
+    }
+
+    @PostMapping("/verify/email")
+    public ApiResponseDto<Void> verifyEmail(@RequestBody VerifyEmailRequest request){
+        return authService.verifyEmail(request.toCommand());
+    }
 
     @PostMapping("/login")
     public ApiResponseDto<LoginInfo> login(@RequestBody LoginRequest request){
@@ -38,5 +46,4 @@ public class AuthController {
         );
         return authService.refreshToken(command);
     }
-
 }

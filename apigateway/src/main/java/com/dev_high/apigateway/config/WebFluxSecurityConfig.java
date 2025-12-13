@@ -19,10 +19,10 @@ import org.springframework.web.cors.CorsConfiguration;
 public class WebFluxSecurityConfig {
 
   private final static String[] PERMITALL_ANTPATTERNS = {
-          "/", "/csrf",
-          "/?*-service/swagger-ui/**",
-          "/?*-service/actuator/?*", "/actuator/?*",
-          "/v3/api-docs/**", "/?*-service/v3/api-docs", "/swagger*/**", "/webjars/**"
+      "/", "/csrf",
+      "/?*-service/swagger-ui/**",
+      "/?*-service/actuator/?*", "/actuator/?*",
+      "/v3/api-docs/**", "/?*-service/v3/api-docs", "/swagger*/**", "/webjars/**"
   };
 
 
@@ -30,45 +30,45 @@ public class WebFluxSecurityConfig {
   private final static String USER_JOIN_ANTPATTERNS = "/api/v1/users/signup";
   private final static String AUTH_ANTPATTERNS = "/api/v1/auth/**";
   private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
-          "/ws-auction/**", "/api/v1/auctions/product/*"};
+      "/ws-auction/**", "/api/v1/auctions/product/*"};
   private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*",
-          "/api/v1/categories/**",
+      "/api/v1/categories/**",
   };
 
   @Bean
   public SecurityWebFilterChain configure(ServerHttpSecurity http,
-                                          ReactiveAuthorizationManager<AuthorizationContext> check) {
+      ReactiveAuthorizationManager<AuthorizationContext> check) {
     http
-            .httpBasic(basic -> basic.authenticationEntryPoint(
-                    new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+        .httpBasic(basic -> basic.authenticationEntryPoint(
+            new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
 
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-            .headers(headers -> headers.frameOptions(
-                    ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
-            .cors(cors -> {
-              cors.configurationSource(request -> {
-                String path = request.getRequest().getURI().getPath();
-                if (path.startsWith("/ws-auction")) {
-                  return null;
-                }
-                CorsConfiguration config = new CorsConfiguration();
-                config.setAllowedOriginPatterns(List.of("*")); // 모든 출처 허용
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*"));
-                config.setExposedHeaders(List.of("*")); // 추가
-                config.setAllowCredentials(false);
-                return config;
-              });
-            })
-            .authorizeExchange(exchanges -> exchanges
-                    .pathMatchers(PERMITALL_ANTPATTERNS).permitAll()
-                    .pathMatchers(AUTH_ANTPATTERNS).permitAll()
-                    .pathMatchers(HttpMethod.POST, USER_JOIN_ANTPATTERNS).permitAll()
-                    .pathMatchers(HttpMethod.GET, AUCTION_ANTPATTERNS).permitAll()
-                    .pathMatchers(HttpMethod.GET, PRODUCT_ANTPATTERNS).permitAll()
-                    .anyExchange().access(check)
-            );
+        .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+        .headers(headers -> headers.frameOptions(
+            ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
+        .cors(cors -> {
+          cors.configurationSource(request -> {
+            String path = request.getRequest().getURI().getPath();
+            if (path.startsWith("/ws-auction")) {
+              return null;
+            }
+            CorsConfiguration config = new CorsConfiguration();
+            config.setAllowedOriginPatterns(List.of("*")); // 모든 출처 허용
+            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            config.setAllowedHeaders(List.of("*"));
+            config.setExposedHeaders(List.of("*")); // 추가
+            config.setAllowCredentials(false);
+            return config;
+          });
+        })
+        .authorizeExchange(exchanges -> exchanges
+            .pathMatchers(PERMITALL_ANTPATTERNS).permitAll()
+            .pathMatchers(AUTH_ANTPATTERNS).permitAll()
+            .pathMatchers(HttpMethod.POST, USER_JOIN_ANTPATTERNS).permitAll()
+            .pathMatchers(HttpMethod.GET, AUCTION_ANTPATTERNS).permitAll()
+            .pathMatchers(HttpMethod.GET, PRODUCT_ANTPATTERNS).permitAll()
+            .anyExchange().access(check)
+        );
 
     return http.build();
   }

@@ -1,5 +1,6 @@
 package com.dev_high.deposit.domain;
 
+import com.dev_high.common.annotation.CustomGeneratedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,6 +19,7 @@ public class DepositHistory {
     @Schema(description = "예치금 이력 ID")
     @Id
     @Column(name = "id")
+    @CustomGeneratedId(method = "deposit_history")
     private Long id;
 
     /*
@@ -31,7 +33,7 @@ public class DepositHistory {
      * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음
      * */
     @Schema(description = "예치금 주문 ID")
-    @Column(name = "deposit_order_id", length = 20, nullable = false, updatable = false)
+    @Column(name = "deposit_order_id", length = 20, updatable = false)
     private String depositOrderId;
 
     @Schema(description = "예치금 유형")
@@ -62,6 +64,7 @@ public class DepositHistory {
         this.type = type;
         this.amount = amount;
         this.balance = balance;
+        this.createdBy = userId;
     }
 
     @PrePersist

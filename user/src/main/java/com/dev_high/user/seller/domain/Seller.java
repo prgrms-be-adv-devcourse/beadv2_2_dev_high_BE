@@ -13,12 +13,11 @@ public class Seller {
 
     @Id
     @Column(length = 20)
-    // db 테이블명을 넣어줌 > public.idgenerator_meta 테이블에 정보 등록되어있어야함.
-    @CustomGeneratedId(method = "seller")
     private String id;
 
     @OneToOne
-    @JoinColumn(name = "user_id",nullable = false)
+    @MapsId
+    @JoinColumn(name = "id",nullable = false)
     private User user;
 
     @Column(name = "bank_name", length = 20, nullable = false)
@@ -71,8 +70,8 @@ public class Seller {
         this.bankAccount = bankAccount;
     }
 
-    public void deleteSeller() {
-        this.sellerStatus = SellerStatus.INACTIVE;
+    public void deleteSeller(SellerStatus status) {
+        this.sellerStatus = status;
         this.deletedYn = "Y";
     }
 

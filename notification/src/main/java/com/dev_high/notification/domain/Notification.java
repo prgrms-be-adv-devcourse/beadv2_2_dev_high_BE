@@ -88,12 +88,11 @@ public class Notification extends BaseEntity {
                 .content(content)
                 .relatedUrl(relatedUrl)
                 .readYn(false)
-                .createdBy(userId)
                 .build();
     }
 
     @Builder
-    public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, boolean readYn, String createdBy) {
+    public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, boolean readYn) {
         this.userId = userId;
         this.type = type;
         this.title = title;
@@ -101,6 +100,6 @@ public class Notification extends BaseEntity {
         this.relatedUrl = relatedUrl;
         this.readYn = Optional.ofNullable(readYn)
                             .orElse(false);
-        this.createdBy = createdBy;
+        this.createdBy = userId;
     }
 }

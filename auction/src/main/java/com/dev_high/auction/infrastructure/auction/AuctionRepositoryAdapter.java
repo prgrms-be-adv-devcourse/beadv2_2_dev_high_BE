@@ -29,22 +29,28 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
   private final AuctionJpaRepository auctionJpaRepository;
 
-  private final EntityManager entityManager;
 
   private final JPAQueryFactory queryFactory;
 
   private final QAuction qAuction = QAuction.auction;
   private final QProduct qProduct = QProduct.product;
   private final QAuctionLiveState qLiveState = QAuctionLiveState.auctionLiveState;
+  private final EntityManager entityManager;
 
 
   @Override
-  public Auction save(Auction auction, String productId) {
-    Product product = entityManager.getReference(Product.class, productId);
+  public Auction save(Auction auction) {
 
-    auction.setProduct(product);
+    Auction saved = auctionJpaRepository.save(auction);
 
-    return auctionJpaRepository.save(auction);
+    // 2) productId 기반으로 프록시 로딩
+    Product productRef = entityManager.getReference(Product.class, saved.getProductId());
+
+    // 3) LAZY 필드 주입
+    saved.setProduct(productRef);
+
+    return saved;
+
   }
 
 
@@ -94,8 +100,9 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
   public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
     BooleanBuilder builder = new BooleanBuilder();
-    if (condition.status() != null) {
-      builder.and(qAuction.status.eq(condition.status()));
+    builder.and(qAuction.deletedYn.ne("Y"));
+    if (condition.status() != null && !condition.status().isEmpty()) {
+      builder.and(qAuction.status.in(condition.status()));
     }
 
     if (condition.startBid() != null) {

@@ -1,5 +1,6 @@
 package com.dev_high.deposit.domain;
 
+import com.dev_high.common.annotation.CustomGeneratedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,6 +19,7 @@ public class DepositPaymentFailureHistory {
     @Schema(description = "예치금 결제 실패 이력 ID")
     @Id
     @Column(name = "id")
+    @CustomGeneratedId(method = "deposit_payment_failure_history")
     private Long id;
 
     /*
@@ -26,6 +28,10 @@ public class DepositPaymentFailureHistory {
     @Schema(description = "결제 ID")
     @Column(name = "deposit_payment_id", length = 20, nullable = false, updatable = false)
     private String depositPaymentId;
+
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false, updatable = false)
+    private String userId;
 
     @Schema(description = "코드")
     @Column(name = "code", nullable = false, length = 50, updatable = false)
@@ -44,10 +50,12 @@ public class DepositPaymentFailureHistory {
     private String createdBy;
 
     @Builder
-    public DepositPaymentFailureHistory(String depositPaymentId, String code, String message) {
+    public DepositPaymentFailureHistory(String depositPaymentId, String userId, String code, String message) {
         this.depositPaymentId = depositPaymentId;
+        this.userId = userId;
         this.code = code;
         this.message = message;
+        this.createdBy = userId;
     }
 
     @PrePersist
@@ -55,9 +63,10 @@ public class DepositPaymentFailureHistory {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static DepositPaymentFailureHistory create(String depositPaymentId, String code, String message) {
+    public static DepositPaymentFailureHistory create(String depositPaymentId, String userId, String code, String message) {
         return DepositPaymentFailureHistory.builder()
                 .depositPaymentId(depositPaymentId)
+                .userId(userId)
                 .code(code)
                 .message(message)
                 .build();
