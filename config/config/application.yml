@@ -1,16 +1,55 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
 eureka:
   instance:
-    hostname: discovery #discovery
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}} # random port 사용시 eureka server에 인스턴스가 각각 표시되지 않는다
-    preferIpAddress: true # 서비스간 통신 시 hostname 보다 ip 를 우선
+    hostname: discovery
+
+---
+spring:
+  datasource:
+    url: ${DATASOURCE_URL}
+    driver-class-name: ${DATASOURCE_DRIVER:org.postgresql.Driver}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+  jackson:
+    time-zone: Asia/Seoul
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      table-prefix: public.batch_
+      isolation-level-for-create: read_committed
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost}:${KAFKA_BOOT_PORT:29092}
+    username: ${KAFKA_USER}
+    password: ${KAFKA_PASSWORD}
+eureka:
   client:
-    register-with-eureka: true # eureka 서버에 등록
-    fetch-registry: true # 외부 검색 가능
     service-url:
-      defaultZone: http://admin:admin@${eureka.instance.hostname:localhost}:8761/eureka
+      register-with-eureka: true
+      fetch-registry: true
+      service-url:
+        defaultZone: http://admin:admin@${eureka.instance.hostname:localhost}:8761/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
 
 management:
   endpoints:
     web:
       exposure:
         include: refresh, health, beans, info
+
+
