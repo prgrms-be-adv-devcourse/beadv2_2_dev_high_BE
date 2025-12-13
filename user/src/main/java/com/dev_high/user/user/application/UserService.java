@@ -2,13 +2,14 @@ package com.dev_high.user.user.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.user.application.dto.CreateUserCommand;
 import com.dev_high.user.user.application.dto.UpdatePasswordCommand;
 import com.dev_high.user.user.application.dto.UpdateUserCommand;
-import com.dev_high.user.user.application.dto.UserInfo;
+import com.dev_high.user.user.application.dto.UserResponse;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.domain.UserRole;
@@ -33,7 +34,7 @@ public class UserService {
     private final KafkaEventPublisher eventPublisher;
 
     @Transactional
-    public ApiResponseDto<UserInfo> create(CreateUserCommand command){
+    public ApiResponseDto<UserResponse> create(CreateUserCommand command){
         if(userRepository.existsByEmail(command.email())) {
             throw new UserAlreadyExistsException();
         }
@@ -51,27 +52,49 @@ public class UserService {
         );
 
         User saved = userRepository.save(user);
-        return ApiResponseDto.success(UserInfo.from(saved));
+
+        if (saved != null) {
+            try {
+                eventPublisher.publish(KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED,
+                        saved.getId());
+            } catch (Exception e) {
+                log.error(">>{ }", e);
+            }
+        }
+
+        return ApiResponseDto.success(
+                "회원 가입이 정상적으로 처리되었습니다.",
+                UserResponse.from(saved)
+        );
     }
 
     @Transactional(readOnly = true)
-    public ApiResponseDto<UserInfo> getProfile() {
+    public ApiResponseDto<UserResponse> getProfile() {
         User user = userDomainService.getUser();
-        return ApiResponseDto.success(UserInfo.from(user));
+        return ApiResponseDto.success(
+                "회원 정보가 정상적으로 조회되었습니다.",
+                UserResponse.from(user)
+        );
     }
 
     @Transactional
-    public ApiResponseDto<UserInfo> updateProfile(UpdateUserCommand command) {
+    public ApiResponseDto<UserResponse> updateProfile(UpdateUserCommand command) {
         User user = userDomainService.getUser();
         user.updateUser(command);
-        return ApiResponseDto.success(UserInfo.from(user));
+        return ApiResponseDto.success(
+                "회원 정보가 정상적으로 변경되었습니다.",
+                UserResponse.from(user)
+        );
     }
 
     @Transactional
     public ApiResponseDto<Void> updatePassword(UpdatePasswordCommand command) {
         User user = userDomainService.getUser();
         user.updatePassWord(passwordEncoder.encode(command.password()));
-        return ApiResponseDto.success(null);
+        return ApiResponseDto.success(
+                "비밀번호가 정상적으로 변경되었습니다.",
+                null
+        );
     }
 
     @Transactional
@@ -83,7 +106,10 @@ public class UserService {
         }
 
         user.deleteUser();
-        return ApiResponseDto.success(null);
+        return ApiResponseDto.success(
+                "회원 탈퇴가 정상적으로 처리되었습니다.",
+                null
+        );
     }
 
 
@@ -91,6 +117,9 @@ public class UserService {
     public ApiResponseDto<Void> logout() {
         String userId = UserContext.get().userId();
         authService.logout(userId);
-        return ApiResponseDto.success(null);
+        return ApiResponseDto.success(
+                "정상적으로 로그아웃되었습니다.",
+                null
+        );
     }
 }

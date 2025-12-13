@@ -32,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponseDto<LoginResponse> login(@RequestBody LoginRequest request){
+    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request){
         LoginCommand command = new LoginCommand(
                 request.email(),
                 request.password()

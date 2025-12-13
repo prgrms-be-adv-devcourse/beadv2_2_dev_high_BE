@@ -2,7 +2,7 @@ package com.dev_high.user.user.application.dto;
 
 import com.dev_high.user.user.domain.User;
 
-public record UserInfo(
+public record UserResponse(
         String email,
         String name,
         String nickname,
@@ -12,8 +12,8 @@ public record UserInfo(
         String city,
         String detail
 ) {
-    public static UserInfo from(User user) {
-        return new UserInfo(
+    public static UserResponse from(User user) {
+        return new UserResponse(
                 user.getEmail(),
                 user.getName(),
                 user.getNickname(),

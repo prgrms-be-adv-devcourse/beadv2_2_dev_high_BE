@@ -38,7 +38,10 @@ public class WishlistService {
                 command.productId()
         );
         Wishlist saved = wishlistRepository.save(wishlist);
-        return ApiResponseDto.success(WishlistResponse.from(saved));
+        return ApiResponseDto.success(
+                "위시리스트가 정상적으로 등록되었습니다.",
+                WishlistResponse.from(saved)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +49,10 @@ public class WishlistService {
         String userId = UserContext.get().userId();
         Page<Wishlist> wishlist = wishlistRepository.findByUserId(userId, pageable);
         Page<WishlistResponse> wishlistPage = wishlist.map(WishlistResponse::from);
-        return ApiResponseDto.success(wishlistPage);
+        return ApiResponseDto.success(
+                "위시리스트가 정상적으로 조회되었습니다.",
+                wishlistPage
+        );
     }
 
     @Transactional
@@ -56,7 +62,10 @@ public class WishlistService {
                 .findByUserIdAndProductId(userId, request.productId())
                 .orElseThrow(WishlistNotFoundException::new);
         wishlistRepository.delete(wishlist);
-        return ApiResponseDto.success(null);
+        return ApiResponseDto.success(
+                "위시리스트가 정상적으로 삭제되었습니다.",
+                null
+        );
     }
 
     public ApiResponseDto<List<String>> getUserIdsByProductId(String productId) {
