@@ -102,11 +102,8 @@ public class BidRecordService {
     }
     AuctionLiveState liveState = participation.getAuction().getLiveState();
 
-    if (liveState.getHighestUserId() != null) {
-
-      if (liveState.getHighestUserId().equals(userId)) {
-        throw new CannotWithdrawHighestBidderException();
-      }
+    if (liveState.getHighestUserId().equals(userId)) {
+      throw new CannotWithdrawHighestBidderException();
     }
 
     participation.markWithdraw();
@@ -123,7 +120,7 @@ public class BidRecordService {
 
       HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(map);
 
-      String url = "http://APIGATEWAY/api/v1/deposit/histories" + userId;
+      String url = "http://APIGATEWAY/api/v1/deposit/" + userId;
 
       ResponseEntity<ApiResponseDto<?>> response;
       response = restTemplate.exchange(

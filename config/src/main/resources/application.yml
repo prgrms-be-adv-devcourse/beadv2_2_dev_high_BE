@@ -1,6 +1,5 @@
 server:
   port: 8888
-
 spring:
   application:
     name: config
@@ -14,15 +13,9 @@ spring:
     config:
       server:
         git:
-          default-label: ${CONFIG_GIT_LABEL:feat/#46-ci-cd}
+          default-label: ${CONFIG_GIT_LABEL:develop}
           search-paths: ${CONFIG_GIT_SEARCH_PATHS:config}
           uri: https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE
           clone-on-start: true
           force-pull: true
           refresh-rate: ${CONFIG_GIT_REFRESH_RATE:0} # 0=매 요청마다 최신 확인
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,refresh
