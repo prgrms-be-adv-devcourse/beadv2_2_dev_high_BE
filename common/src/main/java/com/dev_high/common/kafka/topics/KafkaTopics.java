@@ -14,8 +14,12 @@ public class KafkaTopics {
    */
   public static final String NOTIFICATION_REQUEST = "notification-requested";
 
+  // auction 발행 토픽
   public static final String AUCTION_ORDER_CREATED_REQUESTED = "auction-order-create-requested"; // 경매 종료 후 주문 생성 이벤트 + 낙찰자에게 결제 안내 알림 ,sub-order , sub-alarm
-
+  public static final String AUCTION_SEARCH_CREATE = "auction-search-create";
+  public static final String AUCTION_SEARCH_UPDATE = "auction-search-update";
+  public static final String AUCTION_SEARCH_DELETE = "auction-search-delete";
+  
   /**
    * 중도포기 시 deposit을 즉시 처리 ,경매 종료시에는 kafka로 이벤트 발송 구독대상: deposit
    */

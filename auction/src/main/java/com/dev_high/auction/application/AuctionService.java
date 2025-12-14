@@ -19,6 +19,8 @@ import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
+import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
@@ -29,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,10 +48,13 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class AuctionService {
 
+
   private final AuctionRepository auctionRepository;
   private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
   private final RestTemplate restTemplate;
   private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
+  private final ApplicationEventPublisher publisher;
+
 
   public ApiResponseDto<List<FileDto>> getFileList(List<String> fileIds) {
 
@@ -123,7 +129,7 @@ public class AuctionService {
         auction,
         fileMap.get(auction.getProduct().getFileId())
     ));
-
+    
     return responsePage;
   }
 
@@ -139,6 +145,9 @@ public class AuctionService {
     return AuctionDetailResponse.fromEntity(auction, product, live);
   }
 
+  /**
+   * 경매를 최초 생성할 때 상품의 커밋이 완료된 이후에 호출되어야 합니다.
+   */
   @Transactional
   public AuctionResponse createAuction(AuctionRequest request) {
     /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
@@ -178,9 +187,25 @@ public class AuctionService {
         new Auction(request.startBid(), start,
             end, userId, request.productId()));
 
-    // @TODO 저장안되면 flush후 시도
     // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
     auctionLiveStateRepository.save(new AuctionLiveState(auction));
+
+    Product product = auction.getProduct();
+    AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
+        auction.getId(),
+        product.getId(),
+        product.getName(),
+        List.of(),
+        product.getDescription(),
+        auction.getStartBid(),
+        auction.getDepositAmount(),
+        auction.getStatus().name(),
+        product.getSellerId(),
+        auction.getAuctionStartAt(),
+        auction.getAuctionEndAt()
+    );
+    publisher.publishEvent(
+        event);
 
     return AuctionResponse.fromEntity(auction);
 
@@ -218,7 +243,14 @@ public class AuctionService {
     validateAuctionTime(start, end);
 
     auction.modify(request.startBid(), start, end, userId);
+    AuctionUpdateSearchRequestEvent event = new AuctionUpdateSearchRequestEvent(
+        auction.getId(),
+        auction.getStartBid(),
+        auction.getDepositAmount(),
+        auction.getStatus().name()
+    );
 
+    publisher.publishEvent(event);
     //dirty check
     return AuctionResponse.fromEntity(auction);
 
@@ -249,6 +281,7 @@ public class AuctionService {
     }
 
     auction.remove(userId);
+    publisher.publishEvent(auctionId);
 
     // dirty check 자동저장
   }

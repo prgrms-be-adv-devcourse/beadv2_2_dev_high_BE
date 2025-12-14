@@ -89,7 +89,6 @@ public class BidRecordService {
 
   // 포기 처리
   // 보증금 즉시환불,,
-
   @Transactional
   public AuctionParticipationResponse withdrawAuctionBid(String auctionId) {
     String userId = UserContext.get().userId();
