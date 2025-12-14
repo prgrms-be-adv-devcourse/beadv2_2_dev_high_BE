@@ -29,7 +29,7 @@ spec:
             - name: CONFIG_GIT_URI
               value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE" # 배포용 설정 리포 주소로 교체
             - name: CONFIG_GIT_LABEL
-              value: "feat/#46-ci-cd"
+              value: "chore/#78-modified-product-test"
             - name: CONFIG_GIT_SEARCH_PATHS
               value: "config"
           readinessProbe:

@@ -3,10 +3,6 @@ spring:
     activate:
       on-profile: prod
 
-eureka:
-  instance:
-    hostname: discovery
-
 ---
 spring:
   datasource:
@@ -35,15 +31,14 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost}:${KAFKA_BOOT_PORT:29092}
     username: ${KAFKA_USER}
     password: ${KAFKA_PASSWORD}
+
 eureka:
   client:
-    service-url:
       register-with-eureka: true
       fetch-registry: true
       service-url:
         defaultZone: http://admin:admin@${eureka.instance.hostname:localhost}:8761/eureka
   instance:
-    hostname: discovery
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
 
