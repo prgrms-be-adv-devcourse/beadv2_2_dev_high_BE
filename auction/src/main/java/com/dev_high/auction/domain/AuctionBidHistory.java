@@ -16,14 +16,14 @@ import lombok.Getter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "auction_bid_history")
+@Table(name = "auction_bid_history", schema = "auction")
 @Getter
 @ToString
 public class AuctionBidHistory {
 
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "auction_bid_history_seq")
-  @SequenceGenerator(name = "auction_bid_history_seq", sequenceName = "auction_bid_history_seq", allocationSize = 1)
+  @SequenceGenerator(name = "auction_bid_history_seq", sequenceName = "auction.auction_bid_history_seq", allocationSize = 1)
   private Long id;
 
   @Column(name = "auction_id", length = 20, nullable = false)
@@ -52,6 +52,7 @@ public class AuctionBidHistory {
     this.type = type;
 
   }
+
   @PrePersist
   public void prePersist() {
     this.createdAt = LocalDateTime.now();

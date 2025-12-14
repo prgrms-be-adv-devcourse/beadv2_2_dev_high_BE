@@ -5,6 +5,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +18,12 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 @Configuration
 @EnableKafka
@@ -51,8 +55,8 @@ public class KafkaConfig {
     props.put("security.protocol", "SASL_PLAINTEXT");
     props.put("sasl.mechanism", "PLAIN");
     props.put("sasl.jaas.config", String.format(
-        "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
-        kafkaUsername, kafkaPassword));
+            "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+            kafkaUsername, kafkaPassword));
     return props;
   }
 
@@ -90,8 +94,8 @@ public class KafkaConfig {
     props.put("security.protocol", "SASL_PLAINTEXT");
     props.put("sasl.mechanism", "PLAIN");
     props.put("sasl.jaas.config", String.format(
-        "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
-        kafkaUsername, kafkaPassword));
+            "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+            kafkaUsername, kafkaPassword));
     return props;
   }
 
@@ -99,13 +103,40 @@ public class KafkaConfig {
   public ConsumerFactory<String, Object> consumerFactory() {
     return new DefaultKafkaConsumerFactory<>(consumerConfigs());
   }
-  
+
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
+  public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+          ConsumerFactory<String, Object> consumerFactory,
+          DefaultErrorHandler errorHandler) {
+
     ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-        new ConcurrentKafkaListenerContainerFactory<>();
-    factory.setConsumerFactory(consumerFactory());
-    factory.setConcurrency(3); // listener concurrency
+            new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setConsumerFactory(consumerFactory);
+    factory.setConcurrency(3);
+    factory.setCommonErrorHandler(errorHandler); // 이제 주입받은 빈 사용
     return factory;
+  }
+
+  // DefaultErrorHandler 빈
+  @Bean
+  public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafkaTemplate) {
+    FixedBackOff fixedBackOff = new FixedBackOff(5000L, 3);
+
+    DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+            (record, ex) -> {
+              log.error("Kafka 메시지 최종 실패, DLQ로 이동: {}", record.value(), ex);
+              return new TopicPartition(record.topic() + ".DLQ", record.partition());
+            });
+    DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, fixedBackOff);
+    // 재시도 로그
+    errorHandler.setRetryListeners((record, ex, deliveryAttempt) ->
+            {
+              if (deliveryAttempt <= 3) {
+                log.warn("Kafka 메시지 재시도 {}회: {}", deliveryAttempt, record.value());
+              }
+            }
+    );
+
+    return errorHandler;
   }
 }

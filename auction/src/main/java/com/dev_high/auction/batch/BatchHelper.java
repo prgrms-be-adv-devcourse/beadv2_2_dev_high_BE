@@ -11,6 +11,7 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionCreateOrderRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
+import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
@@ -41,7 +42,6 @@ public class BatchHelper {
   private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
   private final KafkaEventPublisher eventPublisher;
   private final ObjectMapper objectMapper;
-
   private final RestTemplate restTemplate;
 
   private List<String> getWishlistUserIds(String productId) {
@@ -53,11 +53,11 @@ public class BatchHelper {
 
       ResponseEntity<ApiResponseDto<List<String>>> response;
       response = restTemplate.exchange(
-          url,
-          HttpMethod.GET,
-          entity,
-          new ParameterizedTypeReference<ApiResponseDto<List<String>>>() {
-          }
+              url,
+              HttpMethod.GET,
+              entity,
+              new ParameterizedTypeReference<ApiResponseDto<List<String>>>() {
+              }
       );
 
       if (response.getBody() != null) {
@@ -71,27 +71,28 @@ public class BatchHelper {
   }
 
   public RepeatStatus startAuctionsUpdate(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                          ChunkContext chunkContext) {
 
     List<String> targetIds = auctionRepository
-        .bulkUpdateStartStatus();
+            .bulkUpdateStartStatus();
+    log.info("auction start target>> {}", targetIds.size());
 
     chunkContext.getStepContext()
-        .getStepExecution()
-        .getJobExecution()
-        .getExecutionContext()
-        .put("startAuctionIds", targetIds);
+            .getStepExecution()
+            .getJobExecution()
+            .getExecutionContext()
+            .put("startAuctionIds", targetIds);
 
     return RepeatStatus.FINISHED;
   }
 
   public RepeatStatus startAuctionsPostProcessing(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                                  ChunkContext chunkContext) {
     Object raw = chunkContext.getStepContext()
-        .getStepExecution()
-        .getJobExecution()
-        .getExecutionContext()
-        .get("startAuctionIds");
+            .getStepExecution()
+            .getJobExecution()
+            .getExecutionContext()
+            .get("startAuctionIds");
 
     List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
     });
@@ -107,12 +108,15 @@ public class BatchHelper {
         String productId = auction.getProduct().getId();
         List<String> ids = getWishlistUserIds(productId);
 
+        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED,
+                new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
+                        auction.getDepositAmount(), auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt()));
         if (ids.size() > 0) {
           try {
             eventPublisher.publish(
-                KafkaTopics.NOTIFICATION_REQUEST,
-                new NotificationRequestEvent(userIds, "찜한 상품의 경매가 시작되었습니다.",
-                    "/auctions/" + auction.getId()));
+                    KafkaTopics.NOTIFICATION_REQUEST,
+                    new NotificationRequestEvent(userIds, "찜한 상품의 경매가 시작되었습니다.",
+                            "/auctions/" + auction.getId()));
           } catch (Exception e) {
             // pass
             log.error("kafka send failed", e);
@@ -127,16 +131,16 @@ public class BatchHelper {
 
 
   public RepeatStatus endAuctionsUpdate(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                        ChunkContext chunkContext) {
     List<String> targetIds = auctionRepository
-        .bulkUpdateEndStatus();
+            .bulkUpdateEndStatus();
 
     log.info("auction end target>> {}", targetIds.size());
     chunkContext.getStepContext()
-        .getStepExecution()
-        .getJobExecution()
-        .getExecutionContext()
-        .put("endAuctionIds", targetIds);
+            .getStepExecution()
+            .getJobExecution()
+            .getExecutionContext()
+            .put("endAuctionIds", targetIds);
 
     return RepeatStatus.FINISHED;
 
@@ -144,12 +148,12 @@ public class BatchHelper {
 
 
   public RepeatStatus endAuctionsPostProcessing(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                                ChunkContext chunkContext) {
     Object raw = chunkContext.getStepContext()
-        .getStepExecution()
-        .getJobExecution()
-        .getExecutionContext()
-        .get("endAuctionIds");
+            .getStepExecution()
+            .getJobExecution()
+            .getExecutionContext()
+            .get("endAuctionIds");
 
     List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
     });
@@ -157,7 +161,7 @@ public class BatchHelper {
     if (targetIds != null && !targetIds.isEmpty()) {
 
       for (String auctionId : targetIds) {
-
+        process(auctionId);
       }
     }
     return RepeatStatus.FINISHED;
@@ -178,56 +182,73 @@ public class BatchHelper {
     if (highestUserId == null) {
       // 유찰 처리
       auction.changeStatus(AuctionStatus.FAILED, "SYSTEM");
-      // TODO: 판매자한테 알림
-
-      return;
-    }
-
-    /* TODO: chunk */
-    List<String> userIds = auctionParticipationJpaRepository.findByAuctionId(
-        targetId).stream().map(AuctionParticipation::getUserId).toList();
-
-    // 이벤트 발행
-    if (!userIds.isEmpty()) {
-
       try {
+        // 판매자에게 알림
         eventPublisher.publish(
-            KafkaTopics.NOTIFICATION_REQUEST,
-            new NotificationRequestEvent(userIds, product.getName() + " 경매가 종료되었습니다.",
-                "/auctions/" + auction.getId()));
-
+                KafkaTopics.NOTIFICATION_REQUEST,
+                new NotificationRequestEvent(List.of(sellerId),
+                        "상품명 " + product.getName() + " 경매가 유찰되었습니다.",
+                        "/auctions/" + auction.getId()));
       } catch (Exception e) {
-        log.error("경매 종료 알림 실패: auctionId={}", targetId, e);
+        log.error("kafka send failed :{}", e);
+      }
 
+    } else {
+
+
+
+      /* TODO: chunk */
+      List<String> userIds = auctionParticipationJpaRepository.findByAuctionId(
+              targetId).stream().map(AuctionParticipation::getUserId).toList();
+
+      // 이벤트 발행
+      if (!userIds.isEmpty()) {
+
+        try {
+          eventPublisher.publish(
+                  KafkaTopics.NOTIFICATION_REQUEST,
+                  new NotificationRequestEvent(userIds, "상품명 " + product.getName() + " 경매가 종료되었습니다.",
+                          "/auctions/" + auction.getId()));
+
+        } catch (Exception e) {
+          log.error("경매 종료 알림 실패: auctionId={}", targetId, e);
+
+        }
+
+        try {
+
+          // deposit service에 해당 유저들 환불요청 (kafka or rest)
+          // highestUserId 은 제외하고 환불요청을함.
+          List<String> refundUserIds = userIds.stream()
+                  .filter(id -> !id.equals(highestUserId))
+                  .toList();
+          eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
+                  new AuctionDepositRefundRequestEvent(refundUserIds, targetId,
+                          auction.getDepositAmount()));
+
+        } catch (Exception e) {
+          log.error("환불 요청 실패: auctionId={}", targetId, e);
+
+        }
       }
 
       try {
+        BigDecimal bid = state.getCurrentBid();
 
-        // deposit service에 해당 유저들 환불요청 (kafka or rest)
-        // highestUserId 은 제외하고 환불요청을함.
-        List<String> refundUserIds = userIds.stream()
-            .filter(id -> !id.equals(highestUserId))
-            .toList();
-        eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
-            new AuctionDepositRefundRequestEvent(refundUserIds, targetId,
-                auction.getDepositAmount()));
-
+        // 주문생성 요청 kafka  ,
+        eventPublisher.publish(
+                KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
+                new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
+                        bid, LocalDateTime.now()));
       } catch (Exception e) {
-        log.error("환불 요청 실패: auctionId={}", targetId, e);
-
+        log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
       }
     }
 
-    try {
-      BigDecimal bid = state.getCurrentBid();
+    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED,
+            new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
+                    auction.getDepositAmount(), auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt()));
 
-      // 주문생성 요청 kafka  ,
-      eventPublisher.publish(
-          KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
-          new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
-              bid, LocalDateTime.now()));
-    } catch (Exception e) {
-      log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
-    }
   }
+
 }
