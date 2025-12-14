@@ -3,7 +3,7 @@ name: Discovery CI/CD
 on:
   push:
     branches:
-      - feat/#46-ci-cd
+      - chore/#78-modified-product-test
     paths:
       - 'discovery/**'
       - '.github/workflows/discovery-ci-cd.yml'
@@ -111,7 +111,7 @@ jobs:
             --docker-password=${{ secrets.GIT_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy discovery
+      - name: Deploy
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         run: |
