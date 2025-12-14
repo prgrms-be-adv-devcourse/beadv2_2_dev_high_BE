@@ -1,6 +1,7 @@
 package com.dev_high.auction.domain;
 
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
+import com.dev_high.auction.application.dto.AuctionProductProjection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -20,9 +21,9 @@ public interface AuctionRepository {
   Auction save(Auction auction);
 
 
-  List<String> bulkUpdateStartStatus(); // READY -> IN_PROGRESS
+  List<AuctionProductProjection> bulkUpdateStartStatus(); // READY -> IN_PROGRESS
 
-  List<String> bulkUpdateEndStatus();   // IN_PROGRESS -> COMPLETED
+  List<AuctionProductProjection> bulkUpdateEndStatus();   // IN_PROGRESS -> COMPLETED
 
 
   // 해당 상품으로 등록된 경매중 대기/진행/완료된건이 있는지 체크
