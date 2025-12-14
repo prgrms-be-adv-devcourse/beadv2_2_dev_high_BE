@@ -115,19 +115,19 @@ jobs:
         run: | 
           kubectl create secret generic product-secret \
           --namespace ${{ env.NAMESPACE }} \
-          --from-SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
-          --from-SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
-          --from-SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
-          --from-SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
-          --from-JWT_SECRET="${{secrets.JWT_SECRET}}" \
-          --from-JWT_ACCESS_TOKEN_EXPIRATION="${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" \
-          --from-JWT_REFRESH_TOKEN_EXPIRATION="${{secrets.JWT_REFRESH_TOKEN_EXPIRATION}}" \
-          --from-MORE_MAIL_USERNAME="${{secrets.MORE_MAIL_USERNAME}}" \
-          --from-MORE_MAIL_PASSWORD="${{secrets.MORE_MAIL_PASSWORD}}" \
-          --from-KAFKA_BOOTSTRAP_SERVERS="${{secrets.KAFKA_BOOTSTRAP_SERVERS}}" \
-          --from-KAFKA_BOOT_PORT="${{secrets.KAFKA_BOOT_PORT}}" \
-          --from-KAFKA_USER="${{secrets.KAFKA_USER}}" \
-          --from-KAFKA_PASSWORD="${{secrets.KAFKA_PASSWORD}}" \
+          --from-literal=SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
+          --from-literal=SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
+          --from-literal=SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
+          --from-literal=SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
+          --from-literal=JWT_SECRET="${{secrets.JWT_SECRET}}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" \
+          --from-literal=JWT_REFRESH_TOKEN_EXPIRATION="${{secrets.JWT_REFRESH_TOKEN_EXPIRATION}}" \
+          --from-literal=MORE_MAIL_USERNAME="${{secrets.MORE_MAIL_USERNAME}}" \
+          --from-literal=MORE_MAIL_PASSWORD="${{secrets.MORE_MAIL_PASSWORD}}" \
+          --from-literal=KAFKA_BOOTSTRAP_SERVERS="${{secrets.KAFKA_BOOTSTRAP_SERVERS}}" \
+          --from-literal=KAFKA_BOOT_PORT="${{secrets.KAFKA_BOOT_PORT}}" \
+          --from-literal=KAFKA_USER="${{secrets.KAFKA_USER}}" \
+          --from-literal=KAFKA_PASSWORD="${{secrets.KAFKA_PASSWORD}}" \
           --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy
