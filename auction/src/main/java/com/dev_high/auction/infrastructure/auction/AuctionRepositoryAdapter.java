@@ -44,10 +44,10 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     Auction saved = auctionJpaRepository.save(auction);
 
     // 2) productId 기반으로 프록시 로딩
-    Product productRef = entityManager.getReference(Product.class, saved.getProductId());
+    Product product = entityManager.find(Product.class, saved.getProductId());
 
     // 3) LAZY 필드 주입
-    saved.setProduct(productRef);
+    saved.setProduct(product);
 
     return saved;
 

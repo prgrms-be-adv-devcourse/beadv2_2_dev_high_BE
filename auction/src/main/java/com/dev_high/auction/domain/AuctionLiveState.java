@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Entity
-@Table(name = "auction_live_state")
+@Table(name = "auction_live_state", schema = "auction")
 @Getter
 public class AuctionLiveState {
 
