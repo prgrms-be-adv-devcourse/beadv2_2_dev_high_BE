@@ -86,7 +86,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/feat/#46-ci-cd'
+    if: github.ref == 'refs/heads/chore/#78-modified-product-test'
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -114,8 +114,6 @@ jobs:
         run: |
           kubectl create secret generic apigateway-secret \
           --namespace ${{ env.NAMESPACE }} \
-          --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION }}" \
           --from-SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
           --from-SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
           --from-SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \

@@ -26,16 +26,85 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: SPRING_DATASOURCE_URL
+
+            - name: SPRING_DATASOURCE_DRIVER
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: SPRING_DATASOURCE_DRIVER
+
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: SPRING_DATASOURCE_USERNAME
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: apigateway-secret
                   key: JWT_SECRET
+
             - name: JWT_ACCESS_TOKEN_EXPIRATION
               valueFrom:
                 secretKeyRef:
                   name: apigateway-secret
                   key: JWT_ACCESS_TOKEN_EXPIRATION
+
+            - name: JWT_REFRESH_TOKEN_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: JWT_REFRESH_TOKEN_EXPIRATION
+
+            - name: MORE_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: MORE_MAIL_USERNAME
+
+            - name: MORE_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: MORE_MAIL_PASSWORD
+
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: KAFKA_BOOTSTRAP_SERVERS
+
+            - name: KAFKA_BOOT_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: KAFKA_BOOT_PORT
+
+            - name: KAFKA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: KAFKA_USER
+
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: apigateway-secret
+                  key: KAFKA_PASSWORD
+
           resources:
             requests:
               cpu: "100m"

@@ -86,7 +86,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/feat/#46-ci-cd'
+    if: github.ref == 'chore/#78-modified-product-test'
     runs-on: ubuntu-latest
     environment: production
     steps:
