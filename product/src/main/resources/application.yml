@@ -1,12 +1,16 @@
-#spring:
-#  application:
-#    name: product-service
-#  config:
-#    import: "configserver:http://localhost:8888"
-#server:
-#  port: 8085
-
-#
 spring:
+  application:
+    name: product-service
   profiles:
     active: ${env.SPRING_PROFILES_ACTIVE:local}
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+server:
+  port: 8085
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"

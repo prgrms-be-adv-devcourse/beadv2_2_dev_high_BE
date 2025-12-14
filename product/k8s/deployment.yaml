@@ -1,21 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: product
+  name: product-service
   labels:
-    app: product
+    app: product-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: product
+      app: product-service
   template:
     metadata:
       labels:
-        app: product
+        app: product-service
     spec:
+      imagePullSecrets: #ghcr 시크릿 사용하도록 설정
+        - name: ghcr-secret
       containers:
-        - name: product
+        - name: product-service
           image: ghcr.io/prgrms-be-adv-devcourse/product:latest
           imagePullPolicy: IfNotPresent
           ports:
@@ -31,19 +33,19 @@ spec:
             - name: SPRING_DATASOURCE_URL
               valueFrom:
                 secretKeyRef:
-                  name: apigateway-secret
+                  name: product-secret
                   key: SPRING_DATASOURCE_URL
 
             - name: SPRING_DATASOURCE_DRIVER
               valueFrom:
                 secretKeyRef:
-                  name: apigateway-secret
+                  name: product-secret
                   key: SPRING_DATASOURCE_DRIVER
 
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: apigateway-secret
+                  name: product-secret
                   key: SPRING_DATASOURCE_USERNAME
 
             - name: SPRING_DATASOURCE_PASSWORD
