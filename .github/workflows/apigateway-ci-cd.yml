@@ -116,7 +116,7 @@ jobs:
           --namespace ${{ env.NAMESPACE }} \
           --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
           --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION }}" \
-          --from-SPRING_DATASOURCE_URL="${{secret.SPRING_DATASOURCE_URL}}" \
+          --from-SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
           --from-SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
           --from-SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
           --from-SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
