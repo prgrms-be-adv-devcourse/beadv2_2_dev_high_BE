@@ -4,7 +4,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.dev_high.user.wishlist.application.WishlistService;
-import com.dev_high.user.wishlist.application.dto.WishlistInfo;
+import com.dev_high.user.wishlist.application.dto.WishlistResponse;
 import com.dev_high.user.wishlist.presentation.dto.WishlistAddRequest;
 import com.dev_high.user.wishlist.presentation.dto.WishlistDeleteRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +20,12 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @PostMapping
-    public ApiResponseDto<WishlistInfo> create( @RequestBody WishlistAddRequest request) {
+    public ApiResponseDto<WishlistResponse> create(@RequestBody WishlistAddRequest request) {
         return wishlistService.create(request.toCommand());
     }
 
     @GetMapping
-    public ApiResponseDto<Page<WishlistInfo>> getWishlist(Pageable pageable) {
+    public ApiResponseDto<Page<WishlistResponse>> getWishlist(Pageable pageable) {
         return wishlistService.getWishlist(pageable);
     }
 

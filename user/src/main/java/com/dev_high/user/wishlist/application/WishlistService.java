@@ -5,7 +5,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.wishlist.application.dto.CreateWishlistCommand;
-import com.dev_high.user.wishlist.application.dto.WishlistInfo;
+import com.dev_high.user.wishlist.application.dto.WishlistResponse;
 import com.dev_high.user.wishlist.domain.Wishlist;
 import com.dev_high.user.wishlist.domain.WishlistRepository;
 import com.dev_high.user.wishlist.exception.WishlistItemAlreadyExistsException;
@@ -28,7 +28,7 @@ public class WishlistService {
     private final UserDomainService userDomainsService;
 
     @Transactional
-    public ApiResponseDto<WishlistInfo> create(CreateWishlistCommand command) {
+    public ApiResponseDto<WishlistResponse> create(CreateWishlistCommand command) {
         User user = userDomainsService.getUser();
         if(wishlistRepository.existsByUserIdAndProductId(user.getId(), command.productId())) {
             throw new WishlistItemAlreadyExistsException();
@@ -38,14 +38,14 @@ public class WishlistService {
                 command.productId()
         );
         Wishlist saved = wishlistRepository.save(wishlist);
-        return ApiResponseDto.success(WishlistInfo.from(saved));
+        return ApiResponseDto.success(WishlistResponse.from(saved));
     }
 
     @Transactional(readOnly = true)
-    public ApiResponseDto<Page<WishlistInfo>> getWishlist(Pageable pageable) {
+    public ApiResponseDto<Page<WishlistResponse>> getWishlist(Pageable pageable) {
         String userId = UserContext.get().userId();
         Page<Wishlist> wishlist = wishlistRepository.findByUserId(userId, pageable);
-        Page<WishlistInfo> wishlistPage = wishlist.map(WishlistInfo::from);
+        Page<WishlistResponse> wishlistPage = wishlist.map(WishlistResponse::from);
         return ApiResponseDto.success(wishlistPage);
     }
 

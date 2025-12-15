@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class IncorrectPasswordException extends CustomException {
     public IncorrectPasswordException() {
-        super(HttpStatus.UNAUTHORIZED, "잘못된 비밀번호입니다.");
+        super(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
     }
 }

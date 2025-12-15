@@ -3,7 +3,7 @@ package com.dev_high.user.seller.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.seller.application.dto.SellerCommand;
-import com.dev_high.user.seller.application.dto.SellerInfo;
+import com.dev_high.user.seller.application.dto.SellerResponse;
 import com.dev_high.user.seller.domain.Seller;
 import com.dev_high.user.seller.domain.SellerRepository;
 import com.dev_high.user.seller.domain.SellerStatus;
@@ -26,7 +26,7 @@ public class SellerService {
     private final UserDomainService userDomainService;
 
     @Transactional
-    public ApiResponseDto<SellerInfo> create(SellerCommand command) {
+    public ApiResponseDto<SellerResponse> create(SellerCommand command) {
         User user = userDomainService.getUser();
         //일반 회원 seller로 변경
         userDomainService.updateUserRole(user, UserRole.SELLER);
@@ -39,20 +39,20 @@ public class SellerService {
                 command.bankAccount()
         );
         Seller saved = sellerRepository.save(seller);
-        return ApiResponseDto.success(SellerInfo.from(saved));
+        return ApiResponseDto.success(SellerResponse.from(saved));
     }
 
     @Transactional(readOnly = true)
-    public ApiResponseDto<SellerInfo> getProfile() {
+    public ApiResponseDto<SellerResponse> getProfile() {
         Seller seller = getSeller();
-        return ApiResponseDto.success(SellerInfo.from(seller));
+        return ApiResponseDto.success(SellerResponse.from(seller));
     }
 
     @Transactional
-    public ApiResponseDto<SellerInfo> updateProfile(SellerCommand command) {
+    public ApiResponseDto<SellerResponse> updateProfile(SellerCommand command) {
         Seller seller = getSeller();
         seller.updateSeller(command.bankName(), command.bankAccount());
-        return ApiResponseDto.success(SellerInfo.from(seller));
+        return ApiResponseDto.success(SellerResponse.from(seller));
     }
 
     @Transactional
