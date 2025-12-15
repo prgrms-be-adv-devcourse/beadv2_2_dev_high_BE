@@ -55,11 +55,11 @@ public class BatchHelper {
 
       ResponseEntity<ApiResponseDto<List<String>>> response;
       response = restTemplate.exchange(
-          url,
-          HttpMethod.GET,
-          entity,
-          new ParameterizedTypeReference<ApiResponseDto<List<String>>>() {
-          }
+              url,
+              HttpMethod.GET,
+              entity,
+              new ParameterizedTypeReference<ApiResponseDto<List<String>>>() {
+              }
       );
 
       if (response.getBody() != null) {
@@ -73,7 +73,7 @@ public class BatchHelper {
   }
 
   public RepeatStatus startAuctionsUpdate(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                          ChunkContext chunkContext) {
 
     List<AuctionProductProjection> targetIds = auctionRepository
         .bulkUpdateStartStatus();
@@ -102,12 +102,12 @@ public class BatchHelper {
   }
 
   public RepeatStatus startAuctionsPostProcessing(StepContribution stepContribution,
-      ChunkContext chunkContext) {
+                                                  ChunkContext chunkContext) {
     Object raw = chunkContext.getStepContext()
-        .getStepExecution()
-        .getJobExecution()
-        .getExecutionContext()
-        .get("startAuctionIds");
+            .getStepExecution()
+            .getJobExecution()
+            .getExecutionContext()
+            .get("startAuctionIds");
 
     ExecutionContext ec = chunkContext.getStepContext()
         .getStepExecution()
@@ -139,15 +139,15 @@ public class BatchHelper {
         String productId = auction.getProduct().getId();
         List<String> ids = getWishlistUserIds(productId);
 
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATE,
-            new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
-                auction.getDepositAmount(), auction.getStatus().name()));
+        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED,
+                new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
+                        auction.getDepositAmount(), auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt()));
         if (ids.size() > 0) {
           try {
             eventPublisher.publish(
-                KafkaTopics.NOTIFICATION_REQUEST,
-                new NotificationRequestEvent(userIds, "찜한 상품의 경매가 시작되었습니다.",
-                    "/auctions/" + auction.getId()));
+                    KafkaTopics.NOTIFICATION_REQUEST,
+                    new NotificationRequestEvent(userIds, "찜한 상품의 경매가 시작되었습니다.",
+                            "/auctions/" + auction.getId()));
           } catch (Exception e) {
             // pass
             log.error("kafka send failed", e);
@@ -242,10 +242,10 @@ public class BatchHelper {
       try {
         // 판매자에게 알림
         eventPublisher.publish(
-            KafkaTopics.NOTIFICATION_REQUEST,
-            new NotificationRequestEvent(List.of(sellerId),
-                "상품명 " + product.getName() + " 경매가 유찰되었습니다.",
-                "/auctions/" + auction.getId()));
+                KafkaTopics.NOTIFICATION_REQUEST,
+                new NotificationRequestEvent(List.of(sellerId),
+                        "상품명 " + product.getName() + " 경매가 유찰되었습니다.",
+                        "/auctions/" + auction.getId()));
       } catch (Exception e) {
         log.error("kafka send failed :{}", e);
       }
@@ -256,16 +256,16 @@ public class BatchHelper {
 
       /* TODO: chunk */
       List<String> userIds = auctionParticipationJpaRepository.findByAuctionId(
-          targetId).stream().map(AuctionParticipation::getUserId).toList();
+              targetId).stream().map(AuctionParticipation::getUserId).toList();
 
       // 이벤트 발행
       if (!userIds.isEmpty()) {
 
         try {
           eventPublisher.publish(
-              KafkaTopics.NOTIFICATION_REQUEST,
-              new NotificationRequestEvent(userIds, "상품명 " + product.getName() + " 경매가 종료되었습니다.",
-                  "/auctions/" + auction.getId()));
+                  KafkaTopics.NOTIFICATION_REQUEST,
+                  new NotificationRequestEvent(userIds, "상품명 " + product.getName() + " 경매가 종료되었습니다.",
+                          "/auctions/" + auction.getId()));
 
         } catch (Exception e) {
           log.error("경매 종료 알림 실패: auctionId={}", targetId, e);
@@ -277,11 +277,11 @@ public class BatchHelper {
           // deposit service에 해당 유저들 환불요청 (kafka or rest)
           // highestUserId 은 제외하고 환불요청을함.
           List<String> refundUserIds = userIds.stream()
-              .filter(id -> !id.equals(highestUserId))
-              .toList();
+                  .filter(id -> !id.equals(highestUserId))
+                  .toList();
           eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED,
-              new AuctionDepositRefundRequestEvent(refundUserIds, targetId,
-                  auction.getDepositAmount()));
+                  new AuctionDepositRefundRequestEvent(refundUserIds, targetId,
+                          auction.getDepositAmount()));
 
         } catch (Exception e) {
           log.error("환불 요청 실패: auctionId={}", targetId, e);
@@ -294,17 +294,17 @@ public class BatchHelper {
 
         // 주문생성 요청 kafka  ,
         eventPublisher.publish(
-            KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
-            new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
-                bid, LocalDateTime.now()));
+                KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
+                new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
+                        bid, LocalDateTime.now()));
       } catch (Exception e) {
         log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
       }
     }
 
-    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATE,
-        new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
-            auction.getDepositAmount(), auction.getStatus().name()));
+    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED,
+            new AuctionUpdateSearchRequestEvent(auction.getId(), auction.getStartBid(),
+                    auction.getDepositAmount(), auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt()));
 
   }
 

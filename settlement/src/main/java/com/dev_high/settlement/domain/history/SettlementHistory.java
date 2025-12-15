@@ -3,19 +3,12 @@ package com.dev_high.settlement.domain.history;
 
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.time.LocalDateTime;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -23,54 +16,48 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "settlement_history", schema = "settlement")
 public class SettlementHistory {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(name = "settlement_id", length = 50, nullable = false)
-  private String settlementId;
+    @Column(name = "settlement_id", length = 50, nullable = false)
+    private String settlementId;
 
-  @Column(name = "seller_id", length = 50, nullable = false)
-  private String sellerId;
+    @Column(name = "seller_id", length = 50, nullable = false)
+    private String sellerId;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "status", length = 20, nullable = false)
-  private SettlementStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private SettlementStatus status;
 
-  @Column(name = "message")
-  private String message;
+    @Column(name = "message")
+    private String message;
 
-  @Column(name = "created_by", length = 50)
-  private String createdBy = "SYSTEM";
+    @Column(name = "created_by", length = 50)
+    private String createdBy = "SYSTEM";
 
-  @CreationTimestamp
-  @Column(name = "created_at", updatable = false)
-  private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-  @UpdateTimestamp
-  @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-  public SettlementHistory(String settlementId, String sellerId, SettlementStatus status,
-      String message) {
-    this.settlementId = settlementId;
-    this.sellerId = sellerId;
-    this.status = status;
-    this.message = message;
-  }
-
-  public static SettlementHistory fromSettlement(Settlement settlement) {
-    String message = settlement.getHistoryMessage();
-    if (message == null) {
-      message = String.format("%s %s %s", settlement.getSellerId(), settlement.getStatus(),
-          settlement.getUpdateDate());
+    public SettlementHistory(String settlementId, String sellerId, SettlementStatus status, String message) {
+        this.settlementId = settlementId;
+        this.sellerId = sellerId;
+        this.status = status;
+        this.message = message;
     }
 
-    return new SettlementHistory(
-        settlement.getId(),
-        settlement.getSellerId(),
-        settlement.getStatus(),
-        message);
-  }
+    public static SettlementHistory fromSettlement(Settlement settlement) {
+        return new SettlementHistory(
+                settlement.getId(),
+                settlement.getSellerId(),
+                settlement.getStatus(),
+                settlement.getSellerId() + settlement.getStatus() + settlement.getUpdateDate()
+        );
+    }
 
 }

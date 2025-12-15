@@ -105,7 +105,7 @@ public class AuthService {
         log.info("refreshToken: {}", refreshToken);
 
         refreshTokenRepository.save(user.getId(), refreshToken, refreshTokenExpiration);
-        LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken, user.getNickname(), user.getUserRole().name());
+        LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken, user.getId(), user.getNickname(), user.getUserRole().name());
 
         return ApiResponseDto.success(loginInfo);
     }
