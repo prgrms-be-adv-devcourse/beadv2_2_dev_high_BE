@@ -14,7 +14,7 @@ spring:
       server:
         git:
           default-label: ${CONFIG_GIT_LABEL:develop}
-          search-paths: ${CONFIG_GIT_SEARCH_PATHS:config}
+          search-paths: ${CONFIG_GIT_SEARCH_PATHS:config/config}
           uri: https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE
           clone-on-start: true
           force-pull: true

@@ -31,7 +31,7 @@ spec:
             - name: CONFIG_GIT_LABEL
               value: "chore/#78-modified-product-test"
             - name: CONFIG_GIT_SEARCH_PATHS
-              value: "config"
+              value: "config/config"
           readinessProbe:
             httpGet:
               path: /actuator/health
