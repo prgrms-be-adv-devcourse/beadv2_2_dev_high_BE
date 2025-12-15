@@ -27,12 +27,12 @@ public class AuthController {
     }
 
     @PostMapping("/verify/email")
-    public ApiResponseDto<Void> verifyEmail(@RequestBody VerifyEmailRequest request){
+    public ApiResponseDto<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request){
         return authService.verifyEmail(request.toCommand());
     }
 
     @PostMapping("/login")
-    public ApiResponseDto<LoginInfo> login(@RequestBody LoginRequest request){
+    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request){
         LoginCommand command = new LoginCommand(
                 request.email(),
                 request.password()
@@ -41,7 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh/token")
-    public ApiResponseDto<TokenInfo> refreshToken(@RequestBody TokenRequest request){
+    public ApiResponseDto<TokenResponse> refreshToken(@RequestBody TokenRequest request){
         TokenCommand command = new TokenCommand(
                 request.refreshToken()
         );

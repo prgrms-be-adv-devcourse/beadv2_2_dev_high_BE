@@ -19,10 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.security.NoSuchAlgorithmException;
+
 import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -38,60 +37,62 @@ public class AuthService {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
-    @Transactional
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     public ApiResponseDto<Void> sendEmail(SendEmailCommand command) {
         String email = command.email();
         if(userRepository.existsByEmail(command.email())) {
             throw new UserAlreadyExistsException();
         }
-        String title = "More 이메일 인증 번호";
+
         String authCode = this.createEmailVerificationCode();
-        log.info(authCode);
         emailVerificationCodeRepository.save(email, authCode, 5);
+
         try {
-            mailService.sendEmail(email, title, authCode);
+            mailService.sendEmail(email, "More 이메일 인증 번호", authCode);
         } catch (MessagingException e) {
+            log.error("메일 발송 실패: {}", e.getMessage(), e);
             throw new MailSendFailedException();
         }
-        return null;
+
+        return ApiResponseDto.success(
+                "인증 메일이 발송되었습니다. 이메일을 확인해주세요.",
+                null
+        );
     }
 
     @Transactional
     public ApiResponseDto<Void> verifyEmail(VerifyEmailCommand command) {
         Optional<String> emailVerificationCode = emailVerificationCodeRepository.findByEmail(command.email());
-        log.info("emailVerificationCode: {}", emailVerificationCode);
 
-        if (emailVerificationCode.isPresent()) {
-            String savedCode = emailVerificationCode.get();
-            if (savedCode.equals(command.code())) {
-                emailVerificationCodeRepository.deleteCode(command.email());
-            } else {
-                throw new EmailCodeMismatchException();
-            }
-        } else {
-            throw new EmailMismatchException();
+        if(emailVerificationCode.isEmpty()) {
+            throw new EmailVerificationNotFoundException();
         }
 
-        return ApiResponseDto.success(null);
+        String savedCode = emailVerificationCode.get();
+        if(!savedCode.equals(command.code())) {
+            throw new EmailCodeMismatchException();
+        }
+
+        emailVerificationCodeRepository.deleteCode(command.email());
+
+        return ApiResponseDto.success(
+                "이메일 인증이 완료되었습니다. 회원가입을 계속 진행해주세요.",
+                null
+        );
     }
 
     private String createEmailVerificationCode() {
         int length = 6;
-
-        try {
-            Random random = SecureRandom.getInstanceStrong();
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < length; i++) {
-                builder.append(random.nextInt(10));
-            }
-            return builder.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException();
+        StringBuilder builder = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            builder.append(SECURE_RANDOM.nextInt(10));
         }
+        return builder.toString();
     }
 
     @Transactional
-    public ApiResponseDto<LoginInfo> login(LoginCommand command) {
+    public ApiResponseDto<LoginResponse> login(LoginCommand command) {
         User user = userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
@@ -105,26 +106,34 @@ public class AuthService {
         log.info("refreshToken: {}", refreshToken);
 
         refreshTokenRepository.save(user.getId(), refreshToken, refreshTokenExpiration);
-        LoginInfo loginInfo = new LoginInfo(accessToken, refreshToken, user.getId(), user.getNickname(), user.getUserRole().name());
+        LoginResponse loginResponse = new LoginResponse(accessToken, refreshToken, user.getId(), user.getNickname(), user.getUserRole().name());
 
-        return ApiResponseDto.success(loginInfo);
+        return ApiResponseDto.success(
+                "로그인에 성공했습니다.",
+                loginResponse
+        );
     }
 
-    public ApiResponseDto<TokenInfo> refreshToken(TokenCommand command) {
+    public ApiResponseDto<TokenResponse> refreshToken(TokenCommand command) {
         Claims claims = jwtProvider.parseToken(command.refreshToken());
         String userId = claims.getSubject();
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId).orElseThrow(RefreshTokenNotFoundException::new);
-        if(refreshToken.getToken().equals(command.refreshToken())) {
-            String newAccess = jwtProvider.generateAccessToken(userId, claims.get("role", String.class));
-            TokenInfo tokenInfo = new TokenInfo(newAccess);
-            return ApiResponseDto.success(tokenInfo);
-        } else {
+        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId)
+                .orElseThrow(RefreshTokenNotFoundException::new);
+
+        if(!refreshToken.getToken().equals(command.refreshToken())) {
             throw new RefreshTokenMismatchException();
         }
+
+        String newAccess = jwtProvider.generateAccessToken(userId, claims.get("role", String.class));
+        TokenResponse tokenResponse = new TokenResponse(newAccess);
+
+        return ApiResponseDto.success(
+                "토큰이 재발급되었습니다.",
+                tokenResponse
+        );
     }
 
-    @Transactional
     public void logout(String userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }

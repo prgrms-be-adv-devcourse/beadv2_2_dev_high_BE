@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class ApiResponseDto<T> {
-  private String code ="SUCCESS";    // 비즈니스/도메인 코드
+  private String code = "SUCCESS";    // 비즈니스/도메인 코드
   private String message = "정상적으로 처리되었습니다.";
   private T data;
 
@@ -45,6 +45,7 @@ public class ApiResponseDto<T> {
     this.message = message;
     this.data = data;
   }
+
   private ApiResponseDto(String code, String message, T data) {
     this.code = code;
     this.message = message;

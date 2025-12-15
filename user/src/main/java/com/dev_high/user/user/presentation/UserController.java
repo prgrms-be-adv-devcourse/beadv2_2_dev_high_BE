@@ -2,7 +2,7 @@ package com.dev_high.user.user.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.user.application.UserService;
-import com.dev_high.user.user.application.dto.UserInfo;
+import com.dev_high.user.user.application.dto.UserResponse;
 import com.dev_high.user.user.presentation.dto.PasswordUpdateRequest;
 import com.dev_high.user.user.presentation.dto.UserSignUpRequest;
 import com.dev_high.user.user.presentation.dto.UserUpdateRequest;
@@ -19,17 +19,17 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ApiResponseDto<UserInfo> create(@RequestBody UserSignUpRequest request) {
+    public ApiResponseDto<UserResponse> create(@RequestBody UserSignUpRequest request) {
         return userService.create(request.toCommand());
     }
 
     @GetMapping("/profile")
-    public ApiResponseDto<UserInfo> getProfile(){
+    public ApiResponseDto<UserResponse> getProfile(){
         return userService.getProfile();
     }
 
     @PutMapping("/profile")
-    public ApiResponseDto<UserInfo> updateProfile(@RequestBody UserUpdateRequest request) {
+    public ApiResponseDto<UserResponse> updateProfile(@RequestBody UserUpdateRequest request) {
         return userService.updateProfile(request.toCommand());
     }
 
