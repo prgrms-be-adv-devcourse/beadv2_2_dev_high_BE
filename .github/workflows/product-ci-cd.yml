@@ -22,7 +22,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/product
-  SERVICE_NAME: product
+  SERVICE_NAME: product-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 
 jobs:
