@@ -86,7 +86,8 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'chore/#78-modified-product-test'
+    # GitHub sets refs/heads/<branch>; without refs/heads the deploy job is always skipped.
+    if: github.ref == 'refs/heads/chore/#78-modified-product-test'
     runs-on: ubuntu-latest
     environment: production
     steps:
