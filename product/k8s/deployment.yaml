@@ -1,21 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: product
+  name: product-service
   labels:
-    app: product
+    app: product-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: product
+      app: product-service
   template:
     metadata:
       labels:
-        app: product
+        app: product-service
     spec:
+      imagePullSecrets: #ghcr 시크릿 사용하도록 설정
+        - name: ghcr-secret
       containers:
-        - name: product
+        - name: product-service
           image: ghcr.io/prgrms-be-adv-devcourse/product:latest
           imagePullPolicy: IfNotPresent
           ports:
@@ -24,32 +26,111 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8085"
+
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
 
-            - name: DATASOURCE_DRIVER
-              valueFrom:
-                secretKeyRef:
-                  name: product-secret
-                  key: DATASOURCE_DRIVER
+            - name: EUREKA_HOST
+              value: "discovery"
 
-            - name: DATASOURCE_PASSWORD
+            - name: SPRING_DATASOURCE_URL
               valueFrom:
                 secretKeyRef:
                   name: product-secret
-                  key: DATASOURCE_PASSWORD
+                  key: SPRING_DATASOURCE_URL
 
-            - name: DATASOURCE_URL
+            - name: SPRING_DATASOURCE_DRIVER
               valueFrom:
                 secretKeyRef:
                   name: product-secret
-                  key: DATASOURCE_URL
+                  key: SPRING_DATASOURCE_DRIVER
 
-            - name: DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: product-secret
-                  key: DATASOURCE_USERNAME
+                  key: SPRING_DATASOURCE_USERNAME
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: JWT_SECRET
+
+            - name: JWT_ACCESS_TOKEN_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: JWT_ACCESS_TOKEN_EXPIRATION
+
+            - name: JWT_REFRESH_TOKEN_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: JWT_REFRESH_TOKEN_EXPIRATION
+
+            - name: MORE_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: MORE_MAIL_USERNAME
+
+            - name: MORE_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: MORE_MAIL_PASSWORD
+
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: KAFKA_BOOTSTRAP_SERVERS
+
+            - name: KAFKA_BOOT_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: KAFKA_BOOT_PORT
+
+            - name: KAFKA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: KAFKA_USER
+
+            - name: ELASTIC_SEARCH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: ELASTIC_SEARCH_URL
+
+
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: REDIS_HOST
+
+
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: REDIS_PORT
+
+            - name: TOSS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: product-secret
+                  key: TOSS_SECRET_KEY
+
           readinessProbe:
             httpGet:
               path: /actuator/health

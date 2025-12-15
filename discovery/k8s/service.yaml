@@ -5,10 +5,11 @@ metadata:
   labels:
     app: discovery
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: discovery
   ports:
     - name: http
       port: 8761
       targetPort: 8761
+      nodePort: 30761

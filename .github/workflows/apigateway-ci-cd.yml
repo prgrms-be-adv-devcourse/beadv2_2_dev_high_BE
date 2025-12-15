@@ -3,7 +3,7 @@ name: Apigateway CI/CD
 on:
   push:
     branches:
-      - feat/#46-ci-cd
+      - main
     paths:
       - 'apigateway/**'
       - '.github/workflows/apigateway-ci-cd.yml'
@@ -86,7 +86,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/feat/#46-ci-cd'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -110,12 +110,27 @@ jobs:
             --docker-password=${{ secrets.GIT_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create or update apigateway secret
-        run: | #jwt 제공
+      - name: Create or update secret
+        run: |
           kubectl create secret generic apigateway-secret \
           --namespace ${{ env.NAMESPACE }} \
-          --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.JWT_ACCESS_TOKEN_EXPIRATION }}" \
+          --from-literal=SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
+          --from-literal=SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
+          --from-literal=SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
+          --from-literal=SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
+          --from-literal=JWT_SECRET="${{secrets.JWT_SECRET}}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" \
+          --from-literal=JWT_REFRESH_TOKEN_EXPIRATION="${{secrets.JWT_REFRESH_TOKEN_EXPIRATION}}" \
+          --from-literal=MORE_MAIL_USERNAME="${{secrets.MORE_MAIL_USERNAME}}" \
+          --from-literal=MORE_MAIL_PASSWORD="${{secrets.MORE_MAIL_PASSWORD}}" \
+          --from-literal=KAFKA_BOOTSTRAP_SERVERS="${{secrets.KAFKA_BOOTSTRAP_SERVERS}}" \
+          --from-literal=KAFKA_BOOT_PORT="${{secrets.KAFKA_BOOT_PORT}}" \
+          --from-literal=KAFKA_USER="${{secrets.KAFKA_USER}}" \
+          --from-literal=KAFKA_PASSWORD="${{secrets.KAFKA_PASSWORD}}" \
+          --from-literal=ELASTIC_SEARCH_URL="${{secrets.ELASTIC_SEARCH_URL}}" \
+          --from-literal=REDIS_HOST="${{secrets.REDIS_HOST}}" \
+          --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
+          --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}"
           --dry-run=client -o yaml | kubectl apply -f -
     
 

@@ -3,7 +3,7 @@ name: Discovery CI/CD
 on:
   push:
     branches:
-      - feat/#46-ci-cd
+      - main
     paths:
       - 'discovery/**'
       - '.github/workflows/discovery-ci-cd.yml'
@@ -86,7 +86,8 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/feat/#46-ci-cd'
+    # GitHub sets refs/heads/<branch>; without refs/heads the deploy job is always skipped.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -111,7 +112,7 @@ jobs:
             --docker-password=${{ secrets.GIT_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy discovery
+      - name: Deploy
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         run: |

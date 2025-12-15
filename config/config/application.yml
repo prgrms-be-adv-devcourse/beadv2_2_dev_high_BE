@@ -3,17 +3,13 @@ spring:
     activate:
       on-profile: prod
 
-eureka:
-  instance:
-    hostname: discovery
-
 ---
 spring:
   datasource:
-    url: ${DATASOURCE_URL}
-    driver-class-name: ${DATASOURCE_DRIVER:org.postgresql.Driver}
-    username: ${DATASOURCE_USERNAME}
-    password: ${DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jackson:
     time-zone: Asia/Seoul
   jpa:
@@ -36,13 +32,13 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost}:${KAFKA_BOOT_PORT:29092}
     username: ${KAFKA_USER}
     password: ${KAFKA_PASSWORD}
+
 eureka:
   client:
-    service-url:
       register-with-eureka: true
       fetch-registry: true
       service-url:
-        defaultZone: http://admin:admin@${eureka.instance.hostname:localhost}:8761/eureka
+        defaultZone: http://admin:admin@${EUREKA_HOST:localhost}:8761/eureka
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
@@ -52,7 +48,6 @@ management:
     web:
       exposure:
         include: refresh, health, beans, info
-
 
 logging:
   level:
