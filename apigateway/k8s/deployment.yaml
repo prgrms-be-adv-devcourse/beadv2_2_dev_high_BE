@@ -27,6 +27,9 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
 
+            - name: EUREKA_HOST
+              value: "discovery"
+
             - name: SPRING_DATASOURCE_URL
               valueFrom:
                 secretKeyRef:
