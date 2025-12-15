@@ -13,21 +13,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.v1}/deposit")
+@RequestMapping("/api/v1/deposit")
 @RequiredArgsConstructor
 @Tag(name = "DepositHistory", description = "예치금 이력 API")
 public class DepositHistoryController {
     private final DepositHistoryService historyService;
 
     @Operation(summary = "예치금 이력 생성", description = "예치금 이력을 생성하고 저장")
-    @PostMapping("/history")
+    @PostMapping("/histories")
     @ResponseStatus(HttpStatus.CREATED)
     public DepositHistoryInfo createHistory(@Valid @RequestBody DepositHistoryCreateRequest request) {
         return historyService.createHistory(request.toCommand());
     }
 
     @Operation(summary = "로그인한 사용자 ID의 예치금 이력 조회", description = "예치금 이력 내역을 사용자 ID로 조회")
-    @GetMapping("/history/me")
+    @GetMapping("/histories/me")
     public Page<DepositHistoryInfo> findByUserId(Pageable pageable) {
         return historyService.findHistoriesByUserId(pageable);
     }
