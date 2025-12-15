@@ -21,6 +21,7 @@ public class KafkaTopics {
   public static final String AUCTION_SEARCH_DELETED_REQUESTED  = "auction-search-delete-requested";
 
   // product 발행 토픽
+  @Deprecated
   public static final String PRODUCT_SEARCH_UPDATED_REQUESTED = "product-search-update-requested";
   public static final String PRODUCT_SEARCH_DELETED_REQUESTED = "product-search-delete-requested";
 
@@ -28,6 +29,14 @@ public class KafkaTopics {
   // user 발행 토픽
   public static final String USER_DEPOSIT_CREATED_REQUESTED = "user-deposit-create-requested";
 
+  @Deprecated
+  public static final String AUCTION_SEARCH_CREATE = "auction-search-create";
+  @Deprecated
+  public static final String AUCTION_SEARCH_UPDATE = "auction-search-update";
+  @Deprecated
+  public static final String AUCTION_SEARCH_DELETE = "auction-search-delete";
+  @Deprecated
+  public static final String AUCTION_PRODUCT_UPDATE = "auction-product-update";
   /**
    * 중도포기 시 deposit을 즉시 처리 ,경매 종료시에는 kafka로 이벤트 발송 구독대상: deposit
    */

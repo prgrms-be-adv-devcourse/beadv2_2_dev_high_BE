@@ -1,5 +1,6 @@
 package com.dev_high.auction.infrastructure.auction;
 
+import com.dev_high.auction.application.dto.AuctionProductProjection;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionStatus;
 import java.util.List;
@@ -9,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AuctionJpaRepository extends JpaRepository<Auction ,String> {
+public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
 
   boolean existsByProductIdAndStatusIn(String productId, List<AuctionStatus> statuses);
 
@@ -19,23 +20,23 @@ public interface AuctionJpaRepository extends JpaRepository<Auction ,String> {
   /* postgre 에서는 retuning 으로 id바로 조회가능 */
   @Modifying
   @Query(value = """
-    UPDATE auction.auction
-    SET status = 'IN_PROGRESS',
-        updated_at = NOW(),
-        updated_by = 'SYSTEM'
-    WHERE status = 'READY' AND auction_start_at <= NOW()
-    RETURNING id
-    """, nativeQuery = true)
-  List<String> bulkUpdateStart();
+      UPDATE auction.auction
+      SET status = 'IN_PROGRESS',
+          updated_at = NOW(),
+          updated_by = 'SYSTEM'
+      WHERE status = 'READY' AND auction_start_at <= NOW()
+      RETURNING id , product_id
+      """, nativeQuery = true)
+  List<AuctionProductProjection> bulkUpdateStart();
 
   @Modifying
   @Query(value = """
-    UPDATE auction.auction
-    SET status = 'COMPLETED',
-        updated_at = NOW(),
-        updated_by = 'SYSTEM'
-    WHERE status = 'IN_PROGRESS' AND auction_end_at <= NOW()
-    RETURNING id
-    """, nativeQuery = true)
-  List<String> bulkUpdateEnd();
+      UPDATE auction.auction
+      SET status = 'COMPLETED',
+          updated_at = NOW(),
+          updated_by = 'SYSTEM'
+      WHERE status = 'IN_PROGRESS' AND auction_end_at <= NOW()
+      RETURNING id , product_id
+      """, nativeQuery = true)
+  List<AuctionProductProjection> bulkUpdateEnd();
 }

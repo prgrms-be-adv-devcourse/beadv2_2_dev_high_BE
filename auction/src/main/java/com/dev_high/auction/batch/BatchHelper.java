@@ -1,5 +1,6 @@
 package com.dev_high.auction.batch;
 
+import com.dev_high.auction.application.dto.AuctionProductProjection;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionParticipation;
@@ -11,11 +12,11 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionCreateOrderRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
+import com.dev_high.common.kafka.event.auction.AuctionProductUpdateEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -73,15 +75,28 @@ public class BatchHelper {
   public RepeatStatus startAuctionsUpdate(StepContribution stepContribution,
                                           ChunkContext chunkContext) {
 
-    List<String> targetIds = auctionRepository
-            .bulkUpdateStartStatus();
+    List<AuctionProductProjection> targetIds = auctionRepository
+        .bulkUpdateStartStatus();
+
+    List<String> auctionIds = targetIds.stream()
+        .map(AuctionProductProjection::getId)
+        .distinct()
+
+        .toList();
+    List<String> productIds = targetIds.stream()
+        .map(AuctionProductProjection::getProductId)
+        .distinct()
+
+        .toList();
     log.info("auction start target>> {}", targetIds.size());
 
-    chunkContext.getStepContext()
-            .getStepExecution()
-            .getJobExecution()
-            .getExecutionContext()
-            .put("startAuctionIds", targetIds);
+    ExecutionContext ec = chunkContext.getStepContext()
+        .getStepExecution()
+        .getJobExecution()
+        .getExecutionContext();
+
+    ec.put("startAuctionIds", auctionIds);
+    ec.put("startProductIds", productIds);
 
     return RepeatStatus.FINISHED;
   }
@@ -94,12 +109,28 @@ public class BatchHelper {
             .getExecutionContext()
             .get("startAuctionIds");
 
-    List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
-    });
+    ExecutionContext ec = chunkContext.getStepContext()
+        .getStepExecution()
+        .getJobExecution()
+        .getExecutionContext();
 
-    if (targetIds != null && !targetIds.isEmpty()) {
+    List<String> auctionIds =
+        (List<String>) ec.get("startAuctionIds");
 
-      List<Auction> auctions = auctionRepository.findByIdIn(targetIds);
+    List<String> productIds =
+        (List<String>) ec.get("startProductIds");
+
+    if (auctionIds != null && !auctionIds.isEmpty()) {
+      try {
+        eventPublisher.publish(KafkaTopics.AUCTION_PRODUCT_UPDATE,
+            new AuctionProductUpdateEvent(productIds,
+                AuctionStatus.IN_PROGRESS.name()));
+
+      } catch (Exception e) {
+        log.error(">>{}", e);
+      }
+
+      List<Auction> auctions = auctionRepository.findByIdIn(auctionIds);
 
       // 여기서 알림, 후처리 로직 실행 ex) 해당 상품찜한 유저에게알림 발송
 
@@ -125,22 +156,36 @@ public class BatchHelper {
         }
       }
     }
+    ec.remove("startAuctionIds");
+    ec.remove("startProductIds");
 
     return RepeatStatus.FINISHED;
   }
 
 
   public RepeatStatus endAuctionsUpdate(StepContribution stepContribution,
-                                        ChunkContext chunkContext) {
-    List<String> targetIds = auctionRepository
-            .bulkUpdateEndStatus();
+      ChunkContext chunkContext) {
+    List<AuctionProductProjection> targetIds = auctionRepository
+        .bulkUpdateEndStatus();
+
+    List<String> auctionIds = targetIds.stream()
+        .map(AuctionProductProjection::getId)
+        .distinct()
+        .toList();
+
+    List<String> productIds = targetIds.stream()
+        .map(AuctionProductProjection::getProductId)
+        .distinct()
+        .toList();
 
     log.info("auction end target>> {}", targetIds.size());
-    chunkContext.getStepContext()
-            .getStepExecution()
-            .getJobExecution()
-            .getExecutionContext()
-            .put("endAuctionIds", targetIds);
+    ExecutionContext ec = chunkContext.getStepContext()
+        .getStepExecution()
+        .getJobExecution()
+        .getExecutionContext();
+
+    ec.put("endtAuctionIds", auctionIds);
+    ec.put("endProductIds", productIds);
 
     return RepeatStatus.FINISHED;
 
@@ -148,22 +193,34 @@ public class BatchHelper {
 
 
   public RepeatStatus endAuctionsPostProcessing(StepContribution stepContribution,
-                                                ChunkContext chunkContext) {
-    Object raw = chunkContext.getStepContext()
-            .getStepExecution()
-            .getJobExecution()
-            .getExecutionContext()
-            .get("endAuctionIds");
+      ChunkContext chunkContext) {
 
-    List<String> targetIds = objectMapper.convertValue(raw, new TypeReference<>() {
-    });
+    ExecutionContext ec = chunkContext.getStepContext()
+        .getStepExecution()
+        .getJobExecution()
+        .getExecutionContext();
 
-    if (targetIds != null && !targetIds.isEmpty()) {
+    List<String> auctionIds =
+        (List<String>) ec.get("endAuctionIds");
 
-      for (String auctionId : targetIds) {
+    List<String> productIds =
+        (List<String>) ec.get("endProductIds");
+
+    if (auctionIds != null && !auctionIds.isEmpty()) {
+      try {
+        eventPublisher.publish(KafkaTopics.AUCTION_PRODUCT_UPDATE,
+            new AuctionProductUpdateEvent(productIds,
+                AuctionStatus.COMPLETED.name()));
+
+      } catch (Exception e) {
+        log.error(">>{}", e);
+      }
+      for (String auctionId : auctionIds) {
         process(auctionId);
       }
     }
+    ec.remove("endAuctionIds");
+    ec.remove("endProductIds");
     return RepeatStatus.FINISHED;
   }
 
