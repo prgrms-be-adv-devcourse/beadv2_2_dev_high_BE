@@ -1,58 +1,18 @@
 spring:
   application:
     name: settlement-service
+  profiles:
+    active: ${env.SPRING_PROFILES_ACTIVE:local}
   config:
-    import: "configserver:http://localhost:8888"
-
-  # Database
-  datasource:
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER}
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-  jackson:
-    time-zone: Asia/Seoul
-
-  # jpa properties
-  jpa:
-    hibernate:
-      ddl-auto: validate # When you launch the application for the first time - switch "none" at "create"
-    show-sql: true
-    database: postgresql
-    database-platform: ${SPRING_DATABASE_PLATFORM}
-    open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          time_zone: UTC
-  batch:
-    jdbc:
-      initialize-schema: never
-    chunk:
-      page-size: 1000 # Reader에서 @Value("${spring.batch.chunk.page-size}")로 주입
-
-  task:
-    scheduling:
-      pool:
-        size: 5
-
-  kafka:
-    bootstrap-servers: ${KAFKA_URI}
-    properties:
-      security.protocol: SASL_PLAINTEXT
-      sasl.mechanism: PLAIN
-      sasl.jaas.config: >
-        org.apache.kafka.common.security.plain.PlainLoginModule required
-        username="kafka"
-        password="1234";
-    producer:
-      security.protocol: SASL_PLAINTEXT
-      sasl.mechanism: PLAIN
-    consumer:
-      security.protocol: SASL_PLAINTEXT
-      sasl.mechanism: PLAIN
-      group-id: ${SETTLEMENT_SERVICE}
-
+    import:
+      - optional:file:.env[.properties]
+      - optional:configserver:http://localhost:8888
 server:
-  port: ${SERVER_PORT}
+  port: 8087
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"

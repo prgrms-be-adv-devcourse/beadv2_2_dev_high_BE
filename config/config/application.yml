@@ -19,13 +19,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         globally_quoted_identifiers: true
         jdbc:
-          time_zone: UTC
+          time_zone: Asia/Seoul
   batch:
     job:
       enabled: false
@@ -54,3 +54,9 @@ management:
         include: refresh, health, beans, info
 
 
+logging:
+  level:
+    root: INFO
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    com.dev_high: INFO
