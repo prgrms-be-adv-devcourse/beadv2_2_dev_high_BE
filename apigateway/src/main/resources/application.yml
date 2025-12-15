@@ -2,7 +2,9 @@ spring:
   application:
     name: apigateway
   config:
-    import: "configserver:http://localhost:8888"
+    import:
+      - configserver:http://localhost:8888
+      - optional:file:.env[.properties]
 server:
   port: 8000
 jwt:

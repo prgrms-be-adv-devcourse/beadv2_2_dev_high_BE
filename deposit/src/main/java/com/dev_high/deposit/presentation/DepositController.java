@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.v1}/deposit")
+@RequestMapping("/api/v1/deposit")
 @RequiredArgsConstructor
 @Tag(name = "Deposit", description = "예치금 계좌 정보 API")
 public class DepositController {

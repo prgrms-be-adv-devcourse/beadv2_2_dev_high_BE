@@ -8,7 +8,7 @@ springdoc:
       - name: Auction
         url: /swagger/auction-service
       - name: Notice
-        url: /swagger/notice-service
+        url: /swagger/notification-service
       - name: Deposit
         url: /swagger/deposit-service
       - name: Order
