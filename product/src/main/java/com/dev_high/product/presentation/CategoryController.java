@@ -4,7 +4,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.CategoryInfo;
-import com.dev_high.product.application.dto.ProductInfo;
+import com.dev_high.product.application.dto.ProductCreateResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,8 +37,8 @@ public class CategoryController {
     //카테고리별 상품 조회
     @Operation(summary = "카테고리별 상품 조회", description = "카테고리에 속한 상품을 페이지네이션으로 조회합니다.")
     @GetMapping("/{categoryId}")
-    public ApiResponseDto<Page<ProductInfo>> getProductsByCategory(@Parameter(description = "카테고리 ID", required = true) @PathVariable String categoryId,
-                                                                   Pageable pageable) {
+    public ApiResponseDto<Page<ProductCreateResult>> getProductsByCategory(@Parameter(description = "카테고리 ID", required = true) @PathVariable String categoryId,
+                                                                           Pageable pageable) {
         return ApiResponseDto.success(productService.getProductsByCategory(categoryId, pageable));
     }
 }
