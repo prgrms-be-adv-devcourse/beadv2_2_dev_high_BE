@@ -1,8 +1,8 @@
 package com.dev_high.deposit.client;
 
 import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
+import com.dev_high.deposit.client.dto.TossConfirmRequest;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -17,18 +17,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Component
-@RequiredArgsConstructor
 public class TossPaymentClient {
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
 
-    private final RestTemplate tossRestTemplate;
-    @Value("${payment.toss.secret-key}")
-    private String secretKey;
+    private final RestTemplate restTemplate;
+    private final String secretKey;
 
-    private class Body{ // dto에 새로 생성하는걸 추천한다. DDD 설계상
-        String paymentKey;
-        String orderId;
-        Long amount;
+    public TossPaymentClient(@Qualifier("tossRestTemplate") RestTemplate restTemplate,
+                             @Value("${payment.toss.secret-key}") String secretKey) {
+        this.restTemplate = restTemplate;
+        this.secretKey = secretKey;
     }
 
     // 하단에 try-catch를 제외하고 throw로 예외를 던져서 AOP로 처리해도 된다
@@ -39,15 +37,16 @@ public class TossPaymentClient {
         //Toss에 요청할 헤더
         HttpHeaders headers = createHeaders();
 
-        Body body = new Body();
-        body.paymentKey = command.paymentKey();
-        body.orderId = command.orderId();
-        body.amount = command.amount();
+        TossConfirmRequest requestBody = new TossConfirmRequest(
+                command.paymentKey(),
+                command.orderId(),
+                command.amount()
+        );
 
-        HttpEntity<Body> entity = new HttpEntity<>(body, headers);
+        HttpEntity<TossConfirmRequest> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            return tossRestTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);
+            return restTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);
         } catch (HttpStatusCodeException ex) {
             HttpStatusCode statusCode = ex.getStatusCode();
             String responseBody = ex.getResponseBodyAsString();
