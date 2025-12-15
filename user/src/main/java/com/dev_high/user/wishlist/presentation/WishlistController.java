@@ -5,8 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.dev_high.user.wishlist.application.WishlistService;
 import com.dev_high.user.wishlist.application.dto.WishlistResponse;
-import com.dev_high.user.wishlist.presentation.dto.WishlistAddRequest;
-import com.dev_high.user.wishlist.presentation.dto.WishlistDeleteRequest;
+import com.dev_high.user.wishlist.presentation.dto.WishlistRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,7 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @PostMapping
-    public ApiResponseDto<WishlistResponse> create(@RequestBody WishlistAddRequest request) {
+    public ApiResponseDto<WishlistResponse> create(@RequestBody WishlistRequest request) {
         return wishlistService.create(request.toCommand());
     }
 
@@ -30,8 +29,8 @@ public class WishlistController {
     }
 
     @DeleteMapping
-    public ApiResponseDto<Void> delete(@RequestBody WishlistDeleteRequest request) {
-        return wishlistService.delete(request);
+    public ApiResponseDto<Void> delete(@RequestBody WishlistRequest request) {
+        return wishlistService.delete(request.toCommand());
     }
 
     @GetMapping("/{productId}")
