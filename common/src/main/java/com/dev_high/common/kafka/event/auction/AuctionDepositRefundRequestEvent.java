@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record AuctionDepositRefundRequestEvent(
-    List<String> userId,       // 환불 대상 유저
+    List<String> userIds,       // 환불 대상 유저
     String auctionId,     // 경매 ID
     BigDecimal amount     // 환불 금액
 

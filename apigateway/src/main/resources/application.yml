@@ -5,11 +5,11 @@ spring:
     active: ${env.SPRING_PROFILES_ACTIVE:local}
   config:
     import:
-    - optional:file:.env[.properties]
-    - optional:configserver:http://localhost:8888
-
+      - optional:file:.env[.properties]
+      - optional:configserver:http://localhost:8888
 server:
   port: 8000
+
 ---
 spring:
   config:

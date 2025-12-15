@@ -1,7 +1,5 @@
 package com.dev_high.auction.application;
 
-import static java.util.stream.Collectors.toMap;
-
 import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
@@ -20,15 +18,11 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
-import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -56,34 +50,6 @@ public class AuctionService {
   private final ApplicationEventPublisher publisher;
 
 
-  public ApiResponseDto<List<FileDto>> getFileList(List<String> fileIds) {
-
-    try {
-      Map<String, Object> body = new HashMap<>();
-      body.put("fileIds", fileIds);
-//      HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(body);
-      HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
-
-      ResponseEntity<ApiResponseDto<List<FileDto>>> response;
-      response = restTemplate.exchange(
-          GATEWAY_URL + "/files",
-          HttpMethod.GET,
-          entity,
-          new ParameterizedTypeReference<>() {
-          }
-      );
-      if (response.getBody() != null) {
-        log.info("");
-        return response.getBody();
-
-      }
-    } catch (Exception e) {
-      log.error("실패: {}", e);
-
-    }
-    return ApiResponseDto.success(List.of());
-  }
-
   public ApiResponseDto<FileDto> getFile(String fileId) {
     try {
 
@@ -99,6 +65,7 @@ public class AuctionService {
       );
       if (response.getBody() != null) {
 
+        response.getBody().getData().fileId();
         return response.getBody();
 
       }
@@ -115,22 +82,8 @@ public class AuctionService {
     AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
     Page<Auction> page = auctionRepository.filterAuctions(filter);
 
-    List<String> fileIds = page.stream()
-        .map(a -> a.getProduct().getFileId())
-        .filter(Objects::nonNull)
-        .distinct()
-        .toList();
+    return page.map(AuctionResponse::fromEntity);
 
-    List<FileDto> fileDtoList = getFileList(fileIds).getData();
-    Map<String, String> fileMap = fileDtoList.stream()
-        .collect(toMap(FileDto::fileId, FileDto::filePath));
-
-    Page<AuctionResponse> responsePage = page.map(auction -> AuctionResponse.fromEntity(
-        auction,
-        fileMap.get(auction.getProduct().getFileId())
-    ));
-    
-    return responsePage;
   }
 
 
@@ -189,7 +142,12 @@ public class AuctionService {
 
     // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
     auctionLiveStateRepository.save(new AuctionLiveState(auction));
+    publishSpringEvent(auction);
+    return AuctionResponse.fromEntity(auction);
 
+  }
+
+  private void publishSpringEvent(Auction auction) {
     Product product = auction.getProduct();
     AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
         auction.getId(),
@@ -204,13 +162,9 @@ public class AuctionService {
         auction.getAuctionStartAt(),
         auction.getAuctionEndAt()
     );
-    publisher.publishEvent(
-        event);
-
-    return AuctionResponse.fromEntity(auction);
+    publisher.publishEvent(event);
 
   }
-
 
   @Transactional
   public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
@@ -243,14 +197,8 @@ public class AuctionService {
     validateAuctionTime(start, end);
 
     auction.modify(request.startBid(), start, end, userId);
-    AuctionUpdateSearchRequestEvent event = new AuctionUpdateSearchRequestEvent(
-        auction.getId(),
-        auction.getStartBid(),
-        auction.getDepositAmount(),
-        auction.getStatus().name()
-    );
+    publishSpringEvent(auction);
 
-    publisher.publishEvent(event);
     //dirty check
     return AuctionResponse.fromEntity(auction);
 

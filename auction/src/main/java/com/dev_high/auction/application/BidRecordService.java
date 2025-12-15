@@ -101,11 +101,8 @@ public class BidRecordService {
     }
     AuctionLiveState liveState = participation.getAuction().getLiveState();
 
-    if (liveState.getHighestUserId() != null) {
-
-      if (liveState.getHighestUserId().equals(userId)) {
-        throw new CannotWithdrawHighestBidderException();
-      }
+    if (liveState.getHighestUserId().equals(userId)) {
+      throw new CannotWithdrawHighestBidderException();
     }
 
     participation.markWithdraw();
@@ -122,7 +119,7 @@ public class BidRecordService {
 
       HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(map);
 
-      String url = "http://APIGATEWAY/api/v1/deposit/histories" + userId;
+      String url = "http://APIGATEWAY/api/v1/deposit/" + userId;
 
       ResponseEntity<ApiResponseDto<?>> response;
       response = restTemplate.exchange(
@@ -178,7 +175,7 @@ public class BidRecordService {
   }
 
 
-  public List<AuctionParticipationResponse> getAllMyParticipations() {
+  public List<AuctionParticipationResponse> getAllMyParticipation() {
     String userId = UserContext.get().userId();
 
     //TODO: 추가로 조회할 정보 (경매상태 ,최종낙찰여부)

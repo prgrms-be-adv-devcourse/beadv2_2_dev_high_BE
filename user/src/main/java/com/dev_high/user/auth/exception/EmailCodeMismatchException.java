@@ -1,9 +1,10 @@
 package com.dev_high.user.auth.exception;
 
 import com.dev_high.common.exception.CustomException;
+import org.springframework.http.HttpStatus;
 
 public class EmailCodeMismatchException extends CustomException {
     public EmailCodeMismatchException() {
-        super("잘못된 코드입니다");
+        super(HttpStatus.GONE, "인증번호가 올바르지 않습니다.");
     }
 }

@@ -19,7 +19,7 @@ public class DepositHistory {
     @Schema(description = "예치금 이력 ID")
     @Id
     @Column(name = "id")
-    @CustomGeneratedId(method = "deposit_history")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /*

@@ -20,7 +20,6 @@ public class Deposit {
     @Schema(description = "사용자 ID")
     @Id
     @Column(name = "id", length = 20)
-    @CustomGeneratedId(method = "deposit")
     private String id;
 
     @Schema(description = "사용가능 잔액")

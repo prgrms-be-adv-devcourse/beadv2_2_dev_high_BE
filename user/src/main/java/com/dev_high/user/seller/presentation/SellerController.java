@@ -3,7 +3,7 @@ package com.dev_high.user.seller.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.seller.application.SellerService;
-import com.dev_high.user.seller.application.dto.SellerInfo;
+import com.dev_high.user.seller.application.dto.SellerResponse;
 import com.dev_high.user.seller.presentation.dto.SellerRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +16,17 @@ public class SellerController {
     private final SellerService sellerService;
 
     @PostMapping
-    public ApiResponseDto<SellerInfo> create(@RequestBody SellerRequest request) {
+    public ApiResponseDto<SellerResponse> create(@RequestBody SellerRequest request) {
         return sellerService.create(request.toCommand());
     }
 
-    @GetMapping
-    public ApiResponseDto<SellerInfo> getProfile() {
+    @GetMapping("/profile")
+    public ApiResponseDto<SellerResponse> getProfile() {
         return sellerService.getProfile();
     }
 
-    @PutMapping
-    public ApiResponseDto<SellerInfo> updateProfile(@RequestBody SellerRequest request) {
+    @PutMapping("/profile")
+    public ApiResponseDto<SellerResponse> updateProfile(@RequestBody SellerRequest request) {
         return sellerService.updateProfile(request.toCommand());
     }
 

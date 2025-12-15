@@ -1,11 +1,14 @@
 spring:
   application:
     name: auction-service
+  profiles:
+    active: ${env.SPRING_PROFILES_ACTIVE:local}
   config:
-    import: "optional:configserver:http://localhost:8888"
+    import:
+      - optional:file:.env[.properties]
+      - optional:configserver:http://localhost:8888
 server:
   port: 8081
-
 ---
 spring:
   config:

@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class RefreshTokenMismatchException extends CustomException {
     public RefreshTokenMismatchException() {
-        super(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다.");
+        super(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
     }
 }
