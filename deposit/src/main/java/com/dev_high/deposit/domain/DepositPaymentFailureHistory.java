@@ -19,6 +19,7 @@ public class DepositPaymentFailureHistory {
     @Schema(description = "예치금 결제 실패 이력 ID")
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /*
