@@ -17,13 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     private final FileService fileService;
-
+// metadata는 프론트에서 요청 시, 꼭 Content-Type을 application/json으로 지정
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponseDto<FileInfo> upload(
-            @RequestPart("file") MultipartFile file, //file 데이터
-            @RequestPart("metadata") FileUploadRequest request
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("metadata") FileUploadRequest request,
+            @RequestPart("productId") String productId,
+            @RequestPart("userId") String userId
     ) {
-        return fileService.upload(file, request.toCommand());
+        return fileService.upload(file, request, productId, userId);
     }
 
     @PostMapping("/search")
