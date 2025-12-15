@@ -63,14 +63,13 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
   @Override
   public List<Auction> findByIdIn(List<String> ids) {
-    List<Auction> auctions = queryFactory
+    return queryFactory
         .selectFrom(qAuction)
         .join(qAuction.product, qProduct).fetchJoin()
         .join(qAuction.liveState, qLiveState).fetchJoin()
         .where(qAuction.id.in(ids))
         .fetch();
 
-    return auctions;
   }
 
   @Override
@@ -97,6 +96,13 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
   }
 
+
+  @Override
+  public List<String> bulkUpdateStatus(List<String> auctionIds, AuctionStatus status) {
+    return auctionJpaRepository.bulkUpdateStatus(auctionIds, status.name());
+  }
+
+
   @Override
   public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
@@ -118,16 +124,20 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
       builder.and(qAuction.auctionEndAt.loe(condition.endAt()));
     }
 
-    long total = queryFactory.selectFrom(qAuction)
-        .where(builder)
-        .fetchCount();
+    long total = Optional.ofNullable(
+        queryFactory.select(qAuction.count())
+            .from(qAuction)
+            .where(builder)
+            .fetchOne()
+    ).orElse(0L);
 
-    OrderSpecifier<?>[] orders = getOrderSpecifiers(condition.sort(), Auction.class);
+    OrderSpecifier<?>[] orders = getOrderSpecifiers(condition.sort());
+    long offset = (long) condition.pageNumber() * condition.pageSize();
 
     List<Auction> content = queryFactory.selectFrom(qAuction)
         .leftJoin(qAuction.product).fetchJoin()
         .where(builder)
-        .offset(condition.pageNumber() * condition.pageSize())
+        .offset(offset)
         .limit(condition.pageSize())
         .orderBy(orders.length > 0 ? orders : new OrderSpecifier[]{qAuction.updatedAt.desc()})
         .fetch();
@@ -137,18 +147,19 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
   }
 
-  private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort, Class<?> entityClass) {
-    PathBuilder<?> entityPath = new PathBuilder<>(entityClass,
-        entityClass.getSimpleName().toLowerCase());
+  private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
+    PathBuilder<Auction> entityPath =
+        new PathBuilder<>(Auction.class, "auction");
 
     return sort.stream()
         .map(order -> {
           Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-          // Comparable 타입으로 가져와야 orderBy 가능
-          return new OrderSpecifier(direction,
-              entityPath.getComparable(order.getProperty(), Comparable.class));
+          return new OrderSpecifier<>(
+              direction,
+              entityPath.getComparable(order.getProperty(), Comparable.class)
+          );
         })
-        .toArray(OrderSpecifier[]::new);
+        .toArray(OrderSpecifier<?>[]::new);
   }
 
 }

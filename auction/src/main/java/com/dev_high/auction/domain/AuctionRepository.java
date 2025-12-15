@@ -25,6 +25,8 @@ public interface AuctionRepository {
 
   List<AuctionProductProjection> bulkUpdateEndStatus();   // IN_PROGRESS -> COMPLETED
 
+  List<String> bulkUpdateStatus(List<String> auctionIds, AuctionStatus status);
+
 
   // 해당 상품으로 등록된 경매중 대기/진행/완료된건이 있는지 체크
   boolean existsByProductIdAndStatusIn(String productId, List<AuctionStatus> statuses);

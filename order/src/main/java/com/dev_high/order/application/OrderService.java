@@ -4,6 +4,7 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.order.application.dto.SettlementRegisterRequest;
+import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderRepository;
 import com.dev_high.order.domain.OrderStatus;
@@ -121,7 +122,7 @@ public class OrderService {
   }
 
   @Transactional
-  public List<String> updateStatusBulk(OrderStatus oldStatus,
+  public List<UpdateOrderProjection> updateStatusBulk(OrderStatus oldStatus,
       OrderStatus newStatus, LocalDateTime targetDate
   ) {
 
