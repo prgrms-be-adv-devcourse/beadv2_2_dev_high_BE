@@ -2,8 +2,10 @@ package com.dev_high.order.batch;
 
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
+import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.order.application.OrderService;
+import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.OrderStatus;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -61,28 +63,47 @@ public class OrderStatusBatchConfig {
 
           LocalDateTime targetTime = LocalDateTime.now().minus(duration);
 
-          List<String> buyers = orderService.updateStatusBulk(
+          List<UpdateOrderProjection> orderData = orderService.updateStatusBulk(
               oldStatus,
               newStatus,
               targetTime
           );
 
-          log.info("{} → {} : {}건", oldStatus, newStatus, buyers.size());
+          log.info("{} → {} : {}건", oldStatus, newStatus, orderData.size());
 
-          notifyBuyers(buyers, message, redirect);
+          List<String> buyerIds = orderData.stream()
+              .map(UpdateOrderProjection::getBuyerId)
+              .distinct()
+              .toList();
+
+          notifyBuyers(buyerIds, message, redirect);
+
+          if (newStatus == OrderStatus.UNPAID_CANCEL) {
+            // 미구매로 인한 주문 취소시 경매에 상태 변경 토픽 발송
+            if (!orderData.isEmpty()) {
+              List<String> auctionIds = orderData.stream()
+                  .map(UpdateOrderProjection::getAuctionId)
+                  .distinct()
+                  .toList();
+
+              publisher.publish(KafkaTopics.ORDER_AUCTION_UPDATE,
+                  new OrderToAuctionUpdateEvent(auctionIds, "CANCELLED"));
+            }
+          }
 
           return RepeatStatus.FINISHED;
         }, txManager)
         .build();
   }
 
-  private void notifyBuyers(List<String> buyers, String message, String redirect) {
-    if (buyers.isEmpty() || message == null || redirect == null) {
+  private void notifyBuyers(List<String> buyer, String message, String redirect) {
+    if (buyer.isEmpty() || message == null || redirect == null) {
       return;
     }
+
     try {
       publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-          new NotificationRequestEvent(buyers.stream().distinct().toList(), message, redirect));
+          new NotificationRequestEvent(buyer, message, redirect));
     } catch (Exception e) {
       log.error("알림 이벤트 실패: {}", e.getMessage());
     }

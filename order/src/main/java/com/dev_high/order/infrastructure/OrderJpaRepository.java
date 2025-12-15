@@ -1,5 +1,6 @@
 package com.dev_high.order.infrastructure;
 
+import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderStatus;
 import java.time.LocalDateTime;
@@ -22,19 +23,23 @@ public interface OrderJpaRepository extends JpaRepository<Order, String> {
   @Query(
       value = """
           UPDATE "order"."order"
-          SET 
+          SET
             status = :newStatus,
-            updated_at = now()            
+            updated_at = now()
           WHERE status = :oldStatus
             AND updated_at <= :targetDate
-          RETURNING buyer_id
+          RETURNING
+            buyer_id   AS buyerId,
+            seller_id  AS sellerId,
+            auction_id AS auctionId
           """,
       nativeQuery = true
   )
-  List<String> updateStatusByUpdatedAtAndReturnBuyer(
+  List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(
       @Param("oldStatus") String oldStatus,
       @Param("newStatus") String newStatus,
-      @Param("targetDate") LocalDateTime targetDate);
+      @Param("targetDate") LocalDateTime targetDate
+  );
 
 
   Page<Order> findAllByStatusAndUpdatedAtBetween(
