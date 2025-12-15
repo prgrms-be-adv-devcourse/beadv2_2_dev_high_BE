@@ -5,6 +5,7 @@ import com.dev_high.common.exception.CustomException;
 import com.dev_high.file.application.dto.FileInfo;
 import com.dev_high.file.application.dto.FileUploadCommand;
 import com.dev_high.file.application.dto.FilePathListResponse;
+import com.dev_high.file.presentation.dto.FileUploadRequest;
 import com.dev_high.file.config.AwsS3Properties;
 import com.dev_high.file.domain.StoredFile;
 import com.dev_high.file.domain.StoredFileRepository;
@@ -37,20 +38,26 @@ public class FileService {
     @Transactional
     public ApiResponseDto<FileInfo> upload(
             MultipartFile multipartFile,
-            FileUploadCommand uploadCommand
+            FileUploadRequest uploadRequest,
+            String productId,
+            String userId
     ) {
 
         if (multipartFile == null || multipartFile.isEmpty()) {
             throw new CustomException("업로드할 파일이 없습니다.");
         }
-        if (uploadCommand == null || !StringUtils.hasText(uploadCommand.productId())) {
+        if (uploadRequest == null || !StringUtils.hasText(productId)) {
             throw new CustomException("상품 ID가 필요합니다.");
         }
+        if (!StringUtils.hasText(userId)) {
+            throw new CustomException("업로더 정보가 없습니다.");
+        }
+
+        FileUploadCommand uploadCommand = uploadRequest.toCommand(productId, userId);
 
         String resolvedFileType = resolveFileType(uploadCommand.fileType(), multipartFile.getContentType());
-        String key = buildObjectKey(multipartFile.getOriginalFilename(), uploadCommand.productId());
+        String key = buildObjectKey(multipartFile.getOriginalFilename(), uploadCommand.userId());
 
-        // 바이너리를 S3에 저장
         try (var inputStream = multipartFile.getInputStream()) {
             PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(awsS3Properties.getBucket())
@@ -67,19 +74,17 @@ public class FileService {
             throw new CustomException("S3 업로드에 실패했습니다.");
         }
 
-        // 접근가능한 url 생성
         String fileUrl = s3Client.utilities().getUrl(GetUrlRequest.builder()
                 .bucket(awsS3Properties.getBucket())
                 .key(key)
                 .build()).toExternalForm();
 
-        // 업로드 결과를 DB에 기록해 조회 가능하도록 유지
         StoredFile saved = storedFileRepository.save(StoredFile.builder()
                 .filePath(fileUrl)
                 .fileType(resolvedFileType)
                 .fileName(resolveFileName(multipartFile.getOriginalFilename()))
                 .productId(uploadCommand.productId())
-                .createdBy(uploadCommand.productId())
+                .createdBy(uploadCommand.userId())
                 .build());
 
         return ApiResponseDto.success(FileInfo.from(saved));
