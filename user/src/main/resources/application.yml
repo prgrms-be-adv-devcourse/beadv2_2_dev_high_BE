@@ -1,47 +1,11 @@
 spring:
   application:
     name: user-service
-  config:
-    import: "configserver:http://localhost:8888"
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    jackson:
-      time-zone: Asia/Seoul
-    jpa:
-      hibernate:
-        ddl-auto: validate
-      show-sql: true
-      properties:
-        hibernate:
-          format_sql: true
-          jdbc:
-            time_zone: UTC
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username:  ${more.mail.username}
-    password: ${more.mail.password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-
-jwt:
-  secret: ${JWT_SECRET}
-  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
-  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
 server:
   port: 8088
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"

@@ -8,8 +8,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 public class JsonUtil {
 
   private static final ObjectMapper mapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule()) // LocalDateTime 지원
-      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+          .registerModule(new JavaTimeModule()) // LocalDateTime 지원
+          .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   private JsonUtil() {
   }

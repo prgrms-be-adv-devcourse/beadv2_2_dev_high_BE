@@ -35,17 +35,17 @@ public class AuctionEventListener {
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handle(AuctionCreateSearchRequestEvent event) {
-    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_CREATE, event);
+    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_CREATED_REQUESTED, event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handle(AuctionUpdateSearchRequestEvent event) {
-    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATE, event);
+    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED, event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handle(String event) {
-    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_DELETE, event);
+    eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_DELETED_REQUESTED, event);
   }
 
 

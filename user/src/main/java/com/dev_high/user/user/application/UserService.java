@@ -1,6 +1,7 @@
 package com.dev_high.user.user.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.domain.SellerStatus;
@@ -29,6 +30,7 @@ public class UserService {
     private final SellerService sellerService;
     private final AuthService authService;
     private final UserDomainService userDomainService;
+    private final KafkaEventPublisher eventPublisher;
 
     @Transactional
     public ApiResponseDto<UserInfo> create(CreateUserCommand command){
@@ -56,7 +58,6 @@ public class UserService {
     public ApiResponseDto<UserInfo> getProfile() {
         User user = userDomainService.getUser();
         return ApiResponseDto.success(UserInfo.from(user));
-
     }
 
     @Transactional
