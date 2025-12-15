@@ -3,6 +3,7 @@ package com.dev_high.deposit.client;
 import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +21,7 @@ import java.util.Base64;
 public class TossPaymentClient {
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate tossRestTemplate;
     @Value("${payment.toss.secret-key}")
     private String secretKey;
 
@@ -45,15 +46,8 @@ public class TossPaymentClient {
 
         HttpEntity<Body> entity = new HttpEntity<>(body, headers);
 
-        /*Map<String, Object> body = new HashMap<>();
-        body.put("paymentKey", command.paymentKey());
-        body.put("orderId", command.orderId());
-        body.put("amount", command.amount());
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);*/
-
         try {
-            return restTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);
+            return tossRestTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);
         } catch (HttpStatusCodeException ex) {
             HttpStatusCode statusCode = ex.getStatusCode();
             String responseBody = ex.getResponseBodyAsString();
