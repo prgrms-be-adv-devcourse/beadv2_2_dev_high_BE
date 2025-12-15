@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 public record AuctionResponse(String auctionId, String sellerId, String productName,
                               AuctionStatus status,
                               BigDecimal startBid, BigDecimal currentBid,
-                              LocalDateTime auctionStartAt, LocalDateTime auctionEndAt,
-                              String fileId, String fileUrl) {
+                              LocalDateTime auctionStartAt, LocalDateTime auctionEndAt) {
 
 
   public static AuctionResponse fromEntity(Auction auction) {
@@ -22,7 +21,7 @@ public record AuctionResponse(String auctionId, String sellerId, String productN
     return new AuctionResponse(auction.getId(), product.getSellerId(), product.getName(),
         auction.getStatus(),
         auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
-        auction.getAuctionEndAt(), product.getFileId(), null);
+        auction.getAuctionEndAt());
   }
 
   public static AuctionResponse fromEntity(Auction auction, String fileUrl) {
@@ -33,6 +32,6 @@ public record AuctionResponse(String auctionId, String sellerId, String productN
     return new AuctionResponse(auction.getId(), product.getSellerId(), product.getName(),
         auction.getStatus(),
         auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
-        auction.getAuctionEndAt(), product.getFileId(), fileUrl);
+        auction.getAuctionEndAt());
   }
 }

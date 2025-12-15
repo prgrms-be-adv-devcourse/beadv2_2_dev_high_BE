@@ -2,6 +2,7 @@ package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.product.application.ProductService;
+import com.dev_high.product.application.dto.ProductCreateResult;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.presentation.dto.ProductRequest;
 import com.dev_high.product.presentation.dto.ProductUpdateRequest;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,16 +38,17 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다.")
-    @PostMapping
-    public ApiResponseDto<ProductInfo> createProduct(@Valid @RequestBody ProductRequest request) {
-        ProductInfo productInfo = productService.registerProduct(request.toCommand());
-        return ApiResponseDto.success("상품이 등록되었습니다.", productInfo);
+    @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다. (이미지/경매 생성 포함)")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponseDto<ProductCreateResult> createProduct(@Valid @ModelAttribute ProductRequest request,
+                                                             @RequestPart(value = "productImages", required = false) List<MultipartFile> productImages) {
+        ProductCreateResult result = productService.registerProduct(request.toCommand(), productImages);
+        return ApiResponseDto.success("상품이 등록되었습니다.", result);
     }
 
     @Operation(summary = "상품 목록 조회", description = "페이지네이션으로 상품 목록을 조회합니다.")
     @GetMapping
-    public ApiResponseDto<Page<ProductInfo>> getProducts(Pageable pageable) {
+    public ApiResponseDto<Page<ProductCreateResult>> getProducts(Pageable pageable) {
         return ApiResponseDto.success(productService.getProducts(pageable));
     }
 
@@ -51,9 +58,9 @@ public class ProductController {
         return ApiResponseDto.success(productService.getProduct(productId));
     }
 
-    @Operation(summary = "상품 단건 조회(카테고리 포함)", description = "카테고리 정보를 포함하여 상품을 조회합니다.")
+    @Operation(summary = "상품 단건 조회(카테고리/경매 포함)", description = "카테고리와 경매 정보를 포함하여 상품을 조회합니다.")
     @GetMapping("/{productId}/categories")
-    public ApiResponseDto<ProductInfo> getProductWithCategories(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
+    public ApiResponseDto<ProductCreateResult> getProductWithCategories(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
         return ApiResponseDto.success(productService.getProductWithCategories(productId));
     }
 

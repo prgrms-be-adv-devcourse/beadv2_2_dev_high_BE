@@ -1,13 +1,16 @@
 package com.dev_high.product.application.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record ProductCommand(
         String name,
         String description,
-        String fileId,
         String sellerId,
         String createdBy,
-        List<String> categoryIds
+        List<String> categoryIds,
+        BigDecimal startBid,
+        String auctionStartAt,
+        String auctionEndAt
 ) {
 }

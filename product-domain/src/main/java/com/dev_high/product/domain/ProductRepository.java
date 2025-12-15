@@ -14,4 +14,8 @@ public interface ProductRepository {
     List<Product> findAll();
 
     Page<Product> findAll(Pageable pageable);
+
+    List<Product> findAllById(List<String> strings);
+
+    void saveAll(List<Product> products);
 }
