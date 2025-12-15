@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,9 +39,9 @@ public class AuctionController {
     return ApiResponseDto.success(res);
   }
 
-  @Operation(summary = "경매 목록 조회", description = "페이지네이션과 필터를 통해 경매 목록을 조회합니다.")
-  @GetMapping("product/{productId}")
-  public ApiResponseDto<?> getAuctionListByProductId(@PathVariable String productId) {
+  @Operation(summary = "상품과 연관된 경매목록 조회", description = "상품과 연관된 경매 목록을 조회합니다.")
+  @GetMapping("by-product")
+  public ApiResponseDto<?> getAuctionListByProductId(@RequestParam String productId) {
 
     return ApiResponseDto.success(auctionService.getAuctionListByProductId(productId));
   }
