@@ -8,6 +8,7 @@ public record FileInfo(
         String fileName,
         String fileType,
         String filePath,
+        String productId,
         String createdBy,
         LocalDateTime createdAt
 ) {
@@ -18,6 +19,7 @@ public record FileInfo(
                 storedFile.getFileName(),
                 storedFile.getFileType(),
                 storedFile.getFilePath(),
+                storedFile.getProductId(),
                 storedFile.getCreatedBy(),
                 storedFile.getCreatedAt()
         );

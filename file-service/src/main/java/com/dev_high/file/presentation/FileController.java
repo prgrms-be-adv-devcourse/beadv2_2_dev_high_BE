@@ -3,8 +3,9 @@ package com.dev_high.file.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.file.application.FileService;
 import com.dev_high.file.application.dto.FileInfo;
+import com.dev_high.file.application.dto.FilePathListResponse;
+import com.dev_high.file.presentation.dto.FileSearchRequest;
 import com.dev_high.file.presentation.dto.FileUploadRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +26,13 @@ public class FileController {
         return fileService.upload(file, request.toCommand());
     }
 
+    @PostMapping("/search")
+    public ApiResponseDto<FilePathListResponse> findByProduct(@RequestBody FileSearchRequest request) {
+        return fileService.findByProductId(request.productId());
+    }
 
-
-    @GetMapping
-    public ApiResponseDto<List<FileInfo>> getAll() {
-        return fileService.findAll();
+    @DeleteMapping("/{productId}")
+    public ApiResponseDto<Void> deleteByProduct(@PathVariable String productId) {
+        return fileService.deleteByProductId(productId);
     }
 }
