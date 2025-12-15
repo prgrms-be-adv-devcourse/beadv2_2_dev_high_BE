@@ -18,7 +18,6 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
-import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
@@ -143,7 +142,12 @@ public class AuctionService {
 
     // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
     auctionLiveStateRepository.save(new AuctionLiveState(auction));
+    publishSpringEvent(auction);
+    return AuctionResponse.fromEntity(auction);
 
+  }
+
+  private void publishSpringEvent(Auction auction) {
     Product product = auction.getProduct();
     AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
         auction.getId(),
@@ -158,13 +162,9 @@ public class AuctionService {
         auction.getAuctionStartAt(),
         auction.getAuctionEndAt()
     );
-    publisher.publishEvent(
-        event);
-
-    return AuctionResponse.fromEntity(auction);
+    publisher.publishEvent(event);
 
   }
-
 
   @Transactional
   public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
@@ -197,14 +197,8 @@ public class AuctionService {
     validateAuctionTime(start, end);
 
     auction.modify(request.startBid(), start, end, userId);
-    AuctionUpdateSearchRequestEvent event = new AuctionUpdateSearchRequestEvent(
-        auction.getId(),
-        auction.getStartBid(),
-        auction.getDepositAmount(),
-        auction.getStatus().name()
-    );
+    publishSpringEvent(auction);
 
-    publisher.publishEvent(event);
     //dirty check
     return AuctionResponse.fromEntity(auction);
 

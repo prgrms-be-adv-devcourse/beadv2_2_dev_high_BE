@@ -175,7 +175,7 @@ public class BidRecordService {
   }
 
 
-  public List<AuctionParticipationResponse> getAllMyParticipations() {
+  public List<AuctionParticipationResponse> getAllMyParticipation() {
     String userId = UserContext.get().userId();
 
     //TODO: 추가로 조회할 정보 (경매상태 ,최종낙찰여부)

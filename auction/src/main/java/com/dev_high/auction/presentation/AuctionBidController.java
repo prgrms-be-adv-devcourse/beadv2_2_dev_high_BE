@@ -33,7 +33,7 @@ public class AuctionBidController {
   @GetMapping("participation/me")
   public ApiResponseDto<?> getParticipationList() {
 
-    return ApiResponseDto.success(bidRecordService.getAllMyParticipations());
+    return ApiResponseDto.success(bidRecordService.getAllMyParticipation());
   }
 
 

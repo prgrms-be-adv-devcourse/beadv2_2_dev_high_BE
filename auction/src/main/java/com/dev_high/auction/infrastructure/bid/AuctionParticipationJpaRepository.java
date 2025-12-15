@@ -20,5 +20,5 @@ public interface AuctionParticipationJpaRepository extends
 
   // 특정 auctionId ,특정 userId
   List<AuctionParticipation> findByAuctionIdAndUserIdIn(String auctionId, List<String> userIds);
-
+  
 }
