@@ -74,7 +74,7 @@ public class GatewayConfig {
     // 서비스 이름과 lb URI를 맵으로 관리
     Map<String, String> services = Map.of(
         "auction-service", "lb://AUCTION-SERVICE",
-        "notice-service", "lb://NOTICE-SERVICE",
+        "notification-service", "lb://NOTIFICATION-SERVICE",
         "deposit-service", "lb://DEPOSIT-SERVICE",
         "order-service", "lb://ORDER-SERVICE",
         "product-service", "lb://PRODUCT-SERVICE",
