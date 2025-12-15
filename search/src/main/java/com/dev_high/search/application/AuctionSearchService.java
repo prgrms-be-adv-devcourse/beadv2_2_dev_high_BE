@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.common.kafka.event.product.*;
 import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.search.domain.AuctionDocument;
 import com.dev_high.search.infrastructure.AuctionSearchRepository;
@@ -54,16 +53,11 @@ public class AuctionSearchService {
         auctionSearchRepository.deleteByProductId(auctionId);
     }
 
-    public void updateByProduct(ProductUpdateSearchRequestEvent request) {
-        AuctionDocument document = auctionSearchRepository.findByProductId(request.productId()).orElseThrow(RuntimeException::new);
-        document.updateProduct(request);
-        auctionSearchRepository.save(document);
-    }
 
     public void updateByAuction(AuctionUpdateSearchRequestEvent request) {
         AuctionDocument document = auctionSearchRepository.findByProductId(request.auctionId()).orElseThrow(RuntimeException::new);
         document.updateAuction(request);
-       auctionSearchRepository.save(document);
+        auctionSearchRepository.save(document);
     }
 
     public ApiResponseDto<Page<AuctionDocument>> searchAuctions(String keyword, List<String> categories, String status, Pageable pageable) {

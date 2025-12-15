@@ -1,7 +1,6 @@
 package com.dev_high.search.application;
 
 import com.dev_high.common.kafka.event.auction.*;
-import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.util.JsonUtil;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -48,17 +47,6 @@ public class SearchEventListener {
             auctionSearchService.deleteByAuction(auctionId);
         } catch (Exception e) {
             log.error("Delete Document By Auction 실패 재시도: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    @KafkaListener(topics = KafkaTopics.PRODUCT_SEARCH_UPDATED_REQUESTED)
-    public void updateByProduct(KafkaEventEnvelope<ProductUpdateSearchRequestEvent> envelope, ConsumerRecord<?, ?> record) {
-        try {
-            ProductUpdateSearchRequestEvent request = JsonUtil.fromPayload(envelope.payload(), ProductUpdateSearchRequestEvent.class);
-            auctionSearchService.updateByProduct(request);
-        } catch (Exception e) {
-            log.error("Update Document By Product 실패 재시도: {}", e.getMessage());
             throw e;
         }
     }

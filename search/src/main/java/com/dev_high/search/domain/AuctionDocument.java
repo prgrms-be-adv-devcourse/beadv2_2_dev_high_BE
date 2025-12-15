@@ -1,7 +1,6 @@
 package com.dev_high.search.domain;
 
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
-import com.dev_high.common.kafka.event.product.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import org.springframework.data.annotation.Id;
@@ -52,13 +51,11 @@ public class AuctionDocument {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
     private LocalDateTime auctionEndAt;
 
-    public void updateProduct(ProductUpdateSearchRequestEvent request) {
+
+    public void updateAuction(AuctionUpdateSearchRequestEvent request) {
         this.productName = request.productName();
         this.categories = request.categories();
         this.description = request.description();
-    }
-
-    public void updateAuction(AuctionUpdateSearchRequestEvent request) {
         this.startPrice = request.startPrice();
         this.depositAmount = request.depositAmount();
         this.status = request.status();
