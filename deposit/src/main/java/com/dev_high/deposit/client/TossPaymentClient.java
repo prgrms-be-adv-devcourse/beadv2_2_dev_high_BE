@@ -20,7 +20,7 @@ import java.util.Base64;
 public class TossPaymentClient {
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
     @Value("${payment.toss.secret-key}")
     private String secretKey;
 
