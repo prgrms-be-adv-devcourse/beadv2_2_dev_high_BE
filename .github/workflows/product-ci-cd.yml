@@ -3,7 +3,7 @@ name: Product CI/CD
 on:
   push:
     branches:
-      - chore/#78-modified-product-test
+      - main
     paths:
       - 'product/**'
       - '.github/workflows/product-ci-cd.yml'
@@ -86,7 +86,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/chore/#78-modified-product-test'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:

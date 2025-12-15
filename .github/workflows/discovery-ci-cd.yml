@@ -3,7 +3,7 @@ name: Discovery CI/CD
 on:
   push:
     branches:
-      - chore/#78-modified-product-test
+      - main
     paths:
       - 'discovery/**'
       - '.github/workflows/discovery-ci-cd.yml'
@@ -87,7 +87,7 @@ jobs:
   deploy:
     needs: build-and-push
     # GitHub sets refs/heads/<branch>; without refs/heads the deploy job is always skipped.
-    if: github.ref == 'refs/heads/chore/#78-modified-product-test'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:

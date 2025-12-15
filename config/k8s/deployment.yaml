@@ -34,7 +34,7 @@ spec:
               value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE" # 배포용 설정 리포 주소로 교체
 
             - name: CONFIG_GIT_LABEL
-              value: "chore/#78-modified-product-test"
+              value: "main"
 
             - name: CONFIG_GIT_SEARCH_PATHS
               value: "config/config"
