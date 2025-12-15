@@ -4,8 +4,9 @@ spring:
   profiles:
     active: ${env.SPRING_PROFILES_ACTIVE:local}
   config:
-    import: "optional:configserver:http://localhost:8888"
-
+    import:
+      - configserver:http://localhost:8888
+      - optional:file:.env[.properties]
 server:
   port: 8000
 ---
