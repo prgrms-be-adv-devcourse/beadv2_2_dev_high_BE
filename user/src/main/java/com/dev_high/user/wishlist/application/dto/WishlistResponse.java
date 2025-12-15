@@ -5,13 +5,15 @@ import com.dev_high.user.wishlist.domain.Wishlist;
 public record WishlistResponse(
         String id,
         String userId,
-        String productId
+        String productId,
+        String productName
 ) {
     public static WishlistResponse from(Wishlist wishlist) {
         return new WishlistResponse(
                 wishlist.getId(),
                 wishlist.getUser().getId(),
-                wishlist.getProductId()
+                wishlist.getProduct().getId(),
+                wishlist.getProduct().getName()
         );
     }
 }

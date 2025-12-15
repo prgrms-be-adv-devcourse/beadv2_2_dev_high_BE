@@ -4,13 +4,11 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
-import com.dev_high.user.wishlist.application.dto.CreateWishlistCommand;
+import com.dev_high.user.wishlist.application.dto.WishlistCommand;
 import com.dev_high.user.wishlist.application.dto.WishlistResponse;
 import com.dev_high.user.wishlist.domain.Wishlist;
 import com.dev_high.user.wishlist.domain.WishlistRepository;
-import com.dev_high.user.wishlist.exception.WishlistItemAlreadyExistsException;
-import com.dev_high.user.wishlist.exception.WishlistNotFoundException;
-import com.dev_high.user.wishlist.presentation.dto.WishlistDeleteRequest;
+import com.dev_high.user.wishlist.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,7 +26,7 @@ public class WishlistService {
     private final UserDomainService userDomainsService;
 
     @Transactional
-    public ApiResponseDto<WishlistResponse> create(CreateWishlistCommand command) {
+    public ApiResponseDto<WishlistResponse> create(WishlistCommand command) {
         User user = userDomainsService.getUser();
         if(wishlistRepository.existsByUserIdAndProductId(user.getId(), command.productId())) {
             throw new WishlistItemAlreadyExistsException();
@@ -56,10 +54,10 @@ public class WishlistService {
     }
 
     @Transactional
-    public ApiResponseDto<Void> delete(WishlistDeleteRequest request) {
+    public ApiResponseDto<Void> delete(WishlistCommand command) {
         String userId = UserContext.get().userId();
         Wishlist wishlist = wishlistRepository
-                .findByUserIdAndProductId(userId, request.productId())
+                .findByUserIdAndProductId(userId, command.productId())
                 .orElseThrow(WishlistNotFoundException::new);
         wishlistRepository.delete(wishlist);
         return ApiResponseDto.success(
