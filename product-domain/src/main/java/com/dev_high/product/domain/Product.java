@@ -6,10 +6,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -59,6 +63,10 @@ public class Product {
 
   @Column(name = "updated_by")
   private String updatedBy;
+
+  // 카테고리 연결(중간 테이블 기준)
+  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+  private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
 
   protected Product() {
   }
@@ -136,5 +144,13 @@ public class Product {
   public enum DeleteStatus {
     Y, N
   }
-}
 
+  /**
+   * 연결된 카테고리 엔티티 목록 반환 (LAZY 로딩 주의).
+   */
+  public List<Category> getCategories() {
+    return categoryRelations.stream()
+        .map(ProductCategoryRel::getCategory)
+        .toList();
+  }
+}
