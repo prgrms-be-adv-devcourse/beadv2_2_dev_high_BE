@@ -51,4 +51,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public void flush() {
         productJpaRepository.flush();
     }
+
+    @Override
+    public List<Product> findByIdIn(List<String> productIds) {
+        return productJpaRepository.findByIdIn(productIds);
+    }
 }

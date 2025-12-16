@@ -6,5 +6,7 @@ public interface StoredFileRepository {
 
     StoredFile save(StoredFile storedFile);
 
-    List<StoredFile> findAll();
+    List<StoredFile> findByProductId(String productId);
+
+    void deleteByProductId(String productId);
 }

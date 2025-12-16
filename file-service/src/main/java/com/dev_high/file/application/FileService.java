@@ -4,10 +4,13 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.file.application.dto.FileInfo;
 import com.dev_high.file.application.dto.FileUploadCommand;
+import com.dev_high.file.application.dto.FilePathListResponse;
+import com.dev_high.file.presentation.dto.FileUploadRequest;
 import com.dev_high.file.config.AwsS3Properties;
 import com.dev_high.file.domain.StoredFile;
 import com.dev_high.file.domain.StoredFileRepository;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +24,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Service
@@ -34,21 +38,26 @@ public class FileService {
     @Transactional
     public ApiResponseDto<FileInfo> upload(
             MultipartFile multipartFile,
-            FileUploadCommand uploadCommand
+            FileUploadRequest uploadRequest,
+            String productId,
+            String userId
     ) {
 
-        //파일 유무 검사
         if (multipartFile == null || multipartFile.isEmpty()) {
             throw new CustomException("업로드할 파일이 없습니다.");
         }
-        if (uploadCommand == null || !StringUtils.hasText(uploadCommand.userId())) {
+        if (uploadRequest == null || !StringUtils.hasText(productId)) {
+            throw new CustomException("상품 ID가 필요합니다.");
+        }
+        if (!StringUtils.hasText(userId)) {
             throw new CustomException("업로더 정보가 없습니다.");
         }
+
+        FileUploadCommand uploadCommand = uploadRequest.toCommand(productId, userId);
 
         String resolvedFileType = resolveFileType(uploadCommand.fileType(), multipartFile.getContentType());
         String key = buildObjectKey(multipartFile.getOriginalFilename(), uploadCommand.userId());
 
-        // 바이너리를 S3에 저장
         try (var inputStream = multipartFile.getInputStream()) {
             PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(awsS3Properties.getBucket())
@@ -65,17 +74,16 @@ public class FileService {
             throw new CustomException("S3 업로드에 실패했습니다.");
         }
 
-        // 접근가능한 url 생성
         String fileUrl = s3Client.utilities().getUrl(GetUrlRequest.builder()
                 .bucket(awsS3Properties.getBucket())
                 .key(key)
                 .build()).toExternalForm();
 
-        // 업로드 결과를 DB에 기록해 조회 가능하도록 유지
         StoredFile saved = storedFileRepository.save(StoredFile.builder()
                 .filePath(fileUrl)
                 .fileType(resolvedFileType)
                 .fileName(resolveFileName(multipartFile.getOriginalFilename()))
+                .productId(uploadCommand.productId())
                 .createdBy(uploadCommand.userId())
                 .build());
 
@@ -83,11 +91,40 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    public ApiResponseDto<List<FileInfo>> findAll() {
-        List<FileInfo> files = storedFileRepository.findAll().stream()
-                .map(FileInfo::from)
+    public ApiResponseDto<FilePathListResponse> findByProductId(String productId) {
+        if (!StringUtils.hasText(productId)) {
+            throw new CustomException("상품 ID가 필요합니다.");
+        }
+
+        List<String> filePathList = storedFileRepository.findByProductId(productId).stream()
+                .map(StoredFile::getFilePath)
                 .toList();
-        return ApiResponseDto.success(files);
+
+        return ApiResponseDto.success(new FilePathListResponse(filePathList));
+    }
+
+    @Transactional
+    public ApiResponseDto<Void> deleteByProductId(String productId) {
+        if (!StringUtils.hasText(productId)) {
+            throw new CustomException("상품 ID가 필요합니다.");
+        }
+
+        List<StoredFile> files = storedFileRepository.findByProductId(productId);
+
+        files.forEach(file -> {
+            String objectKey = extractObjectKey(file.getFilePath());
+            try {
+                s3Client.deleteObject(DeleteObjectRequest.builder()
+                        .bucket(awsS3Properties.getBucket())
+                        .key(objectKey)
+                        .build());
+            } catch (S3Exception e) {
+                throw new CustomException("S3 객체 삭제에 실패했습니다.");
+            }
+        });
+
+        storedFileRepository.deleteByProductId(productId);
+        return ApiResponseDto.success(null);
     }
 
     private String resolveFileType(String fileType, String contentType) {
@@ -116,5 +153,16 @@ public class FileService {
 
         String safeUploader = uploaderId.replace("/", "_").replace("\\", "_");
         return safeUploader + "/" + LocalDate.now() + "/" + baseName + "-" + UUID.randomUUID() + extension;
+    }
+
+    private String extractObjectKey(String fileUrl) {
+        if (!StringUtils.hasText(fileUrl)) {
+            throw new CustomException("파일 경로가 잘못되었습니다.");
+        }
+        String path = URI.create(fileUrl).getPath(); // leading slash 포함
+        if (!StringUtils.hasText(path)) {
+            throw new CustomException("파일 경로가 잘못되었습니다.");
+        }
+        return path.startsWith("/") ? path.substring(1) : path;
     }
 }

@@ -35,5 +35,7 @@ public class KafkaTopics {
   // deposit
   public static final String DEPOSIT_AUCTION_REFUND_RESPONSE = "deposit-auction-refund-response";
 
+  public static final String ORDER_AUCTION_UPDATE = "order_auction_update"; // 주문상태(기한매 미구매로 주문 취소될시 경매쪽에 알림)
+
 
 }

@@ -22,11 +22,11 @@ public class SettlementScheduler {
 
   /**
    * 매일 n시 n분 n초 정산 수집 JOB 테스트 중이라
-   *
-   * @테스트 5분마다 수집
+   * <p>
+   * 5분마다 수집
    */
 //  @Scheduled(cron = "2 2 2 * * *")
-  @Scheduled(cron = "1/5 */5 * * * *")
+  @Scheduled(cron = "5 */5 * * * *")
   public void runRegisterJob() {
     try {
       jobLauncher.run(registrationJob, new JobParametersBuilder()
@@ -35,16 +35,16 @@ public class SettlementScheduler {
           .toJobParameters());
 
     } catch (JobExecutionException e) {
-      log.error("job error: {}", e);
+      log.error("job error: {}", e.getMessage(), e);
     }
   }
 
   /**
    * 매달 n일 n시 n분 에 정산시도
-   *
-   * @테스트 10분마다 시도
+   * <p>
+   * 10분마다 시도
    */
-//  @Scheduled(cron = "0 5 9 15 * *")
+//  @Scheduled(cron = "0 5 6 15 * *")
   @Scheduled(cron = "*/10 */10 * * * *")
   public void runSettlementJob() {
     try {
@@ -54,12 +54,12 @@ public class SettlementScheduler {
           .toJobParameters());
 
     } catch (JobExecutionException e) {
-      log.error("job error: {}", e);
+      log.error("job error: {}", e.getMessage(), e);
     }
   }
 
   /**
-   * @테스트 15분마다 실패 정산 재시도
+   * 실제는 12시간~하루정도 15분마다 실패 정산 재시도
    */
   //  @Scheduled(cron = "0 30 11 * * *")
   @Scheduled(cron = "* */15 * * * *")
@@ -71,7 +71,7 @@ public class SettlementScheduler {
           .toJobParameters());
 
     } catch (JobExecutionException e) {
-      log.error("job error: {}", e);
+      log.error("job error: {}", e.getMessage(), e);
     }
   }
 

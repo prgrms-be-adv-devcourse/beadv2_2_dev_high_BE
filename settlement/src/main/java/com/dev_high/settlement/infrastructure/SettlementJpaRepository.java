@@ -22,12 +22,18 @@ public interface SettlementJpaRepository extends JpaRepository<Settlement, Strin
   List<Settlement> findAllByIdIn(List<String> ids);
 
 
-  @Query("SELECT s.orderId " +
-      "FROM Settlement s " +
-      "WHERE s.dueDate = :dueDate " +
-      "AND s.status = :status")
-  Set<String> findAllOrderIdsByDueDateAndStatus(@Param("dueDate") LocalDateTime dueDate,
-      @Param("status") SettlementStatus status);
+  @Query("""
+        SELECT s.orderId
+        FROM Settlement s
+        WHERE s.dueDate >= :fromDate
+          AND s.dueDate <= :toDate
+          AND s.status = :status
+      """)
+  Set<String> findAllOrderIdsByDueDateRangeAndStatus(
+      @Param("fromDate") LocalDateTime fromDate,
+      @Param("toDate") LocalDateTime toDate,
+      @Param("status") SettlementStatus status
+  );
 
 
   Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime dueDate,

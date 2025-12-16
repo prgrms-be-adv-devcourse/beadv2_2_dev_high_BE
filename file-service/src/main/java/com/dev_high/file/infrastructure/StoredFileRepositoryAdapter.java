@@ -18,7 +18,12 @@ public class StoredFileRepositoryAdapter implements StoredFileRepository {
     }
 
     @Override
-    public List<StoredFile> findAll() {
-        return storedFileJpaRepository.findAll();
+    public List<StoredFile> findByProductId(String productId) {
+        return storedFileJpaRepository.findByProductId(productId);
+    }
+
+    @Override
+    public void deleteByProductId(String productId) {
+        storedFileJpaRepository.deleteByProductId(productId);
     }
 }

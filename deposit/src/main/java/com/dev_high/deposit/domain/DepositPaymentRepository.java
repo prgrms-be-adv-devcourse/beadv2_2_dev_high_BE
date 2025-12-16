@@ -10,6 +10,8 @@ public interface DepositPaymentRepository {
 
     Optional<DepositPayment> findById(String paymentId);
 
+    Optional<DepositPayment> findByDepositOrderId(String oderId);
+
     Page<DepositPayment> findByUserId(String userId, Pageable pageable);
 
     boolean existsByOrderId(String orderId);

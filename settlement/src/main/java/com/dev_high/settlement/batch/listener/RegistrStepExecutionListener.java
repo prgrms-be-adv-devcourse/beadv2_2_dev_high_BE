@@ -2,6 +2,7 @@ package com.dev_high.settlement.batch.listener;
 
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -22,23 +23,24 @@ public class RegistrStepExecutionListener implements StepExecutionListener {
 
   @Override
   public void beforeStep(StepExecution stepExecution) {
-    LocalDateTime nextMonth3rd = LocalDate.now()
+    LocalDateTime to = LocalDate.now()
         .plusMonths(1)
         .withDayOfMonth(3)
         .atStartOfDay();
+    LocalDateTime from = to.minusMonths(1);
 
     Set<String> existingOrderIds = new HashSet<>(
-        settlementRepository.findAllOrderIdsByDueDateAndStatus(nextMonth3rd,
+        settlementRepository.findAllOrderIdsByDueDateRangeAndStatus(from, to,
             SettlementStatus.WAITING)
     );
 
     stepExecution.getExecutionContext().put("existingOrderIds", existingOrderIds);
     log.info("기존 등록 주문 ID 수: {}", existingOrderIds.size());
-    
+
   }
 
   @Override
-  public ExitStatus afterStep(StepExecution stepExecution) {
+  public ExitStatus afterStep(@Nullable StepExecution stepExecution) {
     return null;
   }
 }

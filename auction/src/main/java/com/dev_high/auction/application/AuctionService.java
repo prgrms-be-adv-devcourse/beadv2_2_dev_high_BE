@@ -139,7 +139,7 @@ public class AuctionService {
     Auction auction = auctionRepository.save(
         new Auction(request.startBid(), start,
             end, userId, request.productId()));
-
+    auctionRepository.flush();
     // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
     auctionLiveStateRepository.save(new AuctionLiveState(auction));
     publishSpringEvent(auction);

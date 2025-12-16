@@ -49,10 +49,11 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     return settlementRepository.save(settlement);
   }
 
+  
   @Override
-  public Set<String> findAllOrderIdsByDueDateAndStatus(LocalDateTime nextMonth3rd,
+  public Set<String> findAllOrderIdsByDueDateRangeAndStatus(LocalDateTime from, LocalDateTime to,
       SettlementStatus status) {
-    return settlementRepository.findAllOrderIdsByDueDateAndStatus(nextMonth3rd, status);
+    return settlementRepository.findAllOrderIdsByDueDateRangeAndStatus(from, to, status);
   }
 
   @Override

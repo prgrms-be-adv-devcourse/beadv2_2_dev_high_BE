@@ -33,7 +33,7 @@ public class DepositHistory {
      * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음
      * */
     @Schema(description = "예치금 주문 ID")
-    @Column(name = "deposit_order_id", length = 20, updatable = false)
+    @Column(name = "order_id", length = 20, updatable = false)
     private String depositOrderId;
 
     @Schema(description = "예치금 유형")

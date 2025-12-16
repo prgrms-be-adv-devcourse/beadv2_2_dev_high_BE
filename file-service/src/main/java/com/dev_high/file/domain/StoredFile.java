@@ -28,6 +28,9 @@ public class StoredFile {
     @Column(name = "file_name")
     private String fileName;
 
+    @Column(name = "product_id", length = 20)
+    private String productId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -41,10 +44,11 @@ public class StoredFile {
     private String updatedBy;
 
     @Builder
-    private StoredFile(String filePath, String fileType, String fileName, String createdBy) {
+    private StoredFile(String filePath, String fileType, String fileName, String productId, String createdBy) {
         this.filePath = filePath;
         this.fileType = fileType;
         this.fileName = fileName;
+        this.productId = productId;
         this.createdBy = createdBy;
         this.updatedBy = createdBy;
     }

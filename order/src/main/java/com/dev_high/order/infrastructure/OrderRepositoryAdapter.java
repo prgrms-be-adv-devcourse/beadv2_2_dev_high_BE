@@ -1,5 +1,6 @@
 package com.dev_high.order.infrastructure;
 
+import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderRepository;
 import com.dev_high.order.domain.OrderStatus;
@@ -49,7 +50,7 @@ public class OrderRepositoryAdapter implements OrderRepository {
   }
 
   @Override
-  public List<String> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
+  public List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
       OrderStatus newStatus,
       LocalDateTime targetDate) {
     return orderRepository.updateStatusByUpdatedAtAndReturnBuyer(oldStatus.name(), newStatus.name(),

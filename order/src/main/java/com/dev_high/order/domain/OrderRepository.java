@@ -1,5 +1,6 @@
 package com.dev_high.order.domain;
 
+import com.dev_high.order.application.dto.UpdateOrderProjection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public interface OrderRepository {
       Pageable pageable
   );
 
-  List<String> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
+  List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
       OrderStatus newStatus,
       LocalDateTime targetDate);
 }

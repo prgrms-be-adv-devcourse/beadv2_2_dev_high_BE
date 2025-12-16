@@ -4,7 +4,9 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.product.ProductPersistenceService;
 import com.dev_high.product.application.dto.AuctionCreateResponse;
+import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductCreateResult;
 import com.dev_high.product.application.dto.ProductInfo;
@@ -22,6 +24,7 @@ import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import com.dev_high.product.exception.ProductUpdateStatusException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,15 +41,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductCategoryRelRepository productCategoryRelRepository;
     private final CategoryRepository categoryRepository;
     private final RestTemplate restTemplate;
+    private final ProductPersistenceService productPersistenceService;
 
     private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
 
@@ -57,21 +63,14 @@ public class ProductService {
         UserInfo userInfo = ensureSellerRole();
         String sellerId = userInfo.userId();
 
-        Product product = Product.create(
-                command.name(),
-                command.description(),
-                sellerId,
-                sellerId,
-                null
-        );
+        Product product = productPersistenceService.saveProduct(sellerId, command);
 
-        Product saved = productRepository.save(product);
-        productRepository.flush();
-        List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
+        List<Category> categories = attachCategories(product, command.categoryIds(), sellerId);
 
-        AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
-        return new ProductCreateResult(ProductInfo.from(saved, categories), auctionResponse);
+        AuctionCreateResponse auctionResponse = createAuction(product.getId(), command, sellerId);
+        return new ProductCreateResult(ProductInfo.from(product, categories), auctionResponse);
     }
+
 
     //상품수정
     @Transactional
@@ -382,5 +381,21 @@ public class ProductService {
             String auctionEndAt,
             String sellerId
     ) {
+    }
+
+    public List<WishlistProductResponse> getProductInfos(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> products =
+                productRepository.findByIdIn(productIds);
+
+        return products.stream()
+                .map(p -> new WishlistProductResponse(
+                        p.getId(),
+                        p.getName()
+                ))
+                .toList();
     }
 }

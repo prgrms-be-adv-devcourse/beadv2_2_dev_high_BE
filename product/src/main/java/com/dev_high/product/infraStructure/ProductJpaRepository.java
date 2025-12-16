@@ -18,4 +18,6 @@ public interface ProductJpaRepository extends JpaRepository<Product, String> {
     List<Product> findByDeletedYn(DeleteStatus deletedYn);
 
     Page<Product> findByDeletedYn(DeleteStatus deletedYn, Pageable pageable);
+
+    List<Product> findByIdIn(List<String> ids);
 }

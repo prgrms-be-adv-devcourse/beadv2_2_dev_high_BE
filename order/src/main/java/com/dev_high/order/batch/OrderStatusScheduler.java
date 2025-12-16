@@ -24,7 +24,8 @@ public class OrderStatusScheduler {
   /**
    * 매일 새벽 n시 n분에 실행
    */
-  @Scheduled(cron = "0 11 1 * * *")
+//  @Scheduled(cron = "0 11 1 * * *")
+  @Scheduled(cron = "3 1/3 * * * *")
   public void runOrderStatusJob() {
     try {
       JobParameters params = new JobParametersBuilder()
