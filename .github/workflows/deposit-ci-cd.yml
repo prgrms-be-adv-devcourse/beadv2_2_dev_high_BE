@@ -1,22 +1,22 @@
 name: Deposit CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'deposit/**'
-      - '.github/workflows/deposit-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'deposit/**'
-      - '.github/workflows/deposit-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'deposit/**'
+#      - '.github/workflows/deposit-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'deposit/**'
+#      - '.github/workflows/deposit-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

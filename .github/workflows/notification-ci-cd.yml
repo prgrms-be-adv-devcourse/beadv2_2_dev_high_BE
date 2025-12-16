@@ -1,22 +1,22 @@
 name: Notification CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'notification/**'
-      - '.github/workflows/notification-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'notification/**'
-      - '.github/workflows/notification-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'notification/**'
+#      - '.github/workflows/notification-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'notification/**'
+#      - '.github/workflows/notification-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

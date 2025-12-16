@@ -1,22 +1,22 @@
 name: Discovery CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'discovery/**'
-      - '.github/workflows/discovery-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'discovery/**'
-      - '.github/workflows/discovery-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'discovery/**'
+#      - '.github/workflows/discovery-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'discovery/**'
+#      - '.github/workflows/discovery-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

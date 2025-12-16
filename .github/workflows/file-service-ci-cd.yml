@@ -1,22 +1,22 @@
 name: File Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'file-service/**'
-      - '.github/workflows/file-service-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'file-service/**'
-      - '.github/workflows/file-service-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'file-service/**'
+#      - '.github/workflows/file-service-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'file-service/**'
+#      - '.github/workflows/file-service-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

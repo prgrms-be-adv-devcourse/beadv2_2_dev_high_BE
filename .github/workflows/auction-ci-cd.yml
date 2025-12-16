@@ -1,22 +1,22 @@
 name: Auction CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'auction/**'
-      - '.github/workflows/auction-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'auction/**'
-      - '.github/workflows/auction-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'auction/**'
+#      - '.github/workflows/auction-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'auction/**'
+#      - '.github/workflows/auction-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

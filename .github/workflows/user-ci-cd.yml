@@ -1,22 +1,22 @@
 name: User CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'user/**'
-      - '.github/workflows/user-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'user/**'
-      - '.github/workflows/user-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'user/**'
+#      - '.github/workflows/user-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'user/**'
+#      - '.github/workflows/user-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:
