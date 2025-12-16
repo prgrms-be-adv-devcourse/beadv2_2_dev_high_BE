@@ -2,7 +2,6 @@ package com.dev_high.user.wishlist.domain;
 
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.product.domain.Product;
 import com.dev_high.user.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,10 +25,6 @@ public class Wishlist {
 
     @Column(name = "product_id", length = 20, nullable = false)
     private String productId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false, insertable = false, updatable = false)
-    private Product product;
 
     @Column(name = "created_by", length = 50)
     private String createdBy;

@@ -35,4 +35,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Page<Product> findAll(Pageable pageable) {
         return productJpaRepository.findByDeletedYn(Product.DeleteStatus.N, pageable);
     }
+
+    @Override
+    public List<Product> findByIdIn(List<String> productIds) {
+        return productJpaRepository.findByIdIn(productIds);
+    }
 }

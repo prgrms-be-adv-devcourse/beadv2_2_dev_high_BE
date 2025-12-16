@@ -4,7 +4,6 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.domain.UserRole;
-import com.dev_high.user.user.domain.UserStatus;
 import com.dev_high.user.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +28,4 @@ public class UserDomainService {
         user.updateRole(role);
     }
 
-
-    @Transactional
-    public void updateUserStatus(String email, UserStatus status) {
-        User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
-        user.updateStatus(status);
-    }
 }

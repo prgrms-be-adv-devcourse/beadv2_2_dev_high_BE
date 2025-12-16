@@ -14,4 +14,6 @@ public interface ProductRepository {
     List<Product> findAll();
 
     Page<Product> findAll(Pageable pageable);
+
+    List<Product> findByIdIn(List<String> productIds);
 }

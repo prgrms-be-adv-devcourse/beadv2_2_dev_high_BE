@@ -32,7 +32,7 @@ public class WebFluxSecurityConfig {
   private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
           "/ws-auction/**"};
   private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*",
-  };
+          "/api/v1/products/internal"};
   private final static String[] SEARCH_ANTPATTERNS = {"/api/v1/search/**"};
 
   @Bean
