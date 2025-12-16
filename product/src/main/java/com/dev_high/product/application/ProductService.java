@@ -14,6 +14,7 @@ import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import com.dev_high.product.exception.ProductUpdateStatusException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,11 +25,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -37,8 +40,9 @@ public class ProductService {
     private final RestTemplate restTemplate;
 
     private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
+    private static final String FILE_SERVICE_URL = "http://FILE-SERVICE/api/v1/files/groups/";
 
-    // 상품 생성
+    // 상품저장 트랜잭션
     @Transactional
     public Product saveProduct(ProductCommand command) {
         UserInfo userInfo = ensureSellerRole();
@@ -49,7 +53,7 @@ public class ProductService {
                 command.description(),
                 sellerId,
                 sellerId,
-                null
+                command.fileGrpId()
         );
 
         Product saved = productRepository.save(product);
@@ -57,16 +61,17 @@ public class ProductService {
         return saved;
     }
 
-
+    //상품생성
     public ProductCreateResult registerProduct(ProductCommand command) {
         UserInfo userInfo = ensureSellerRole();
         String sellerId = userInfo.userId();
 
         Product saved = saveProduct(command);
         List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
+        FileGroupResponse fileGroup = fetchFileGroup(command.fileGrpId());
 
         AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
-        return new ProductCreateResult(ProductInfo.from(saved, categories), List.of(auctionResponse));
+        return new ProductCreateResult(ProductInfo.from(saved, categories, fileGroup), List.of(auctionResponse));
     }
 
     //상품수정
@@ -80,13 +85,16 @@ public class ProductService {
         if (userInfo.userId() == null || !userInfo.userId().equals(product.getSellerId())) {
             throw new ProductUnauthorizedException();
         }
+
         //경매시작 전일 때만 가능하도록 체크
         if (product.getStatus() != ProductStatus.READY) {
             throw new ProductUpdateStatusException();
         }
-        //
-        product.updateDetails(command.name(), command.description(), null, userInfo.userId());
+
+        product.updateDetails(command.name(), command.description(), command.fileGrpId(), userInfo.userId());
+
         List<Category> categories = replaceCategories(product, command.categoryIds(), userInfo.userId());
+
         updateAuction(productId, command, userInfo.userId());
         return toCreateResult(product, categories);
     }
@@ -194,7 +202,8 @@ public class ProductService {
     }
 
     private ProductCreateResult toCreateResult(Product product, List<Category> categories) {
-        ProductInfo productInfo = ProductInfo.from(product, categories);
+        FileGroupResponse fileGroup = fetchFileGroup(product.getFileId());
+        ProductInfo productInfo = ProductInfo.from(product, categories, fileGroup);
         List<AuctionCreateResponse> auction = fetchAuction(product.getId());
         return new ProductCreateResult(productInfo, auction);
     }
@@ -232,6 +241,7 @@ public class ProductService {
         return toAuctionResponse(response.getBody().getData());
     }
 
+    //auction update
     private void updateAuction(String productId, ProductUpdateCommand command, String sellerId) {
         if (command.auctionId() == null || command.auctionId().isBlank()) {
             return;
@@ -282,7 +292,7 @@ public class ProductService {
         return new HttpEntity<>(request, headers);
     }
 
-    // 옥션 수정
+    // 옥션 정보 가져오기
     private List<AuctionCreateResponse> fetchAuction(String productId) {
         HttpHeaders headers = new HttpHeaders();
         applyAuthHeaders(headers);
@@ -403,5 +413,36 @@ public class ProductService {
                         p.getName()
                 ))
                 .toList();
+    }
+
+    // fileGroup 가져오기
+    private FileGroupResponse fetchFileGroup(String fileGroupId) {
+        if (fileGroupId == null || fileGroupId.isBlank()) {
+            return new FileGroupResponse(null, Collections.emptyList());
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            applyAuthHeaders(headers);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<ApiResponseDto<FileGroupResponse>> response = restTemplate.exchange(
+                    FILE_SERVICE_URL + fileGroupId,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            if (response.getBody() != null) {
+                return response.getBody().getData();
+            }
+        } catch (Exception e) {
+            if (e instanceof org.springframework.web.client.RestClientResponseException rex) {
+                log.warn("파일 그룹 조회 실패 fileGroupId={}, status={}, body={}", fileGroupId, rex.getRawStatusCode(), rex.getResponseBodyAsString());
+            } else {
+                log.warn("파일 그룹 조회 실패 fileGroupId={}, reason={}", fileGroupId, e.getMessage());
+            }
+        }
+        return new FileGroupResponse(fileGroupId, Collections.emptyList());
     }
 }

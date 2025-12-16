@@ -28,8 +28,12 @@ public class StoredFile {
     @Column(name = "file_name")
     private String fileName;
 
-    @Column(name = "product_id", length = 20)
-    private String productId;
+    @Column(name = "file_Group_id", length = 20)
+    private String fileGroupId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_Group_id", insertable = false, updatable = false)
+    private FileGroup fileGroup;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -44,13 +48,13 @@ public class StoredFile {
     private String updatedBy;
 
     @Builder
-    private StoredFile(String filePath, String fileType, String fileName, String productId, String createdBy) {
+    private StoredFile(String filePath, String fileType, String fileName, String createdBy, String fileGroupId) {
         this.filePath = filePath;
         this.fileType = fileType;
         this.fileName = fileName;
-        this.productId = productId;
         this.createdBy = createdBy;
         this.updatedBy = createdBy;
+        this.fileGroupId = fileGroupId;
     }
 
     @PrePersist

@@ -1,13 +1,10 @@
 package com.dev_high.file;
 
 import org.springframework.boot.SpringApplication;
-import com.dev_high.common.config.KafkaConfig;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.dev_high.file", "com.dev_high.common"})
 @EnableDiscoveryClient
 public class FileServiceApplication {
 

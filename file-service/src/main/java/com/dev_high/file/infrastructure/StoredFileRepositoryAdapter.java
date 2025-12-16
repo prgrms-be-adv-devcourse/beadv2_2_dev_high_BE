@@ -18,12 +18,7 @@ public class StoredFileRepositoryAdapter implements StoredFileRepository {
     }
 
     @Override
-    public List<StoredFile> findByProductId(String productId) {
-        return storedFileJpaRepository.findByProductId(productId);
-    }
-
-    @Override
-    public void deleteByProductId(String productId) {
-        storedFileJpaRepository.deleteByProductId(productId);
+    public List<StoredFile> findByFileGroupId(String fileGroupId) {
+        return storedFileJpaRepository.findByFileGroupId(fileGroupId);
     }
 }
