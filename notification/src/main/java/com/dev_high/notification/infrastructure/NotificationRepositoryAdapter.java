@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class NotificationRepositoryAdapter implements NotificationRepository {
@@ -21,5 +23,15 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Override
     public Page<NotificationInfo> findAllByUserId(String userId, Pageable pageable) {
         return repository.findAllByUserId(userId, pageable);
+    }
+
+    @Override
+    public long countUnreadByUserId(String userId) {
+        return repository.countByUserIdAndReadYn(userId, false);
+    }
+
+    @Override
+    public Optional<Notification> findById(String notificationId) {
+        return repository.findById(notificationId);
     }
 }

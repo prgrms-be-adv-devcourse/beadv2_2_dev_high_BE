@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NotificationJpaRepository extends JpaRepository<Notification, String> {
     Page<NotificationInfo> findAllByUserId(String userId, Pageable pageable);
+
+    long countByUserIdAndReadYn(String userId, Boolean readYn);
 }

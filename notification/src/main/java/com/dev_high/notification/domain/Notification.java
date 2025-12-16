@@ -75,12 +75,6 @@ public class Notification{
     @Column(name = "updated_by", length = 20, nullable = false)
     private String updatedBy;
 
-
-    // 읽음 처리 메서드
-    public void markAsRead() {
-        this.readYn = true;
-    }
-
     @Builder
     public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, Boolean readYn) {
         this.userId = userId;
@@ -90,7 +84,6 @@ public class Notification{
         this.relatedUrl = relatedUrl;
         this.readYn = Optional.ofNullable(readYn)
                 .orElse(false);
-        //this.readYn = (readYn == null) ? false : readYn; // null일 경우 기본값 false
         this.createdBy = userId;
         this.updatedBy = userId;
     }
@@ -123,5 +116,11 @@ public class Notification{
                 .relatedUrl(relatedUrl)
                 .readYn(false) // 기본값은 false
                 .build();
+    }
+
+    public void markAsRead(String userId) {
+        this.readYn = true;
+        this.updatedAt = LocalDateTime.now();
+        this.updatedBy = userId;
     }
 }
