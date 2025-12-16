@@ -16,7 +16,7 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
 
     boolean existsByProductIdAndStatusIn(String productId, List<AuctionStatus> statuses);
 
-    List<Auction> findByProduct_IdOrderByIdDesc(String productId);
+    List<Auction> findByProduct_IdAndDeletedYnOrderByIdDesc(String productId, String deletedYn);
 
 
     /* postgre 에서는 retuning 으로 id바로 조회가능 */

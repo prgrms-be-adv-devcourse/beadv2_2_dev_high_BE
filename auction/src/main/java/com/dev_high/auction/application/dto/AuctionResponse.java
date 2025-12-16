@@ -8,7 +8,7 @@ import com.dev_high.product.domain.Product;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record AuctionResponse(String auctionId, String sellerId, String productName,
+public record AuctionResponse(String auctionId, String productId, String sellerId, String productName,
                               AuctionStatus status,
                               BigDecimal startBid, BigDecimal currentBid,
                               LocalDateTime auctionStartAt, LocalDateTime auctionEndAt) {
@@ -23,7 +23,7 @@ public record AuctionResponse(String auctionId, String sellerId, String productN
         Product product = auction.getProduct();
         AuctionLiveState state = auction.getLiveState();
         BigDecimal currentBid = state != null ? state.getCurrentBid() : BigDecimal.ZERO;
-        return new AuctionResponse(auction.getId(), product.getSellerId(), product.getName(),
+        return new AuctionResponse(auction.getId(), product.getId(), product.getSellerId(), product.getName(),
                 auction.getStatus(),
                 auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
                 auction.getAuctionEndAt());
