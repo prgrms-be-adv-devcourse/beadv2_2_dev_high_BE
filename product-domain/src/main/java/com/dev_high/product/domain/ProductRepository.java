@@ -24,4 +24,6 @@ public interface ProductRepository {
 
     List<Product> findByIdIn(List<String> productIds);
 
+    List<Product> findBySellerId(String sellerId);
+
 }

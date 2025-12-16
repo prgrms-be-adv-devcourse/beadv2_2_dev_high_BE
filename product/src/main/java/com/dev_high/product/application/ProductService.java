@@ -113,6 +113,13 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductCreateResult> getProductsBySeller(String sellerId) {
+        return productRepository.findBySellerId(sellerId).stream()
+                .map(this::toCreateResult)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<ProductCreateResult> getProductsByCategory(String categoryId, Pageable pageable) {
         return productCategoryRelRepository.findProductsByCategoryId(categoryId, DeleteStatus.N, pageable)
                 .map(product -> {
