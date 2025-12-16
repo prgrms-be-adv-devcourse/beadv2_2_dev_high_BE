@@ -22,7 +22,7 @@ public interface SettlementRepository {
   Settlement save(Settlement settlement);
 
 
-  Set<String> findAllOrderIdsByDueDateAndStatus(LocalDateTime nextMonth3rd,
+  Set<String> findAllOrderIdsByDueDateRangeAndStatus(LocalDateTime from, LocalDateTime to,
       SettlementStatus status);
 
   Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime nextMonth3rd,

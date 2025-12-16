@@ -1,6 +1,7 @@
 package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductCreateResult;
 import com.dev_high.product.presentation.dto.ProductRequest;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -71,5 +74,10 @@ public class ProductController {
                                               @Parameter(description = "판매자 ID", required = true) @RequestParam String sellerId) {
         productService.deleteProduct(productId, sellerId);
         return ApiResponseDto.success(null);
+    }
+
+    @GetMapping("/internal")
+    public List<WishlistProductResponse> getProductInfos(@RequestBody List<String> productIds) {
+        return productService.getProductInfos(productIds);
     }
 }

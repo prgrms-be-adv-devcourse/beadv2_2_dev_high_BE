@@ -8,12 +8,12 @@ public record WishlistResponse(
         String productId,
         String productName
 ) {
-    public static WishlistResponse from(Wishlist wishlist) {
+    public static WishlistResponse from(Wishlist wishlist, String productName) {
         return new WishlistResponse(
                 wishlist.getId(),
                 wishlist.getUser().getId(),
-                wishlist.getProduct().getId(),
-                wishlist.getProduct().getName()
+                wishlist.getProductId(),
+                productName
         );
     }
 }

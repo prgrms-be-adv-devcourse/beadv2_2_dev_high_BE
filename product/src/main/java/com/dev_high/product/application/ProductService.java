@@ -5,6 +5,7 @@ import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.product.application.dto.AuctionCreateResponse;
+import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductCreateResult;
 import com.dev_high.product.application.dto.ProductInfo;
@@ -382,5 +383,21 @@ public class ProductService {
             String auctionEndAt,
             String sellerId
     ) {
+    }
+
+    public List<WishlistProductResponse> getProductInfos(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> products =
+                productRepository.findByIdIn(productIds);
+
+        return products.stream()
+                .map(p -> new WishlistProductResponse(
+                        p.getId(),
+                        p.getName()
+                ))
+                .toList();
     }
 }

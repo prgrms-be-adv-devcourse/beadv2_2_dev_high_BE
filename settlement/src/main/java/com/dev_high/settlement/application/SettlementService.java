@@ -1,5 +1,6 @@
 package com.dev_high.settlement.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
@@ -37,10 +38,10 @@ public class SettlementService {
   /**
    * 판매자 ID로 모든 정산 정보를 조회합니다.
    *
-   * @param sellerId 판매자 ID
    * @return 해당 판매자의 모든 정산 정보 목록
    */
-  public ApiResponseDto<List<SettlementResponse>> findBySellerId(String sellerId) {
+  public ApiResponseDto<List<SettlementResponse>> findBySellerId() {
+    String sellerId = UserContext.get().userId();
     List<Settlement> found = settlementRepository.findAllBySellerId(sellerId);
     List<SettlementResponse> settlementResponseList = found.stream().map(Settlement::toResponse)
         .toList();

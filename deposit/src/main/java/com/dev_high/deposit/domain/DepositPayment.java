@@ -116,7 +116,8 @@ public class DepositPayment {
                 .build();
     }
 
-    public void confirmPayment(String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
+    public void confirmPayment(String paymentKey, String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
+        this.paymentKey = paymentKey;
         this.status = DepositPaymentStatus.CONFIRMED;
         this.method = method;
         this.approvedAt = approvedAt;

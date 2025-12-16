@@ -15,9 +15,13 @@ public interface ProductRepository {
 
     Page<Product> findAll(Pageable pageable);
 
+
     List<Product> findAllById(List<String> strings);
 
     void saveAll(List<Product> products);
 
     void flush();
+
+    List<Product> findByIdIn(List<String> productIds);
+
 }

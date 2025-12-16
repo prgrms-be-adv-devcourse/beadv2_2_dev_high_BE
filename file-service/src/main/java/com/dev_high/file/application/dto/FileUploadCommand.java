@@ -1,4 +1,4 @@
 package com.dev_high.file.application.dto;
 
-public record FileUploadCommand(String fileType, String userId) {
+public record FileUploadCommand(String fileType, String productId, String userId) {
 }

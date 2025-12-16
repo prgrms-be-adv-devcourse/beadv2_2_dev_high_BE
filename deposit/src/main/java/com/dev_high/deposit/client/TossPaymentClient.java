@@ -1,7 +1,6 @@
 package com.dev_high.deposit.client;
 
 import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
-import com.dev_high.deposit.client.dto.TossConfirmRequest;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,13 +36,7 @@ public class TossPaymentClient {
         //Toss에 요청할 헤더
         HttpHeaders headers = createHeaders();
 
-        TossConfirmRequest requestBody = new TossConfirmRequest(
-                command.paymentKey(),
-                command.orderId(),
-                command.amount()
-        );
-
-        HttpEntity<TossConfirmRequest> entity = new HttpEntity<>(requestBody, headers);
+        HttpEntity<DepositPaymentConfirmCommand> entity = new HttpEntity<>(command, headers);
 
         try {
             return restTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);
