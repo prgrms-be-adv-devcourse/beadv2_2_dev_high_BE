@@ -6,6 +6,8 @@ import com.dev_high.deposit.application.dto.DepositOrderInfo;
 import com.dev_high.deposit.application.dto.DepositOrderUpdateCommand;
 import com.dev_high.deposit.domain.DepositOrder;
 import com.dev_high.deposit.domain.DepositOrderRepository;
+import com.dev_high.deposit.domain.DepositPayment;
+import com.dev_high.deposit.domain.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,13 +20,15 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class DepositOrderService {
     private final DepositOrderRepository orderRepository;
+    private final DepositPaymentRepository paymentRepository;
 
     // 주문 생성
     @Transactional
     public DepositOrderInfo createOrder(DepositOrderCreateCommand command) {
         DepositOrder order;
+        String userId = UserContext.get().userId();
+
         try {
-            String userId = UserContext.get().userId();
             order = DepositOrder.create(
                     userId,
                     command.amount()
@@ -32,6 +36,17 @@ public class DepositOrderService {
         } catch (IllegalArgumentException exception) {
             throw exception;
         }
+
+        // 예치금 결제 생성
+        DepositPayment payment = DepositPayment.create(
+                order.getId(),
+                userId,
+                command.amount(),
+                ""
+        );
+
+        paymentRepository.save(payment);
+
         return DepositOrderInfo.from(orderRepository.save(order));
     }
 
