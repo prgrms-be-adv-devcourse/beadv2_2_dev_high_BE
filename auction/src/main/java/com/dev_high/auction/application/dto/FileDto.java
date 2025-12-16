@@ -1,5 +1,13 @@
 package com.dev_high.auction.application.dto;
 
-public record FileDto(String fileId, String filePath, String fileType) {
+import java.time.LocalDateTime;
+
+public record FileDto(String id,
+                      String fileName,
+                      String fileType,
+                      String filePath,
+                      String fileGroupId,
+                      String createdBy,
+                      LocalDateTime createdAt) {
 
 }

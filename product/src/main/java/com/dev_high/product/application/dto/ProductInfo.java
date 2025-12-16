@@ -2,12 +2,11 @@ package com.dev_high.product.application.dto;
 
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.ProductStatus;
 import com.dev_high.product.domain.Product.DeleteStatus;
+import com.dev_high.product.domain.ProductStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 public record ProductInfo(
         String id,
