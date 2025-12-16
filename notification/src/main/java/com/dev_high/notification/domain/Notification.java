@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -18,8 +17,7 @@ import java.util.Optional;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Configuration
-public class Notification extends BaseEntity {
+public class Notification{
     @Schema(description = "알림 ID")
     @Id
     @Column(name = "id", length = 20)
@@ -55,23 +53,59 @@ public class Notification extends BaseEntity {
     @Schema(description = "확인 여부")
     @Convert(converter = BooleanToYNConverter.class)
     @Column(name = "read_yn", length = 1, nullable = false)
-    private boolean readYn;
+    private Boolean readYn;
 
     @Schema(description = "생성일시")
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Schema(description = "생성자")
-    @Column(name = "created_by", length = 20, nullable = false)
+    @Column(name = "created_by", length = 20, nullable = false, updatable = false)
     private String createdBy;
 
     @Schema(description = "만료일자")
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
+    @Schema(description = "수정일시")
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Schema(description = "수정자")
+    @Column(name = "updated_by", length = 20, nullable = false)
+    private String updatedBy;
+
+
     // 읽음 처리 메서드
     public void markAsRead() {
         this.readYn = true;
+    }
+
+    @Builder
+    public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, Boolean readYn) {
+        this.userId = userId;
+        this.type = type;
+        this.title = title;
+        this.content = content;
+        this.relatedUrl = relatedUrl;
+        this.readYn = Optional.ofNullable(readYn)
+                .orElse(false);
+        //this.readYn = (readYn == null) ? false : readYn; // null일 경우 기본값 false
+        this.createdBy = userId;
+        this.updatedBy = userId;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        this.expiredAt = now.plusDays(30);
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public static Notification create(
@@ -87,19 +121,7 @@ public class Notification extends BaseEntity {
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .readYn(false)
+                .readYn(false) // 기본값은 false
                 .build();
-    }
-
-    @Builder
-    public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, boolean readYn) {
-        this.userId = userId;
-        this.type = type;
-        this.title = title;
-        this.content = content;
-        this.relatedUrl = relatedUrl;
-        this.readYn = Optional.ofNullable(readYn)
-                            .orElse(false);
-        this.createdBy = userId;
     }
 }
