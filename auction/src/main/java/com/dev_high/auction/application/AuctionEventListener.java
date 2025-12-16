@@ -5,9 +5,9 @@ import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
-import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionProductUpdateEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
+import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.util.JsonUtil;
@@ -37,12 +37,33 @@ public class AuctionEventListener {
     @KafkaListener(topics = KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE)
     public void refundComplete(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
 
-        AuctionDepositRefundRequestEvent val = JsonUtil.fromPayload(envelope.payload(),
-                AuctionDepositRefundRequestEvent.class);
+        DepositCompletedEvent val = JsonUtil.fromPayload(envelope.payload(),
+                DepositCompletedEvent.class);
 
-        recordService.markDepositRefunded(val.auctionId(), val.userIds());
+        try {
+            if (val.type().equals("REFUND")) {
+                recordService.markDepositRefunded(val.auctionId(), val.userIds());
+            }
+        } catch (Exception e) {
+
+        }
+
     }
 
+    @KafkaListener(topics = KafkaTopics.DEPOSIT_AUCTION_DEPOIST_RESPONSE) // 보증금 차감 이벤트
+    public void depositComplete(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
+
+        DepositCompletedEvent val = JsonUtil.fromPayload(envelope.payload(),
+                DepositCompletedEvent.class);
+
+        if (val.type().equals("DEPOSIT")) {
+            val.userIds().forEach(id -> {
+                recordService.createParticipation(val.auctionId(), val.amount(), id);
+
+            });
+        }
+
+    }
 
     @KafkaListener(topics = KafkaTopics.ORDER_AUCTION_UPDATE)
     public void auctionStatusUpdate(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
@@ -50,12 +71,17 @@ public class AuctionEventListener {
         OrderToAuctionUpdateEvent val = JsonUtil.fromPayload(envelope.payload(),
                 OrderToAuctionUpdateEvent.class);
         // 미결제로 인한 주문취소 이벤트 소비하고 상품에 상태를 전달
+
         List<String> productIds = auctionRepository.bulkUpdateStatus(val.auctionIds(),
                 (AuctionStatus.valueOf(val.status())));
+        try {
+            eventPublisher.publish(KafkaTopics.AUCTION_PRODUCT_UPDATE,
+                    new AuctionProductUpdateEvent(productIds,
+                            val.status()));
+        } catch (Exception e) {
 
-        eventPublisher.publish(KafkaTopics.AUCTION_PRODUCT_UPDATE,
-                new AuctionProductUpdateEvent(productIds,
-                        val.status()));
+        }
+
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

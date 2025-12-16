@@ -106,6 +106,7 @@ public class ProductService {
         return toCreateResult(product);
     }
 
+    @Deprecated
     @Transactional(readOnly = true)
     public ProductCreateResult getProductWithCategories(String productId) {
         Product product = productRepository.findById(productId)
@@ -131,7 +132,7 @@ public class ProductService {
     public Page<ProductCreateResult> getProductsByCategory(String categoryId, Pageable pageable) {
         return productCategoryRelRepository.findProductsByCategoryId(categoryId, DeleteStatus.N, pageable)
                 .map(product -> {
-                    List<Category> categories = productCategoryRelRepository.findCategoriesByProductId(product.getId());
+                    List<Category> categories = product.getCategories();
                     return toCreateResult(product, categories);
                 });
     }
@@ -197,7 +198,7 @@ public class ProductService {
 
 
     private ProductCreateResult toCreateResult(Product product) {
-        List<Category> categories = productCategoryRelRepository.findCategoriesByProductId(product.getId());
+        List<Category> categories = product.getCategories();
         return toCreateResult(product, categories);
     }
 
