@@ -51,9 +51,6 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public void flush() {
         productJpaRepository.flush();
-
-    public List<Product> findByIdIn(List<String> productIds) {
-        return productJpaRepository.findByIdIn(productIds);
     }
 
     // 추가 조회: ID 리스트로 상품 조회 (삭제되지 않은 상품만 반환)
