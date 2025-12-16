@@ -90,11 +90,8 @@ public class Auction {
         this.status = AuctionStatus.READY;
         this.productId = productId;
         this.startBid = startBid;
-        BigDecimal deposit = startBid
-                .multiply(new BigDecimal("0.05"))       // 5% 계산
-                .divide(new BigDecimal("10"), 0, RoundingMode.CEILING) // 10으로 나눈 후 올림
-                .multiply(new BigDecimal("10"));
-        this.depositAmount = deposit.max(BigDecimal.valueOf(1000));
+
+        this.depositAmount = depositMax(startBid);
         this.auctionStartAt = auctionStartAt;
         this.auctionEndAt = auctionEndAt;
         this.createdBy = creatorId;
@@ -103,10 +100,20 @@ public class Auction {
 
     }
 
+    private BigDecimal depositMax(BigDecimal startBid) {
+        BigDecimal deposit = startBid
+                .multiply(new BigDecimal("0.05"))       // 5% 계산
+                .divide(new BigDecimal("10"), 0, RoundingMode.CEILING) // 10으로 나눈 후 올림
+                .multiply(new BigDecimal("10"));
+
+        return deposit;
+    }
+
     public void modify(BigDecimal startBid, LocalDateTime auctionStartAt,
                        LocalDateTime auctionEndAt, String updatedBy) {
 
         this.startBid = startBid;
+        this.depositAmount = depositMax(startBid);
         this.auctionStartAt = auctionStartAt;
         this.auctionEndAt = auctionEndAt;
         this.updatedBy = updatedBy;

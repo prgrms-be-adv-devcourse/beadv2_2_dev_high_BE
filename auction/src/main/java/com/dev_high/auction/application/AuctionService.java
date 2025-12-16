@@ -173,14 +173,17 @@ public class AuctionService {
 
         if ("USER".equals(role)) {
             throw new AuctionModifyForbiddenException();
-        } else if ("SELLER".equals(role)) {
-            if (!userId.equals(request.sellerId())) {
-                throw new AuctionModifyForbiddenException();
-            }
         }
+
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
+        String sellerId = auction.getProduct().getSellerId();
+        if ("SELLER".equals(role)) {
+            if (!sellerId.equals(userId)) {
+                throw new AuctionModifyForbiddenException();
+            }
+        }
 
         if (auction.getStatus() != AuctionStatus.READY) {
             throw new AuctionStatusInvalidException(
@@ -217,15 +220,17 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
 
-        if (auction.getStatus() != AuctionStatus.READY) {
+
+        if (!List.of(AuctionStatus.READY, AuctionStatus.CANCELLED, AuctionStatus.FAILED)
+                .contains(auction.getStatus())) {
             throw new AuctionStatusInvalidException();
         }
 
+        String sellerId = auction.getProduct().getSellerId();
         if ("SELLER".equals(role)) {
-            if (!auction.getProduct().getSellerId().equals(userId)) {
+            if (!sellerId.equals(userId)) {
                 throw new AuctionModifyForbiddenException();
             }
-
         }
 
         auction.remove(userId);
@@ -270,7 +275,7 @@ public class AuctionService {
 
         // 3. 등록 가능한 분 체크
         int currentSecond = now.getSecond();
-        if (currentSecond > 30) {
+        if (currentSecond > 55) {
             LocalDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
             if (start.isBefore(earliest)) {
                 throw new CustomException(DateUtil.format(earliest, "HH:mm") + " 이후에 다시 시도해주세요.");
