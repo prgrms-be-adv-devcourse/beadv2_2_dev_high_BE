@@ -25,6 +25,9 @@ public class DepositPaymentRepositoryAdapter implements DepositPaymentRepository
     }
 
     @Override
+    public Optional<DepositPayment> findByDepositOrderId(String oderId) { return repository.findByOrderId(oderId); }
+
+    @Override
     public Page<DepositPayment> findByUserId(String userId, Pageable pageable) {
         return repository.findByUserId(userId, pageable);
     }

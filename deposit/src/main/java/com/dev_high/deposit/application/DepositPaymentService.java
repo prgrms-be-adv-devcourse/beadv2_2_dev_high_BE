@@ -1,15 +1,15 @@
 package com.dev_high.deposit.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.deposit.application.dto.DepositHistoryCreateCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentCreateCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentInfo;
 import com.dev_high.deposit.client.TossPaymentClient;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
-import com.dev_high.deposit.domain.DepositOrderRepository;
-import com.dev_high.deposit.domain.DepositPayment;
-import com.dev_high.deposit.domain.DepositPaymentRepository;
+import com.dev_high.deposit.domain.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,12 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepositPaymentService {
     private final DepositPaymentRepository depositPaymentRepository;
     private final DepositOrderRepository depositOrderRepository;
-    private final DepositPaymentFailureHistoryService failureHistoryService;
+    private final DepositHistoryService depositHistoryService;
+    private final DepositPaymentFailureHistoryRepository historyRepository;
     private final TossPaymentClient tossPaymentClient;
 
     // 결제 생성
@@ -63,22 +65,50 @@ public class DepositPaymentService {
 
     // 토스 결제 승인
     public DepositPaymentInfo confirmPayment(DepositPaymentConfirmCommand command) {
-        TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
-
         String userId = UserContext.get().userId();
 
-        DepositPayment payment = DepositPayment.create(
-                tossPayment.orderId(),
-                userId,
-                tossPayment.totalAmount(),
-                tossPayment.paymentKey()
-        );
-        LocalDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toLocalDateTime() : null;
-        LocalDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toLocalDateTime() : null;
+        // 1. orderId로 미리 생성된 DepositPayment 엔티티를 조회
+        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
+                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
 
-        payment.confirmPayment(tossPayment.method(), approvedAt, requestedAt);
+        // 2. 금액 검증 (보안)
+        if (payment.getAmount() != command.amount()) {
+            throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
+        }
 
-        return DepositPaymentInfo.from(depositPaymentRepository.save(payment));
+        // 3. 토스 페이먼츠 결제 승인 API 호출
+        try {
+            TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
+
+            LocalDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toLocalDateTime() : null;
+            LocalDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toLocalDateTime() : null;
+
+            payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
+
+            DepositHistoryCreateCommand historyCommand = new DepositHistoryCreateCommand(
+                    userId,
+                    command.orderId(),
+                    DepositType.CHARGE,
+                    command.amount()
+            );
+
+            depositHistoryService.createHistory(historyCommand);
+
+            return DepositPaymentInfo.from(depositPaymentRepository.save(payment));
+        } catch (Exception e) {
+            payment.failPayment();
+            DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
+                    payment.getOrderId(),
+                    payment.getUserId(),
+                    "404",
+                    "결제 승인 실패"
+                    // [TODO] 실패 당시의 금액 정보도 함께 기록해야 함
+            );
+            historyRepository.save(history);
+            log.error("토스 페이먼츠 결제 승인 실패", e);
+            throw new IllegalStateException("토스페이먼츠 결제 승인 실패", e);
+
+        }
     }
 
     // 결제 실패 기럭
