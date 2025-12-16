@@ -30,7 +30,7 @@ public record NotificationInfo(
                 notification.getTitle(),
                 notification.getContent(),
                 notification.getRelatedUrl(),
-                notification.isReadYn()
+                notification.getReadYn()
         );
     }
 }
