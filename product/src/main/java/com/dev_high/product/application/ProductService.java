@@ -3,20 +3,11 @@ package com.dev_high.product.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.common.exception.CustomException;
-import com.dev_high.product.application.dto.AuctionCreateResponse;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
-import com.dev_high.product.application.dto.ProductCommand;
-import com.dev_high.product.application.dto.ProductCreateResult;
-import com.dev_high.product.application.dto.ProductInfo;
-import com.dev_high.product.application.dto.ProductUpdateCommand;
-import com.dev_high.product.domain.Category;
-import com.dev_high.product.domain.CategoryRepository;
-import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.ProductCategoryRel;
-import com.dev_high.product.domain.ProductCategoryRelRepository;
-import com.dev_high.product.domain.ProductRepository;
-import com.dev_high.product.domain.ProductStatus;
+import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.util.DateUtil;
+import com.dev_high.product.application.dto.*;
+import com.dev_high.product.domain.*;
 import com.dev_high.product.domain.Product.DeleteStatus;
 import com.dev_high.product.exception.CategoryNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
@@ -26,11 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -51,10 +38,9 @@ public class ProductService {
 
     private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
 
-
     // 상품 생성
     @Transactional
-    public ProductCreateResult registerProduct(ProductCommand command) {
+    public Product saveProduct(ProductCommand command) {
         UserInfo userInfo = ensureSellerRole();
         String sellerId = userInfo.userId();
 
@@ -67,11 +53,20 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
-        productRepository.flush();
+        productRepository.flush(); // ID 확보
+        return saved;
+    }
+
+
+    public ProductCreateResult registerProduct(ProductCommand command) {
+        UserInfo userInfo = ensureSellerRole();
+        String sellerId = userInfo.userId();
+
+        Product saved = saveProduct(command);
         List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
 
         AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
-        return new ProductCreateResult(ProductInfo.from(saved, categories), auctionResponse);
+        return new ProductCreateResult(ProductInfo.from(saved, categories), List.of(auctionResponse));
     }
 
     //상품수정
@@ -137,13 +132,13 @@ public class ProductService {
 
         product.markDeleted(sellerId);
     }
-/*
-*
-* 여기서부터는
-* 상품생성 및 수정관련
-* private 메소드
-*
- */
+    /*
+     *
+     * 여기서부터는
+     * 상품생성 및 수정관련
+     * private 메소드
+     *
+     */
 
     //판매자 검증
     private UserInfo ensureSellerRole() {
@@ -193,16 +188,16 @@ public class ProductService {
 
     private ProductCreateResult toCreateResult(Product product, List<Category> categories) {
         ProductInfo productInfo = ProductInfo.from(product, categories);
-        AuctionCreateResponse auction = fetchAuction(product.getId());
+        List<AuctionCreateResponse> auction = fetchAuction(product.getId());
         return new ProductCreateResult(productInfo, auction);
     }
 
     /*
-    *
-    * 여기서 부터는
-    * Auction 생성 및 수정
-    * (http요청)
-    *
+     *
+     * 여기서 부터는
+     * Auction 생성 및 수정
+     * (http요청)
+     *
      */
 
     private AuctionCreateResponse createAuction(String productId, ProductCommand command, String sellerId) {
@@ -281,7 +276,7 @@ public class ProductService {
     }
 
     // 옥션 수정
-    private AuctionCreateResponse fetchAuction(String productId) {
+    private List<AuctionCreateResponse> fetchAuction(String productId) {
         HttpHeaders headers = new HttpHeaders();
         applyAuthHeaders(headers);
 
@@ -292,6 +287,7 @@ public class ProductService {
                 httpEntity,
                 new ParameterizedTypeReference<>() {
                 }
+
         );
 
         if (response.getBody() == null || response.getBody().getData() == null) {
@@ -302,7 +298,7 @@ public class ProductService {
         if (auctions.isEmpty()) {
             return null;
         }
-        return toAuctionResponse(auctions.get(0));
+        return auctions.stream().map(a -> toAuctionResponse(a)).toList();
     }
 
     //
@@ -349,9 +345,10 @@ public class ProductService {
         if (value instanceof LocalDateTime ldt) {
             return ldt;
         }
+
         if (value instanceof String s && !s.isBlank()) {
             try {
-                return LocalDateTime.parse(s);
+                return DateUtil.parse(s);
             } catch (Exception ignored) {
                 return null;
             }

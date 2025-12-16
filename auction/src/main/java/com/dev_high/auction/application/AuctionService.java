@@ -21,8 +21,6 @@ import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,250 +35,252 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuctionService {
 
 
-  private final AuctionRepository auctionRepository;
-  private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
-  private final RestTemplate restTemplate;
-  private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
-  private final ApplicationEventPublisher publisher;
+    private final AuctionRepository auctionRepository;
+    private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
+    private final RestTemplate restTemplate;
+    private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
+    private final ApplicationEventPublisher publisher;
 
 
-  public ApiResponseDto<FileDto> getFile(String fileId) {
-    try {
+    public ApiResponseDto<FileDto> getFile(String fileId) {
+        try {
 
-      HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
+            HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
 
-      ResponseEntity<ApiResponseDto<FileDto>> response;
-      response = restTemplate.exchange(
-          GATEWAY_URL + "/files/" + fileId,
-          HttpMethod.POST,
-          entity,
-          new ParameterizedTypeReference<>() {
-          }
-      );
-      if (response.getBody() != null) {
+            ResponseEntity<ApiResponseDto<FileDto>> response;
+            response = restTemplate.exchange(
+                    GATEWAY_URL + "/files/" + fileId,
+                    HttpMethod.POST,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            if (response.getBody() != null) {
 
-        response.getBody().getData().fileId();
-        return response.getBody();
+                response.getBody().getData().fileId();
+                return response.getBody();
 
-      }
-    } catch (Exception e) {
-      log.error("실패: {}", e);
+            }
+        } catch (Exception e) {
+            log.error("실패: {}", e);
 
-    }
-    return ApiResponseDto.success(null);
-
-  }
-
-  public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
-
-    AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
-    Page<Auction> page = auctionRepository.filterAuctions(filter);
-
-    return page.map(AuctionResponse::fromEntity);
-
-  }
-
-
-  public AuctionDetailResponse getAuctionDetail(String auctionId) {
-
-    Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(AuctionNotFoundException::new);
-    AuctionLiveState live = auction.getLiveState();
-
-    Product product = auction.getProduct();
-
-    return AuctionDetailResponse.fromEntity(auction, product, live);
-  }
-
-  /**
-   * 경매를 최초 생성할 때 상품의 커밋이 완료된 이후에 호출되어야 합니다.
-   */
-  @Transactional
-  public AuctionResponse createAuction(AuctionRequest request) {
-    /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
-    String userId = UserContext.get().userId();
-    String role = UserContext.get().role();
-
-    if ("USER".equals(role)) {
-      throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
-    } else if ("SELLER".equals(role)) {
-      if (!userId.equals(request.sellerId())) {
-        throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
-
-      }
-    }
-
-    validateAuction(request);
-    LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
-        .withSecond(0)
-        .withNano(0);
-
-    LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
-        .withSecond(0)
-        .withNano(0);
-
-    validateAuctionTime(start, end);
-
-    // 대기중, 진행중 ,완료된 경매가 있으면 throw
-    if (auctionRepository.existsByProductIdAndStatusIn(
-        request.productId(),
-        List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED))) {
-
-      throw new DuplicateAuctionException();
+        }
+        return ApiResponseDto.success(null);
 
     }
 
-    Auction auction = auctionRepository.save(
-        new Auction(request.startBid(), start,
-            end, userId, request.productId()));
+    public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
-    // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
-    auctionLiveStateRepository.save(new AuctionLiveState(auction));
-    publishSpringEvent(auction);
-    return AuctionResponse.fromEntity(auction);
+        AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
+        Page<Auction> page = auctionRepository.filterAuctions(filter);
 
-  }
-
-  private void publishSpringEvent(Auction auction) {
-    Product product = auction.getProduct();
-    AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
-        auction.getId(),
-        product.getId(),
-        product.getName(),
-        List.of(),
-        product.getDescription(),
-        auction.getStartBid(),
-        auction.getDepositAmount(),
-        auction.getStatus().name(),
-        product.getSellerId(),
-        auction.getAuctionStartAt(),
-        auction.getAuctionEndAt()
-    );
-    publisher.publishEvent(event);
-
-  }
-
-  @Transactional
-  public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
-    String userId = UserContext.get().userId();
-    String role = UserContext.get().role();
-
-    if ("USER".equals(role)) {
-      throw new AuctionModifyForbiddenException();
-    } else if ("SELLER".equals(role)) {
-      if (!userId.equals(request.sellerId())) {
-        throw new AuctionModifyForbiddenException();
-      }
-    }
-
-    Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(AuctionNotFoundException::new);
-
-    if (auction.getStatus() != AuctionStatus.READY) {
-      throw new AuctionStatusInvalidException(
-      );
-    }
-
-    validateAuction(request);
-    LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
-        .withSecond(0)
-        .withNano(0);
-    LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
-        .withSecond(0)
-        .withNano(0);
-    validateAuctionTime(start, end);
-
-    auction.modify(request.startBid(), start, end, userId);
-    publishSpringEvent(auction);
-
-    //dirty check
-    return AuctionResponse.fromEntity(auction);
-
-  }
-
-
-  @Transactional
-  public void removeAuction(String auctionId) {
-    String userId = UserContext.get().userId();
-    String role = UserContext.get().role();
-
-    if ("USER".equals(role)) {
-      throw new AuctionModifyForbiddenException();
-    }
-
-    Auction auction = auctionRepository.findById(auctionId)
-        .orElseThrow(AuctionNotFoundException::new);
-
-    if (auction.getStatus() != AuctionStatus.READY) {
-      throw new AuctionStatusInvalidException();
-    }
-
-    if ("SELLER".equals(role)) {
-      if (!auction.getProduct().getSellerId().equals(userId)) {
-        throw new AuctionModifyForbiddenException();
-      }
+        return page.map(AuctionResponse::fromEntity);
 
     }
 
-    auction.remove(userId);
-    publisher.publishEvent(auctionId);
 
-    // dirty check 자동저장
-  }
+    public AuctionDetailResponse getAuctionDetail(String auctionId) {
 
-  // 유효성 체크
-  private void validateAuction(AuctionRequest request) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+        AuctionLiveState live = auction.getLiveState();
 
+        Product product = auction.getProduct();
 
-    /*TODO: 즉시시작 추가여부에 따라서 변경*/
-    if (!StringUtils.hasText(request.auctionStartAt()) || !StringUtils.hasText(
-        request.auctionEndAt())) {
-      throw new CustomException("경매 시작/종료 시간은 반드시 입력해야 합니다.");
-    }
-    if (DateUtil.parse(request.auctionStartAt()).isAfter(DateUtil.parse(request.auctionEndAt()))) {
-      throw new CustomException("경매 시작 시간은 종료 시간보다 이전이어야 합니다.");
+        return AuctionDetailResponse.fromEntity(auction, product, live);
     }
 
-    if (request.startBid() == null || request.startBid().longValue() <= 0) {
-      throw new CustomException("시작 입찰가는 0보다 큰 정수여야 합니다.");
+    /**
+     * 경매를 최초 생성할 때 상품의 커밋이 완료된 이후에 호출되어야 합니다.
+     */
+    @Transactional
+    public AuctionResponse createAuction(AuctionRequest request) {
+        /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
+        String userId = UserContext.get().userId();
+        String role = UserContext.get().role();
+
+        if ("USER".equals(role)) {
+            throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
+        } else if ("SELLER".equals(role)) {
+            if (!userId.equals(request.sellerId())) {
+                throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
+
+            }
+        }
+
+        validateAuction(request);
+        LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+
+        LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+
+        validateAuctionTime(start, end);
+
+        // 대기중, 진행중 ,완료된 경매가 있으면 throw
+        if (auctionRepository.existsByProductIdAndStatusIn(
+                request.productId(),
+                List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED))) {
+
+            throw new DuplicateAuctionException();
+
+        }
+
+        Auction auction = auctionRepository.save(
+                new Auction(request.startBid(), start,
+                        end, userId, request.productId()));
+        // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
+        auctionLiveStateRepository.save(new AuctionLiveState(auction));
+        publishSpringEvent(auction);
+        return AuctionResponse.fromEntity(auction);
+
     }
-  }
 
-  // 시간 검증
-  private void validateAuctionTime(LocalDateTime start, LocalDateTime end) {
-    /*TODO: 즉시시작 추가여부에 따라서 변경*/
+    private void publishSpringEvent(Auction auction) {
+        Product product = auction.getProduct();
+        AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
+                auction.getId(),
+                product.getId(),
+                product.getName(),
+                List.of(),
+                product.getDescription(),
+                auction.getStartBid(),
+                auction.getDepositAmount(),
+                auction.getStatus().name(),
+                product.getSellerId(),
+                auction.getAuctionStartAt(),
+                auction.getAuctionEndAt()
+        );
+        publisher.publishEvent(event);
 
-    LocalDateTime now = LocalDateTime.now();
-
-    // 1. 시작 시간 > 현재 시간
-    if (!start.isAfter(now)) {
-      throw new CustomException("경매 시작 시간은 현재 시간 이후여야 합니다.");
     }
 
-    // 2. 종료 시간 > 시작 시간
-    if (!end.isAfter(start)) {
-      throw new CustomException("경매 종료 시간은 시작 시간 이후여야 합니다.");
+    @Transactional
+    public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
+        String userId = UserContext.get().userId();
+        String role = UserContext.get().role();
+
+        if ("USER".equals(role)) {
+            throw new AuctionModifyForbiddenException();
+        } else if ("SELLER".equals(role)) {
+            if (!userId.equals(request.sellerId())) {
+                throw new AuctionModifyForbiddenException();
+            }
+        }
+
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new AuctionStatusInvalidException(
+            );
+        }
+
+        validateAuction(request);
+        LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+        LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+        validateAuctionTime(start, end);
+
+        auction.modify(request.startBid(), start, end, userId);
+        publishSpringEvent(auction);
+
+        //dirty check
+        return AuctionResponse.fromEntity(auction);
+
     }
 
-    // 3. 등록 가능한 분 체크
-    int currentSecond = now.getSecond();
-    if (currentSecond > 30) {
-      LocalDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
-      if (start.isBefore(earliest)) {
-        throw new CustomException(DateUtil.format(earliest, "HH:mm") + " 이후에 다시 시도해주세요.");
-      }
+
+    @Transactional
+    public void removeAuction(String auctionId) {
+        String userId = UserContext.get().userId();
+        String role = UserContext.get().role();
+
+        if ("USER".equals(role)) {
+            throw new AuctionModifyForbiddenException();
+        }
+
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new AuctionStatusInvalidException();
+        }
+
+        if ("SELLER".equals(role)) {
+            if (!auction.getProduct().getSellerId().equals(userId)) {
+                throw new AuctionModifyForbiddenException();
+            }
+
+        }
+
+        auction.remove(userId);
+        publisher.publishEvent(auctionId);
+
+        // dirty check 자동저장
     }
-  }
 
-  public List<AuctionResponse> getAuctionListByProductId(String productId) {
+    // 유효성 체크
+    private void validateAuction(AuctionRequest request) {
 
-    return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity)
-        .toList();
-  }
+
+        /*TODO: 즉시시작 추가여부에 따라서 변경*/
+        if (!StringUtils.hasText(request.auctionStartAt()) || !StringUtils.hasText(
+                request.auctionEndAt())) {
+            throw new CustomException("경매 시작/종료 시간은 반드시 입력해야 합니다.");
+        }
+        if (DateUtil.parse(request.auctionStartAt()).isAfter(DateUtil.parse(request.auctionEndAt()))) {
+            throw new CustomException("경매 시작 시간은 종료 시간보다 이전이어야 합니다.");
+        }
+
+        if (request.startBid() == null || request.startBid().longValue() <= 0) {
+            throw new CustomException("시작 입찰가는 0보다 큰 정수여야 합니다.");
+        }
+    }
+
+    // 시간 검증
+    private void validateAuctionTime(LocalDateTime start, LocalDateTime end) {
+        /*TODO: 즉시시작 추가여부에 따라서 변경*/
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. 시작 시간 > 현재 시간
+        if (!start.isAfter(now)) {
+            throw new CustomException("경매 시작 시간은 현재 시간 이후여야 합니다.");
+        }
+
+        // 2. 종료 시간 > 시작 시간
+        if (!end.isAfter(start)) {
+            throw new CustomException("경매 종료 시간은 시작 시간 이후여야 합니다.");
+        }
+
+        // 3. 등록 가능한 분 체크
+        int currentSecond = now.getSecond();
+        if (currentSecond > 30) {
+            LocalDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+            if (start.isBefore(earliest)) {
+                throw new CustomException(DateUtil.format(earliest, "HH:mm") + " 이후에 다시 시도해주세요.");
+            }
+        }
+    }
+
+    public List<AuctionResponse> getAuctionListByProductId(String productId) {
+
+        return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity)
+                .toList();
+    }
 }
