@@ -1,5 +1,6 @@
 package com.dev_high.product.application;
 
+import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.application.dto.ProductUpdateCommand;
@@ -131,5 +132,21 @@ public class ProductService {
     private List<Category> replaceCategories(Product product, List<String> categoryIds, String sellerId) {
         productCategoryRelRepository.deleteByProductId(product.getId());
         return attachCategories(product, categoryIds, sellerId);
+    }
+
+    public List<WishlistProductResponse> getProductInfos(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> products =
+                productRepository.findByIdIn(productIds);
+
+        return products.stream()
+                .map(p -> new WishlistProductResponse(
+                        p.getId(),
+                        p.getName()
+                ))
+                .toList();
     }
 }
