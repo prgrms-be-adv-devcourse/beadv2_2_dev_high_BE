@@ -1,20 +1,11 @@
 package com.dev_high.product.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "category", schema = "product")
@@ -46,10 +37,11 @@ public class Category {
     @Column(name = "updated_by", nullable = false)
     private String updatedBy;
 
-    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    private List<ProductCategoryRel> productRelations = new ArrayList<>();
+//    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+//    private List<ProductCategoryRel> productRelations = new ArrayList<>();
 
-    protected Category() {}
+    protected Category() {
+    }
 
     private Category(String id, String categoryName, String createdBy) {
         this.id = id;
@@ -89,9 +81,9 @@ public class Category {
      * 이 카테고리에 속한 상품들을 반환합니다.
      * LAZY 로딩이므로 트랜잭션 내에서 접근해야 합니다.
      */
-    public List<Product> getProducts() {
-        return productRelations.stream()
-                .map(ProductCategoryRel::getProduct)
-                .toList();
-    }
+//    public List<Product> getProducts() {
+//        return productRelations.stream()
+//                .map(ProductCategoryRel::getProduct)
+//                .toList();
+//    }
 }
