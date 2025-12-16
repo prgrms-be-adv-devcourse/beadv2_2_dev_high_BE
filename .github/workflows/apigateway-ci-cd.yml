@@ -130,7 +130,7 @@ jobs:
           --from-literal=ELASTIC_SEARCH_URL="${{secrets.ELASTIC_SEARCH_URL}}" \
           --from-literal=REDIS_HOST="${{secrets.REDIS_HOST}}" \
           --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
-          --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}"
+          --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}" \
           --dry-run=client -o yaml | kubectl apply -f -
     
 
