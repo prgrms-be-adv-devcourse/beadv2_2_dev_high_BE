@@ -36,9 +36,6 @@ public class Product {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
-  @Column(name = "file_id")
-  private String fileId;
-
   @Column(name = "name", nullable = false)
   private String name;
 
@@ -47,6 +44,9 @@ public class Product {
 
   @Column(name = "seller_id", nullable = false)
   private String sellerId;
+
+  @Column(name = "file_id")
+  private String fileId;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -65,16 +65,16 @@ public class Product {
 
   private Product(String name,
       String description,
-      String fileId,
       String sellerId,
-      String createdBy) {
+      String createdBy,
+      String fileId) {
 
     this.name = name;
     this.description = description;
-    this.fileId = fileId;
     this.sellerId = sellerId;
     this.createdBy = createdBy;
     this.updatedBy = createdBy;
+    this.fileId = fileId;
 
     this.status = ProductStatus.READY;
     this.deletedYn = DeleteStatus.N;
@@ -82,10 +82,10 @@ public class Product {
 
   public static Product create(String name,
       String description,
-      String fileId,
       String sellerId,
-      String createdBy) {
-    return new Product(name, description, fileId, sellerId, createdBy);
+      String createdBy,
+      String fileId) {
+    return new Product(name, description, sellerId, createdBy, fileId);
   }
 
   public void ChangeStart(String updatedBy) {
@@ -103,6 +103,10 @@ public class Product {
     this.description = description;
     this.fileId = fileId;
     this.updatedBy = updatedBy;
+  }
+
+  public void changeStatus(ProductStatus status) {
+    this.status = status;
   }
 
   public void markDeleted(String updatedBy) {
