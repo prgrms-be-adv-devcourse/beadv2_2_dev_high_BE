@@ -3,8 +3,10 @@ package com.dev_high.deposit.presentation;
 import com.dev_high.deposit.application.DepositService;
 import com.dev_high.deposit.application.dto.DepositInfo;
 import com.dev_high.deposit.presentation.dto.DepositCreateRequest;
+import com.dev_high.deposit.presentation.dto.DepositUsageRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -29,5 +31,11 @@ public class DepositController {
     @GetMapping("/me")
     public DepositInfo findDepositAccountById() {
         return depositService.findDepositAccountById();
+    }
+
+    @Operation(summary = "예치금 사용", description = "예치금 사용")
+    @PostMapping("/usages")
+    public DepositInfo usageDeposit(@Valid @RequestBody DepositUsageRequest request) {
+        return depositService.updateBalance(request.toCommand());
     }
 }

@@ -33,7 +33,9 @@ public class KafkaTopics {
   public static final String USER_DEPOSIT_CREATED_REQUESTED = "user-deposit-create-requested";
 
   // deposit
-  public static final String DEPOSIT_AUCTION_REFUND_RESPONSE = "deposit-auction-refund-response";
+  public static final String DEPOSIT_AUCTION_DEPOIST_RESPONSE = "deposit-auction-deposit-response";   // 보증금 차감이 완료되면, auction 서비스에게 알림
+  public static final String DEPOSIT_AUCTION_REFUND_RESPONSE = "deposit-auction-refund-response";   // 보증금 환불이 완료되면, auction 서비스에게 알림
+  public static final String DEPOSIT_ORDER_COMPLETE_RESPONSE = "deposit-order-complete-response";   // 예치금 주문 완료"
 
   public static final String ORDER_AUCTION_UPDATE = "order_auction_update"; // 주문상태(기한매 미구매로 주문 취소될시 경매쪽에 알림)
 
