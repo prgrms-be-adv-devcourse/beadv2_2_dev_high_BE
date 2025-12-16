@@ -45,6 +45,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
     @Override
     public void saveAll(List<Product> products) {
+        productJpaRepository.saveAll(products);
     }
 
     @Override
@@ -53,5 +54,12 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
     public List<Product> findByIdIn(List<String> productIds) {
         return productJpaRepository.findByIdIn(productIds);
+    }
+
+    // 추가 조회: ID 리스트로 상품 조회 (삭제되지 않은 상품만 반환)
+    public List<Product> findByIdIn(List<String> productIds) {
+        return productJpaRepository.findByIdIn(productIds).stream()
+                .filter(product -> product.getDeletedYn() == Product.DeleteStatus.N)
+                .toList();
     }
 }
