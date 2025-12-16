@@ -26,6 +26,12 @@ public class ReactiveAuthorization implements ReactiveAuthorizationManager<Autho
     public Mono<AuthorizationDecision> check(Mono<Authentication> authentication, AuthorizationContext context) {
         ServerHttpRequest request = context.getExchange().getRequest();
 
+
+        log.warn("[SECURITY CHECK] method={}, path={}, uri={}",
+                request.getMethod(),
+                request.getPath().value(),
+                request.getURI());
+
         // Authorization 헤더 체크
         if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
             log.warn("Authorization 헤더가 비어 있습니다.");
@@ -34,7 +40,7 @@ public class ReactiveAuthorization implements ReactiveAuthorizationManager<Autho
 
         String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        if (authorizationHeader == null  || !authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             log.warn("잘못된 Authorization 헤더 형식입니다.");
             return Mono.just(new AuthorizationDecision(false));
         }
