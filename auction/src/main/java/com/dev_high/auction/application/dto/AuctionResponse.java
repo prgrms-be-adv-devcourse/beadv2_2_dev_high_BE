@@ -11,26 +11,27 @@ import java.time.LocalDateTime;
 public record AuctionResponse(String auctionId, String productId, String sellerId, String productName,
                               AuctionStatus status,
                               BigDecimal startBid, BigDecimal currentBid,
-                              LocalDateTime auctionStartAt, LocalDateTime auctionEndAt) {
+                              LocalDateTime auctionStartAt, LocalDateTime auctionEndAt, String filePath) {
 
 
-    public static AuctionResponse fromEntity(Auction auction) {
-        // 상품 썸네일 ?
-        return getAuctionResponse(auction);
-    }
-
-    private static AuctionResponse getAuctionResponse(Auction auction) {
+    public static AuctionResponse getAuctionResponse(Auction auction, String filePath) {
         Product product = auction.getProduct();
         AuctionLiveState state = auction.getLiveState();
         BigDecimal currentBid = state != null ? state.getCurrentBid() : BigDecimal.ZERO;
         return new AuctionResponse(auction.getId(), product.getId(), product.getSellerId(), product.getName(),
                 auction.getStatus(),
                 auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
-                auction.getAuctionEndAt());
+                auction.getAuctionEndAt(), filePath);
     }
 
-    public static AuctionResponse fromEntity(Auction auction, String fileUrl) {
+    public static AuctionResponse fromEntity(Auction auction) {
         // 상품 썸네일 ?
-        return getAuctionResponse(auction);
+        Product product = auction.getProduct();
+        AuctionLiveState state = auction.getLiveState();
+        BigDecimal currentBid = state != null ? state.getCurrentBid() : BigDecimal.ZERO;
+        return new AuctionResponse(auction.getId(), product.getId(), product.getSellerId(), product.getName(),
+                auction.getStatus(),
+                auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
+                auction.getAuctionEndAt(), null);
     }
 }

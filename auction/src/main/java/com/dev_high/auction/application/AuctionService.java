@@ -21,6 +21,8 @@ import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.product.domain.Product;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,6 +39,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -49,32 +52,42 @@ public class AuctionService {
     private final RestTemplate restTemplate;
     private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
     private final ApplicationEventPublisher publisher;
+    private final ObjectMapper objectMapper;
 
 
-    public ApiResponseDto<FileDto> getFile(String fileId) {
+    public List<FileDto> getFile(String fileGroupId) {
         try {
 
             HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
 
-            ResponseEntity<ApiResponseDto<FileDto>> response;
+            ResponseEntity<ApiResponseDto<Map<String, Object>>> response;
             response = restTemplate.exchange(
-                    GATEWAY_URL + "/files/" + fileId,
-                    HttpMethod.POST,
+                    GATEWAY_URL + "/files/groups/" + fileGroupId,
+                    HttpMethod.GET,
                     entity,
                     new ParameterizedTypeReference<>() {
                     }
             );
             if (response.getBody() != null) {
 
-                response.getBody().getData().fileId();
-                return response.getBody();
+                Object filesObj = response.getBody().getData().get("files");
+                if (filesObj == null) {
+                    return List.of();
+                }
+
+                return objectMapper.convertValue(
+                        filesObj,
+                        new TypeReference<List<FileDto>>() {
+                        }
+                );
+
 
             }
         } catch (Exception e) {
             log.error("실패: {}", e);
 
         }
-        return ApiResponseDto.success(null);
+        return List.of();
 
     }
 
@@ -82,8 +95,18 @@ public class AuctionService {
 
         AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
         Page<Auction> page = auctionRepository.filterAuctions(filter);
-
-        return page.map(AuctionResponse::fromEntity);
+        return page.map(item -> {
+            String fileGroupId = item.getProduct().getFileId();
+            if (fileGroupId != null) {
+                List<FileDto> files = getFile(fileGroupId);
+                if (!files.isEmpty()) {
+                    String path = files.get(0).filePath();
+                    return AuctionResponse.getAuctionResponse(item, path);
+                }
+            }
+            return AuctionResponse.fromEntity(item);
+        });
+//        return page.map(AuctionResponse::fromEntity);
 
     }
 
@@ -95,8 +118,12 @@ public class AuctionService {
         AuctionLiveState live = auction.getLiveState();
 
         Product product = auction.getProduct();
+        List<FileDto> files = List.of();
+        if (product.getFileId() != null) {
+            files = getFile(product.getFileId());
 
-        return AuctionDetailResponse.fromEntity(auction, product, live);
+        }
+        return AuctionDetailResponse.fromEntity(auction, product, live, files);
     }
 
     /**
