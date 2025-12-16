@@ -2,7 +2,9 @@ package com.dev_high.deposit.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.DepositCreateCommand;
+import com.dev_high.deposit.application.dto.DepositHistoryCreateCommand;
 import com.dev_high.deposit.application.dto.DepositInfo;
+import com.dev_high.deposit.application.dto.DepositUsageCommand;
 import com.dev_high.deposit.domain.Deposit;
 import com.dev_high.deposit.domain.DepositRepository;
 import com.dev_high.deposit.domain.DepositType;
@@ -16,6 +18,7 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class DepositService {
     private final DepositRepository depositRepository;
+    private final DepositHistoryService depositHistoryService;
 
     /*
     * 신규 사용자에게 예치금 계좌를 생성
@@ -75,11 +78,60 @@ public class DepositService {
                 deposit.decreaseBalance(amount);
                 break;
 
+            case DEPOSIT:
+                // 보증금 : 잔액 감소
+                deposit.decreaseBalance(amount);
+                break;
+
+            case REFUND:
+                // 환불 : 잔액 증가
+                deposit.increaseBalance(amount);
+                break;
+
             default:
                 // DepositHistoryService에서 이미 검증했으나, 방어적으로 다시 처리
                 throw new IllegalArgumentException("지원하지 않는 예치금 유형입니다: " + type);
         }
 
         return deposit.getBalance();
+    }
+
+    @Transactional
+    public DepositInfo updateBalance(DepositUsageCommand command) {
+        Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
+                .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
+
+        switch (command.type()) {
+            case CHARGE:
+                // 충전 : 잔액 증가
+                deposit.increaseBalance(command.amount());
+                break;
+
+            case USAGE:
+                // 사용 : 잔액 감소
+                deposit.decreaseBalance(command.amount());
+                break;
+
+            case DEPOSIT:
+                // 보증금 : 잔액 감소
+                deposit.decreaseBalance(command.amount());
+                break;
+
+            case REFUND:
+                // 환불 : 잔액 증가
+                deposit.increaseBalance(command.amount());
+                break;
+
+            default:
+                throw new IllegalArgumentException("지원하지 않는 예치금 유형입니다: " + command.type());
+        }
+
+        Deposit savedDeposit = depositRepository.save(deposit);
+
+        DepositHistoryCreateCommand depositHistoryCreateCommand = new DepositHistoryCreateCommand(command.userId(), command.depositOrderId(), command.type(), command.amount());
+
+        depositHistoryService.insertHistory(depositHistoryCreateCommand, savedDeposit.getBalance());
+
+        return  DepositInfo.from(savedDeposit);
     }
 }
