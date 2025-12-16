@@ -39,6 +39,12 @@ public class ProductController {
         return ApiResponseDto.success(productService.getProducts(pageable));
     }
 
+    @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")
+    @GetMapping("/users/{sellerId}")
+    public ApiResponseDto<List<ProductCreateResult>> getProductsBySeller(@Parameter(description = "판매자 ID", required = true) @PathVariable String sellerId) {
+        return ApiResponseDto.success(productService.getProductsBySeller(sellerId));
+    }
+
     @Operation(summary = "상품 단건 조회", description = "카테고리/경매/이미지 URL 정보를 포함한 상품 단건을 조회합니다.")
     @GetMapping("/{productId}")
     public ApiResponseDto<ProductCreateResult> getProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {

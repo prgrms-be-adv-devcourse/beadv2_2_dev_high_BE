@@ -7,6 +7,7 @@ import com.dev_high.product.domain.Product.DeleteStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 public record ProductInfo(
         String id,
@@ -14,41 +15,34 @@ public record ProductInfo(
         String name,
         String description,
         String sellerId,
-        List<String> fileUrls,
         DeleteStatus deletedYn,
         LocalDateTime deletedAt,
         LocalDateTime createdAt,
         String createdBy,
         LocalDateTime updatedAt,
         String updatedBy,
-        List<Category> categories
+        List<Category> categories,
+        FileGroupResponse fileGroup
 ) {
     public static ProductInfo from(Product product) {
-        return from(product, List.of());
+        return from(product, List.of(), null);
     }
 
-    public static ProductInfo from(Product product, List<Category> categories) {
+    public static ProductInfo from(Product product, List<Category> categories, FileGroupResponse fileGroup) {
         return new ProductInfo(
                 product.getId(),
                 product.getStatus(),
                 product.getName(),
                 product.getDescription(),
                 product.getSellerId(),
-                fileUrlsFrom(product),
                 product.getDeletedYn(),
                 product.getDeletedAt(),
                 product.getCreatedAt(),
                 product.getCreatedBy(),
                 product.getUpdatedAt(),
                 product.getUpdatedBy(),
-                categories == null ? List.of() : categories
+                categories == null ? List.of() : categories,
+                fileGroup
         );
-    }
-
-    private static List<String> fileUrlsFrom(Product product) {
-        if (product.getFileId() == null || product.getFileId().isBlank()) {
-            return List.of();
-        }
-        return List.of(product.getFileId());
     }
 }

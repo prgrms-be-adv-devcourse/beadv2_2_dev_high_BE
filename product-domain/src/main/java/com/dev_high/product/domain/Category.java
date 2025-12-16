@@ -42,7 +42,6 @@ public class Category {
 
     protected Category() {
     }
-
     private Category(String id, String categoryName, String createdBy) {
         this.id = id;
         this.categoryName = categoryName;

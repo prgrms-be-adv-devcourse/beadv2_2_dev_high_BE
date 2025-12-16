@@ -18,11 +18,6 @@ repositories {
     mavenCentral()
 }
 
-configurations.configureEach {
-    // file-service에서는 카프카 미사용
-    exclude group: 'org.springframework.kafka', module: 'spring-kafka'
-}
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'

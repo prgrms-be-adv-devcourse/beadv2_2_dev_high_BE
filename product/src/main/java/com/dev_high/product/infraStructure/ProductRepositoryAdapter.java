@@ -44,6 +44,11 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public List<Product> findBySellerId(String sellerId) {
+        return productJpaRepository.findBySellerIdAndDeletedYn(sellerId, Product.DeleteStatus.N);
+    }
+
+    @Override
     public void saveAll(List<Product> products) {
         productJpaRepository.saveAll(products);
     }
