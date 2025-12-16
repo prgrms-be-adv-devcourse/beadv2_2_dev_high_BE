@@ -44,7 +44,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
         // 3) LAZY 필드 주입
         auction.setProduct(product);
-        
+
         Auction saved = auctionJpaRepository.save(auction);
 
 
@@ -78,7 +78,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
     @Override
     public List<Auction> findByProductId(String productId) {
-        return auctionJpaRepository.findByProduct_Id(productId);
+        return auctionJpaRepository.findByProduct_IdOrderByIdDesc(productId);
     }
 
     @Override
