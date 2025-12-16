@@ -1,7 +1,9 @@
 package com.dev_high.product.application;
 
+import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.event.auction.AuctionProductUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.util.JsonUtil;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
 import com.dev_high.product.domain.ProductStatus;
@@ -24,7 +26,9 @@ public class ProductStatusListener {
      * 토픽: auction-product-update
      */
     @KafkaListener(topics = KafkaTopics.AUCTION_PRODUCT_UPDATE, groupId = "product-status-updater")
-    public void handleAuctionProductUpdate(AuctionProductUpdateEvent event) {
+    public void handleAuctionProductUpdate(KafkaEventEnvelope<AuctionProductUpdateEvent> envelope) {
+        AuctionProductUpdateEvent event = JsonUtil.fromPayload(envelope.payload(), AuctionProductUpdateEvent.class);
+        
         if (event == null || event.productIds() == null || event.productIds().isEmpty()) {
             return;
         }

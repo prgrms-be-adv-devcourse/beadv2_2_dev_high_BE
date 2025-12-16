@@ -66,8 +66,8 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
+        productRepository.flush();
         List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
-        productRepository.flush(); // ensure product is visible before auction creation
 
         AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
         return new ProductCreateResult(ProductInfo.from(saved, categories), auctionResponse);
