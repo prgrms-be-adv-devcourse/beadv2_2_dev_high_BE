@@ -3,8 +3,8 @@ package com.dev_high.product.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductService;
-import com.dev_high.product.application.dto.CategoryInfo;
 import com.dev_high.product.application.dto.ProductCreateResult;
+import com.dev_high.product.domain.Category;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ public class CategoryController {
     //카테고리 목록 조회
     @Operation(summary = "카테고리 목록 조회", description = "전체 카테고리를 조회합니다.")
     @GetMapping
-    public ApiResponseDto<List<CategoryInfo>> getCategories() {
+    public ApiResponseDto<List<Category>> getCategories() {
         return ApiResponseDto.success(categoryService.getCategories());
     }
 

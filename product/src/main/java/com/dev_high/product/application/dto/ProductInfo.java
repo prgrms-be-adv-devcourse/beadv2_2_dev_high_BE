@@ -14,36 +14,41 @@ public record ProductInfo(
         String name,
         String description,
         String sellerId,
+        List<String> fileUrls,
         DeleteStatus deletedYn,
         LocalDateTime deletedAt,
         LocalDateTime createdAt,
         String createdBy,
         LocalDateTime updatedAt,
         String updatedBy,
-        List<CategoryInfo> categories
+        List<Category> categories
 ) {
     public static ProductInfo from(Product product) {
         return from(product, List.of());
     }
 
     public static ProductInfo from(Product product, List<Category> categories) {
-        List<CategoryInfo> categoryInfos = categories == null
-                ? List.of()
-                : categories.stream().map(CategoryInfo::from).toList();
-
         return new ProductInfo(
                 product.getId(),
                 product.getStatus(),
                 product.getName(),
                 product.getDescription(),
                 product.getSellerId(),
+                fileUrlsFrom(product),
                 product.getDeletedYn(),
                 product.getDeletedAt(),
                 product.getCreatedAt(),
                 product.getCreatedBy(),
                 product.getUpdatedAt(),
                 product.getUpdatedBy(),
-                categoryInfos
+                categories == null ? List.of() : categories
         );
+    }
+
+    private static List<String> fileUrlsFrom(Product product) {
+        if (product.getFileId() == null || product.getFileId().isBlank()) {
+            return List.of();
+        }
+        return List.of(product.getFileId());
     }
 }

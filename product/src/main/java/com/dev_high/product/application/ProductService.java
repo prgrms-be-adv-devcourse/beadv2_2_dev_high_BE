@@ -12,35 +12,32 @@ import com.dev_high.product.application.dto.ProductUpdateCommand;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.CategoryRepository;
 import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.ProductRepository;
-import com.dev_high.product.domain.ProductCategoryRelRepository;
 import com.dev_high.product.domain.ProductCategoryRel;
+import com.dev_high.product.domain.ProductCategoryRelRepository;
+import com.dev_high.product.domain.ProductRepository;
+import com.dev_high.product.domain.ProductStatus;
 import com.dev_high.product.domain.Product.DeleteStatus;
+import com.dev_high.product.exception.CategoryNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import com.dev_high.product.exception.ProductUpdateStatusException;
-import com.dev_high.product.exception.CategoryNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.core.io.ByteArrayResource;
-
-import java.io.IOException;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,41 +48,60 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final RestTemplate restTemplate;
 
-    private static final String FILE_SERVICE_URL = "http://FILE-SERVICE/api/v1/files";
     private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
 
 
-    //상품 등록!!!!
+    // 상품 생성
     @Transactional
-    public ProductCreateResult registerProduct(ProductCommand command, List<MultipartFile> productImages) {
-        ensureSellerRole(); //사전검증. 판매자인지 확인
+    public ProductCreateResult registerProduct(ProductCommand command) {
+        UserInfo userInfo = ensureSellerRole();
+        String sellerId = userInfo.userId();
 
         Product product = Product.create(
                 command.name(),
                 command.description(),
-                command.sellerId(),
-                command.sellerId()
+                sellerId,
+                sellerId,
+                null
         );
 
-        Product saved = productRepository.save(product); // 1. 상품기본정보 저장
-        List<Category> categories = attachCategories(saved, command.categoryIds(), command.sellerId());
+        Product saved = productRepository.save(product);
+        List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
+        productRepository.flush(); // ensure product is visible before auction creation
 
-        // TODO: 파일 업로드 기능 준비되면 활성화
-        List<String> uploadedImageUrls = List.of();
-
-        AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command);
-        return new ProductCreateResult(ProductInfo.from(saved, categories), uploadedImageUrls, auctionResponse);
+        AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
+        return new ProductCreateResult(ProductInfo.from(saved, categories), auctionResponse);
     }
 
-    //카테고리 정보를 포함하지 않는 product
-    @Transactional(readOnly = true)
-    public ProductInfo getProduct(String productId) {
+    //상품수정
+    @Transactional
+    public ProductCreateResult updateProduct(String productId, ProductUpdateCommand command) {
+
+        UserInfo userInfo = ensureSellerRole();
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
-        return ProductInfo.from(product);
+
+        if (userInfo.userId() == null || !userInfo.userId().equals(product.getSellerId())) {
+            throw new ProductUnauthorizedException();
+        }
+        //경매시작 전일 때만 가능하도록 체크
+        if (product.getStatus() != ProductStatus.READY) {
+            throw new ProductUpdateStatusException();
+        }
+        //
+        product.updateDetails(command.name(), command.description(), null, userInfo.userId());
+        List<Category> categories = replaceCategories(product, command.categoryIds(), userInfo.userId());
+        updateAuction(productId, command, userInfo.userId());
+        return toCreateResult(product, categories);
     }
 
-    //카테고리 정보를 포함하는 product 단일조회
+    @Transactional(readOnly = true)
+    public ProductCreateResult getProduct(String productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
+        return toCreateResult(product);
+    }
+
     @Transactional(readOnly = true)
     public ProductCreateResult getProductWithCategories(String productId) {
         Product product = productRepository.findById(productId)
@@ -94,7 +110,6 @@ public class ProductService {
         return toCreateResult(product, categories);
     }
 
-    //products 조회 (pagination)
     @Transactional(readOnly = true)
     public Page<ProductCreateResult> getProducts(Pageable pageable) {
         return productRepository.findAll(pageable)
@@ -110,28 +125,6 @@ public class ProductService {
                 });
     }
 
-
-    // 상품 수정
-    @Transactional
-    public ProductInfo updateProduct(String productId, ProductUpdateCommand command) {
-        ensureSellerRole();
-        Product product = productRepository.findById(productId)
-                .orElseThrow(ProductNotFoundException::new);
-
-        if (!product.getCreatedBy().equals(command.sellerId())) {
-            throw new ProductUnauthorizedException();
-        }
-
-        if (product.getStatus() != com.dev_high.product.domain.ProductStatus.READY) {
-            throw new ProductUpdateStatusException();
-        }
-
-        product.updateDetails(command.name(), command.description(), command.sellerId());
-        List<Category> categories = replaceCategories(product, command.categoryIds(), command.sellerId());
-        updateAuction(productId, command);
-        return ProductInfo.from(product, categories);
-    }
-
     @Transactional
     public void deleteProduct(String productId, String sellerId) {
         Product product = productRepository.findById(productId)
@@ -143,27 +136,54 @@ public class ProductService {
 
         product.markDeleted(sellerId);
     }
+/*
+*
+* 여기서부터는
+* 상품생성 및 수정관련
+* private 메소드
+*
+ */
 
+    //판매자 검증
+    private UserInfo ensureSellerRole() {
+        UserInfo userInfo = UserContext.get();
+        if (userInfo == null || userInfo.userId() == null || !"SELLER".equalsIgnoreCase(userInfo.role())) {
+            throw new ProductUnauthorizedException("판매자만 상품을 등록/수정할 수 있습니다.", "PRODUCT_SELLER_ONLY");
+        }
+        return userInfo;
+    }
+
+
+    // 카테고리 수정
+    private List<Category> replaceCategories(Product product, List<String> categoryIds, String sellerId) {
+        //기존 카테고리 삭제
+        productCategoryRelRepository.deleteByProductId(product.getId());
+        //새 카테고리 생성(카테고리 생성로직 재사용)
+        return attachCategories(product, categoryIds, sellerId);
+    }
+
+
+    //카테고리 생성
     private List<Category> attachCategories(Product product, List<String> categoryIds, String sellerId) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return List.of();
-        }
+        } // null이거나 카테고리 없으면 바로 빈 List 반환
 
+        //주어진 카테고리들의 테이블 정보를 조회해서 List로 정리
         List<Category> categories = categoryIds.stream()
                 .map(id -> categoryRepository.findById(id).orElseThrow(CategoryNotFoundException::new))
                 .toList();
 
+        // 상품+카테고리 rel 생성
         List<ProductCategoryRel> relations = categories.stream()
                 .map(category -> ProductCategoryRel.create(product, category, sellerId))
                 .toList();
+
+        //저장
         productCategoryRelRepository.saveAll(relations);
         return categories;
     }
 
-    private List<Category> replaceCategories(Product product, List<String> categoryIds, String sellerId) {
-        productCategoryRelRepository.deleteByProductId(product.getId());
-        return attachCategories(product, categoryIds, sellerId);
-    }
 
     private ProductCreateResult toCreateResult(Product product) {
         List<Category> categories = productCategoryRelRepository.findCategoriesByProductId(product.getId());
@@ -172,114 +192,35 @@ public class ProductService {
 
     private ProductCreateResult toCreateResult(Product product, List<Category> categories) {
         ProductInfo productInfo = ProductInfo.from(product, categories);
-
-        // TODO: 파일 업로드 기능 준비되면 실제 이미지 URL 리스트 반환
-        List<String> imageUrls = List.of();
-
         AuctionCreateResponse auction = fetchAuction(product.getId());
-        return new ProductCreateResult(productInfo, imageUrls, auction);
+        return new ProductCreateResult(productInfo, auction);
     }
 
     /*
     *
-    * 아래로는 내부 private 메소드
-    * 판매자검증(ensureSellerRole), 이미지 다건 업로드(uploadProductImages), 이미지 단건 업로드(uploadSingleImages)
+    * 여기서 부터는
+    * Auction 생성 및 수정
+    * (http요청)
     *
-    */
-    private void ensureSellerRole() {
-        UserInfo userInfo = UserContext.get();
-        if (userInfo == null || !"SELLER".equalsIgnoreCase(userInfo.role())) {
-            throw new ProductUnauthorizedException("판매자만 상품을 등록할 수 있습니다.", "PRODUCT_SELLER_ONLY");
-        }
-    }
+     */
 
-    private List<String> uploadProductImages(List<MultipartFile> images, String productId, String sellerId) {
-        if (images == null || images.isEmpty()) {
-            return List.of();
-        }
-
-        java.util.List<String> results = new java.util.ArrayList<>();
-
-        for (int i = 0; i < images.size(); i++) {
-            results.add(uploadSingleImage(images.get(i), productId, sellerId, images.get(i).getContentType()));
-        }
-
-        return results;
-    }
-
-    private String uploadSingleImage(MultipartFile image, String productId, String sellerId, String fileType) {
-        try {
-            String resolvedFileType = fileType != null ? fileType : image.getContentType();
-
-            MultipartBodyBuilder builder = new MultipartBodyBuilder();
-            builder.part("file", new ByteArrayResource(image.getBytes()) {
-                @Override
-                public String getFilename() {
-                    return image.getOriginalFilename();
-                }
-            }).contentType(MediaType.parseMediaType(resolvedFileType != null ? resolvedFileType : MediaType.APPLICATION_OCTET_STREAM_VALUE));
-
-            builder.part("metadata", new UploadMetadata(resolvedFileType))
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            builder.part("productId", productId);
-            builder.part("userId", sellerId);
-
-            MultiValueMap<String, HttpEntity<?>> built = builder.build();
-            MultiValueMap<String, Object> multipartBody = new LinkedMultiValueMap<>();
-            built.forEach(multipartBody::addAll);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-            applyAuthHeaders(headers);
-
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(multipartBody, headers);
-
-            ResponseEntity<ApiResponseDto<java.util.Map<String, Object>>> response = restTemplate.exchange(
-                    FILE_SERVICE_URL,
-                    HttpMethod.POST,
-                    requestEntity,
-                    new ParameterizedTypeReference<>() {
-                    }
-            );
-
-            if (response.getBody() == null || response.getBody().getData() == null) {
-                throw new CustomException("파일 업로드에 실패했습니다.");
-            }
-
-            Object data = response.getBody().getData();
-            if (data instanceof java.util.Map<?, ?> map) {
-                Object filePath = map.get("filePath");
-                if (filePath != null) {
-                    return filePath.toString();
-                }
-            }
-            throw new CustomException("파일 업로드에 실패했습니다.");
-        } catch (IOException e) {
-            throw new CustomException("파일을 읽는 도중 오류가 발생했습니다.");
-        }
-    }
-
-    private AuctionCreateResponse createAuction(String productId, ProductCommand command) {
-        AuctionCreateRequest request = new AuctionCreateRequest(
+    private AuctionCreateResponse createAuction(String productId, ProductCommand command, String sellerId) {
+        HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
                 productId,
                 command.startBid(),
                 command.auctionStartAt(),
                 command.auctionEndAt(),
-                command.sellerId()
+                sellerId
         );
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        applyAuthHeaders(headers);
-
-        HttpEntity<AuctionCreateRequest> httpEntity = new HttpEntity<>(request, headers);
-        ResponseEntity<ApiResponseDto<java.util.Map<String, Object>>> response = restTemplate.exchange(
-                AUCTION_SERVICE_URL,
-                HttpMethod.POST,
-                httpEntity,
-                new ParameterizedTypeReference<>() {
-                }
-        );
+        ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
+                restTemplate.exchange(
+                        AUCTION_SERVICE_URL,
+                        HttpMethod.POST,
+                        httpEntity,
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
 
         if (response.getBody() == null || response.getBody().getData() == null) {
             throw new CustomException("경매 생성에 실패했습니다.");
@@ -288,43 +229,63 @@ public class ProductService {
         return toAuctionResponse(response.getBody().getData());
     }
 
-    private void updateAuction(String productId, ProductUpdateCommand command) {
+    private void updateAuction(String productId, ProductUpdateCommand command, String sellerId) {
         if (command.auctionId() == null || command.auctionId().isBlank()) {
             return;
         }
 
-        AuctionCreateRequest request = new AuctionCreateRequest(
+        HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
                 productId,
                 command.startBid(),
                 command.auctionStartAt(),
                 command.auctionEndAt(),
-                command.sellerId()
+                sellerId
         );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        applyAuthHeaders(headers);
-
-        HttpEntity<AuctionCreateRequest> httpEntity = new HttpEntity<>(request, headers);
-        ResponseEntity<ApiResponseDto<java.util.Map<String, Object>>> response = restTemplate.exchange(
-                AUCTION_SERVICE_URL + "/" + command.auctionId(),
-                HttpMethod.PUT,
-                httpEntity,
-                new ParameterizedTypeReference<>() {
-                }
-        );
+        ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
+                restTemplate.exchange(
+                        AUCTION_SERVICE_URL + "/" + command.auctionId(),
+                        HttpMethod.PUT,
+                        httpEntity,
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
 
         if (response.getBody() == null || response.getBody().getData() == null) {
             throw new CustomException("경매 수정에 실패했습니다.");
         }
     }
 
+    // auction 요청 시 http객체 생성
+    private HttpEntity<AuctionCreateRequest> buildAuctionRequestBody(
+            String productId,
+            BigDecimal startBid,
+            String auctionStartAt,
+            String auctionEndAt,
+            String sellerId
+    ) {
+        //body 생성
+        AuctionCreateRequest request = new AuctionCreateRequest(
+                productId,
+                startBid,
+                auctionStartAt,
+                auctionEndAt,
+                sellerId
+        );
+        //header 생성
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        applyAuthHeaders(headers);
+
+        return new HttpEntity<>(request, headers);
+    }
+
+    // 옥션 수정
     private AuctionCreateResponse fetchAuction(String productId) {
         HttpHeaders headers = new HttpHeaders();
         applyAuthHeaders(headers);
 
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<ApiResponseDto<java.util.List<java.util.Map<String, Object>>>> response = restTemplate.exchange(
+        ResponseEntity<ApiResponseDto<List<Map<String, Object>>>> response = restTemplate.exchange(
                 AUCTION_SERVICE_URL + "/by-product?productId=" + productId,
                 HttpMethod.GET,
                 httpEntity,
@@ -336,14 +297,15 @@ public class ProductService {
             return null;
         }
 
-        List<java.util.Map<String, Object>> auctions = response.getBody().getData();
+        List<Map<String, Object>> auctions = response.getBody().getData();
         if (auctions.isEmpty()) {
             return null;
         }
         return toAuctionResponse(auctions.get(0));
     }
 
-    private AuctionCreateResponse toAuctionResponse(java.util.Map<String, Object> map) {
+    //
+    private AuctionCreateResponse toAuctionResponse(Map<String, Object> map) {
         if (map == null) {
             return null;
         }
@@ -359,19 +321,19 @@ public class ProductService {
         );
     }
 
-    private java.math.BigDecimal toBigDecimal(Object value) {
+    private BigDecimal toBigDecimal(Object value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof java.math.BigDecimal bigDecimal) {
+        if (value instanceof BigDecimal bigDecimal) {
             return bigDecimal;
         }
         if (value instanceof Number number) {
-            return new java.math.BigDecimal(number.toString());
+            return new BigDecimal(number.toString());
         }
         if (value instanceof String s && !s.isBlank()) {
             try {
-                return new java.math.BigDecimal(s);
+                return new BigDecimal(s);
             } catch (NumberFormatException ignored) {
                 return null;
             }
@@ -379,16 +341,16 @@ public class ProductService {
         return null;
     }
 
-    private java.time.LocalDateTime toLocalDateTime(Object value) {
+    private LocalDateTime toLocalDateTime(Object value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof java.time.LocalDateTime ldt) {
+        if (value instanceof LocalDateTime ldt) {
             return ldt;
         }
         if (value instanceof String s && !s.isBlank()) {
             try {
-                return java.time.LocalDateTime.parse(s);
+                return LocalDateTime.parse(s);
             } catch (Exception ignored) {
                 return null;
             }
@@ -396,7 +358,7 @@ public class ProductService {
         return null;
     }
 
-    //타 서비스 호출 시 사용하는 헤더
+    //요청 헤더 설정 템플릿
     private void applyAuthHeaders(HttpHeaders headers) {
         UserInfo userInfo = UserContext.get();
         if (userInfo == null) {
@@ -412,17 +374,10 @@ public class ProductService {
             headers.set("X-Role", userInfo.role());
         }
     }
-    /*
-    *
-    *아래로는 내부 레코드
-    *
-    */
-    private record UploadMetadata(String fileType) {
-    }
 
     private record AuctionCreateRequest(
             String productId,
-            java.math.BigDecimal startBid,
+            BigDecimal startBid,
             String auctionStartAt,
             String auctionEndAt,
             String sellerId

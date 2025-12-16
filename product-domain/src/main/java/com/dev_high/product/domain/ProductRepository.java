@@ -18,4 +18,6 @@ public interface ProductRepository {
     List<Product> findAllById(List<String> strings);
 
     void saveAll(List<Product> products);
+
+    void flush();
 }

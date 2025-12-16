@@ -9,8 +9,8 @@ import java.util.List;
 public record ProductUpdateRequest(
         @NotBlank(message = "상품명은 필수입니다.") String name,
         String description,
-        @NotBlank(message = "판매자 ID는 필수입니다.") String sellerId,
         List<String> categoryIds,
+        List<String> fileIds,
         String auctionId,
         @NotNull(message = "경매 시작가는 필수입니다.") BigDecimal startBid,
         @NotBlank(message = "경매 시작 시간은 필수입니다.") String auctionStartAt,
@@ -20,8 +20,8 @@ public record ProductUpdateRequest(
         return new ProductUpdateCommand(
                 name,
                 description,
-                sellerId,
                 categoryIds,
+                fileIds,
                 auctionId,
                 startBid,
                 auctionStartAt,

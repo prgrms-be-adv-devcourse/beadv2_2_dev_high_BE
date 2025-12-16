@@ -6,9 +6,8 @@ import java.util.List;
 public record ProductCommand(
         String name,
         String description,
-        String sellerId,
-        String createdBy,
         List<String> categoryIds,
+        List<String> fileIds,
         BigDecimal startBid,
         String auctionStartAt,
         String auctionEndAt
