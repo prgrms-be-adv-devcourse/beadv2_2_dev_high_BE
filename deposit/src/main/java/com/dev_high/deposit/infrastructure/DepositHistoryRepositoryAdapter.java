@@ -19,6 +19,6 @@ public class DepositHistoryRepositoryAdapter implements DepositHistoryRepository
 
     @Override
     public Page<DepositHistory> findByUserId(String userId, Pageable pageable) {
-        return repository.findByUserId(userId, pageable);
+        return repository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 }
