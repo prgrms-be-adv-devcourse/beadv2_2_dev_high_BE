@@ -11,6 +11,7 @@ import com.dev_high.deposit.domain.DepositHistory;
 import com.dev_high.deposit.domain.DepositHistoryRepository;
 import com.dev_high.deposit.domain.DepositType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepositHistoryService {
@@ -120,6 +122,7 @@ public class DepositHistoryService {
     @Transactional(readOnly = true)
     public Page<DepositHistoryInfo> findHistoriesByUserId(Pageable pageable) {
         String userId = UserContext.get().userId();
+        log.info("Finding deposit histories for userId: {}", userId);
 
         return depositHistoryRepository.findByUserId(userId, pageable)
                 .map(DepositHistoryInfo::from);
