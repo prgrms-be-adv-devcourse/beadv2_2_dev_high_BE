@@ -1,22 +1,22 @@
 name: Search CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'search/**'
-      - '.github/workflows/search-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'search/**'
-      - '.github/workflows/search-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'search/**'
+#      - '.github/workflows/search-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'search/**'
+#      - '.github/workflows/search-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env:

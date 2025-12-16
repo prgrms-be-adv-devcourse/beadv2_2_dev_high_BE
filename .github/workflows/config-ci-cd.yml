@@ -1,24 +1,24 @@
 name: Config CI/CD
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'config/**'
-      - '!config/config/**' # ignore data-only changes
-      - '.github/workflows/config-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
-  pull_request:
-    paths:
-      - 'config/**'
-      - '!config/config/**' # ignore data-only changes
-      - '.github/workflows/config-ci-cd.yml'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - '.dockerignore'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'config/**'
+#      - '!config/config/**' # ignore data-only changes
+#      - '.github/workflows/config-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'config/**'
+#      - '!config/config/**' # ignore data-only changes
+#      - '.github/workflows/config-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
   workflow_dispatch:
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
