@@ -9,6 +9,7 @@ import com.dev_high.deposit.client.TossPaymentClient;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
 import com.dev_high.deposit.domain.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepositPaymentService {
@@ -99,10 +101,11 @@ public class DepositPaymentService {
                     payment.getOrderId(),
                     payment.getUserId(),
                     "404",
-                    "결제 실패"
+                    "결제 승인 실패"
                     // [TODO] 실패 당시의 금액 정보도 함께 기록해야 함
             );
             historyRepository.save(history);
+            log.error("토스 페이먼츠 결제 승인 실패", e);
             throw new IllegalStateException("토스페이먼츠 결제 승인 실패", e);
 
         }
