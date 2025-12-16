@@ -22,7 +22,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public Page<NotificationInfo> findAllByUserId(String userId, Pageable pageable) {
-        return repository.findAllByUserId(userId, pageable);
+        return repository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Override

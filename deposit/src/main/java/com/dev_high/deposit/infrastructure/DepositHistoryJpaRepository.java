@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DepositHistoryJpaRepository extends JpaRepository<DepositHistory, Long> {
-    Page<DepositHistory> findByUserId(String userId, Pageable pageable);
+    Page<DepositHistory> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
 }
