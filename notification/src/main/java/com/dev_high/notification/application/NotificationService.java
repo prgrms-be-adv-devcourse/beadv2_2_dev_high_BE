@@ -1,10 +1,10 @@
 package com.dev_high.notification.application;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.notification.application.dto.NotificationCommand;
 import com.dev_high.notification.application.dto.NotificationInfo;
 import com.dev_high.notification.domain.Notification;
 import com.dev_high.notification.domain.NotificationRepository;
-import com.dev_high.notification.presentation.dto.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +30,29 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Page<NotificationInfo>> getAllNotifications(String userId, Pageable pageable) {
-        Page<NotificationInfo> notifications = notificationRepository.findAllByUserId(userId, pageable);
-        return ResponseEntity.ok(notifications);
+    public Page<NotificationInfo> getAllNotifications(Pageable pageable) {
+        String userId = UserContext.get().userId();
+        return notificationRepository.findAllByUserId(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadNotificationCount() {
+        String userId = UserContext.get().userId();
+        return notificationRepository.countUnreadByUserId(userId);
+    }
+
+    @Transactional
+    public NotificationInfo getNotificationById(String notificationId) {
+        // 1. notificationId로 알림 정보 조회
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+
+        // 2. 해당 알림을 읽음처리
+        notification.markAsRead(UserContext.get().userId());
+
+        // 3. 알림 정보 업데이트
+        notificationRepository.save(notification);
+
+        return NotificationInfo.from(notification);
     }
 }
