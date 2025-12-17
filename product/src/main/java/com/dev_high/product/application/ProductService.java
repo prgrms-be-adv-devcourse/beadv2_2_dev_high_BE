@@ -5,6 +5,7 @@ import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.util.JsonUtil;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.product.application.dto.*;
 import com.dev_high.product.domain.*;
@@ -427,15 +428,15 @@ public class ProductService {
             applyAuthHeaders(headers);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<ApiResponseDto<FileGroupResponse>> response = restTemplate.exchange(
+            ResponseEntity<ApiResponseDto<Map<String, Object>>> response = restTemplate.exchange(
                     FILE_SERVICE_URL + fileGroupId,
                     HttpMethod.GET,
                     entity,
                     new ParameterizedTypeReference<>() {
                     }
             );
-            if (response.getBody() != null) {
-                return response.getBody().getData();
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                return JsonUtil.fromPayload(response.getBody().getData(), FileGroupResponse.class);
             }
         } catch (Exception e) {
             if (e instanceof org.springframework.web.client.RestClientResponseException rex) {
