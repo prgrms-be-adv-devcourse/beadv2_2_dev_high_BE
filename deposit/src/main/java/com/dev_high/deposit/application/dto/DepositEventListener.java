@@ -26,7 +26,7 @@ public class DepositEventListener {
     * user 서비스에서 발행한 메시지
     * topics "user-deposit-create" 토픽 구독
     * */
-    @KafkaListener(topics = "user-deposit-create")
+    @KafkaListener(topics = "user-deposit-create-requested")
     public void handleUserDepositCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         try {
             Map<String, Object> payload = envelope.payload();
