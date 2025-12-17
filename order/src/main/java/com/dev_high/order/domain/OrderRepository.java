@@ -30,4 +30,12 @@ public interface OrderRepository {
     List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
                                                                       OrderStatus newStatus,
                                                                       LocalDateTime targetDate);
+
+    Long getStatusCount(String buyerId, OrderStatus status);
+
+    List<Order> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status);
+
+    List<Order> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status);
+
+
 }

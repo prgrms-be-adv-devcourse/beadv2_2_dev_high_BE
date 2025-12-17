@@ -15,10 +15,6 @@ import java.util.List;
 
 public interface OrderJpaRepository extends JpaRepository<Order, String> {
 
-    List<Order> findAllOrdersBySellerIdOrderByUpdatedAtDesc(String sellerId);
-
-    List<Order> findAllOrdersByBuyerIdOrderByUpdatedAtDesc(String buyerId);
-
 
     @Modifying
     @Query(
@@ -49,4 +45,18 @@ public interface OrderJpaRepository extends JpaRepository<Order, String> {
             LocalDateTime end,
             Pageable pageable
     );
+
+    Long countByBuyerIdAndStatus(String buyerId, OrderStatus orderStatus);
+
+    Long countBySellerIdAndStatus(String sellerId, OrderStatus orderStatus);
+
+    List<Order> findAllOrdersBySellerIdOrderByUpdatedAtDesc(String sellerId);
+
+    List<Order> findAllOrdersByBuyerIdOrderByUpdatedAtDesc(String buyerId);
+
+
+    List<Order> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status);
+
+    List<Order> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status);
+
 }
