@@ -1,9 +1,10 @@
 package com.dev_high.search.config;
 
 import com.dev_high.search.domain.AuctionDocument;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Component;
@@ -17,8 +18,17 @@ public class ElasticsearchIndexInitializer {
 
     private final ElasticsearchOperations elasticsearchOperations;
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+        try {
+            createAuctionIndexIfNotExists();
+        } catch (Exception e) {
+            log.error("[Search] Elasticsearch index initialization failed", e);
+        }
+    }
+
     public void createAuctionIndexIfNotExists() {
+        System.out.println("ELASTIC_SEARCH_URL = " + System.getenv("ELASTIC_SEARCH_URL"));
         IndexOperations indexOps = elasticsearchOperations.indexOps(AuctionDocument.class);
 
         if (!indexOps.exists()) {
