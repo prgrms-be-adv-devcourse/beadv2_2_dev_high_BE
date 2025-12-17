@@ -156,9 +156,9 @@ public class AuctionService {
         validateAuctionTime(start, end);
 
         // 대기중, 진행중 ,완료된 경매가 있으면 throw
-        if (auctionRepository.existsByProductIdAndStatusIn(
+        if (auctionRepository.existsByProductIdAndStatusInAndDeletedYn(
                 request.productId(),
-                List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED))) {
+                List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED),"N")) {
 
             throw new DuplicateAuctionException();
 
