@@ -63,11 +63,11 @@ public class DepositPaymentController {
         return historyService.findHistoryById(historyId);
     }
 
-    @Operation(summary = "결제 ID별 실패 이력 조회", description = "결제 ID로 결제 실패 이력을 조회")
+    @Operation(summary = "주문 ID별 실패 이력 조회", description = "주문 ID로 결제 실패 이력을 조회")
     @PostMapping("/payments/fail/paymentId")
-    public Page<DepositPaymentFailureHistoryInfo> findHistoriesByPaymentId(
+    public Page<DepositPaymentFailureHistoryInfo> findHistoriesByOrderId(
             @RequestBody DepositPaymentFailureHistorySearchRequest request, Pageable pageable) {
-        return historyService.findHistoriesByPaymentId(request.toCommand(), pageable);
+        return historyService.findHistoriesByOrderId(request.toCommand(), pageable);
     }
 
     @Operation(summary = "사용자 ID별 실패 이력 조회", description = "사용자 ID로 결제 실패 이력을 조회")
