@@ -1,6 +1,5 @@
 package com.dev_high.deposit.domain;
 
-import com.dev_high.common.annotation.CustomGeneratedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -23,11 +22,11 @@ public class DepositPaymentFailureHistory {
     private Long id;
 
     /*
-     * 추후 deposit_payment 테이블의 외래 키 관계 명확화를 할수 있음
+     * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음
      * */
-    @Schema(description = "결제 ID")
-    @Column(name = "deposit_payment_id", length = 20, nullable = false, updatable = false)
-    private String depositPaymentId;
+    @Schema(description = "예치금 주문 ID")
+    @Column(name = "order_id", length = 20, nullable = false, updatable = false)
+    private String orderId;
 
     @Schema(description = "사용자 ID")
     @Column(name = "user_id", length = 20, nullable = false, updatable = false)
@@ -50,8 +49,8 @@ public class DepositPaymentFailureHistory {
     private String createdBy;
 
     @Builder
-    public DepositPaymentFailureHistory(String depositPaymentId, String userId, String code, String message) {
-        this.depositPaymentId = depositPaymentId;
+    public DepositPaymentFailureHistory(String orderId, String userId, String code, String message) {
+        this.orderId = orderId;
         this.userId = userId;
         this.code = code;
         this.message = message;
@@ -63,9 +62,9 @@ public class DepositPaymentFailureHistory {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static DepositPaymentFailureHistory create(String depositPaymentId, String userId, String code, String message) {
+    public static DepositPaymentFailureHistory create(String orderId, String userId, String code, String message) {
         return DepositPaymentFailureHistory.builder()
-                .depositPaymentId(depositPaymentId)
+                .orderId(orderId)
                 .userId(userId)
                 .code(code)
                 .message(message)

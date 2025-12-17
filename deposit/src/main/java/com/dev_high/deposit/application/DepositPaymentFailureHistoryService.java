@@ -3,8 +3,7 @@ package com.dev_high.deposit.application;
 import com.dev_high.deposit.application.dto.DepositPaymentFailureHistoryCommand;
 import com.dev_high.deposit.application.dto.DepositPaymentFailureHistoryInfo;
 import com.dev_high.deposit.application.dto.DepositPaymentFailureHistorySearchCommand;
-import com.dev_high.deposit.domain.DepositPaymentFailureHistory;
-import com.dev_high.deposit.domain.DepositPaymentFailureHistoryRepository;
+import com.dev_high.deposit.domain.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,15 +17,28 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class DepositPaymentFailureHistoryService {
     private final DepositPaymentFailureHistoryRepository historyRepository;
+    private final DepositOrderRepository depositOrderRepository;
+    private final DepositPaymentRepository depositPaymentRepository;
 
     // 예치금 결제 실패 이력 저장
     @Transactional
     public DepositPaymentFailureHistoryInfo createHistory(DepositPaymentFailureHistoryCommand command) {
+        DepositOrder order = depositOrderRepository.findById(command.orderId())
+                .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + command.orderId()));
+
+        order.updateStatus(DepositOrderStatus.FAILED);
+
+        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
+                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
+
+        payment.failPayment();
+
         DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
-                command.depositPaymentId(),
+                command.orderId(),
                 command.userId(),
                 command.code(),
                 command.message()
+                // [TODO] 실패 당시의 금액 정보도 함께 기록해야 함
         );
         return DepositPaymentFailureHistoryInfo.from(historyRepository.save(history));
     }
@@ -48,14 +60,14 @@ public class DepositPaymentFailureHistoryService {
 
     // 예치금 결제 실패 이력 결제 ID 별 조회
     @Transactional(readOnly = true)
-    public Page<DepositPaymentFailureHistoryInfo> findHistoriesByPaymentId(DepositPaymentFailureHistorySearchCommand command, Pageable pageable) {
-        if (command.depositPaymentId() == null || command.depositPaymentId().isBlank()) {
+    public Page<DepositPaymentFailureHistoryInfo> findHistoriesByOrderId(DepositPaymentFailureHistorySearchCommand command, Pageable pageable) {
+        if (command.orderId() == null || command.orderId().isBlank()) {
             throw new IllegalArgumentException("결제 ID는 필수 검색 조건입니다.");
         }
 
-        String depositPaymentId = command.depositPaymentId();
+        String orderId = command.orderId();
 
-        return historyRepository.findByDepositPaymentId(depositPaymentId, pageable)
+        return historyRepository.findByOrderId(orderId, pageable)
                 .map(DepositPaymentFailureHistoryInfo::from);
     }
 
