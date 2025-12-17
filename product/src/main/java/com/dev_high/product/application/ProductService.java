@@ -5,7 +5,6 @@ import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.common.exception.CustomException;
-import com.dev_high.common.util.JsonUtil;
 import com.dev_high.common.util.DateUtil;
 import com.dev_high.product.application.dto.*;
 import com.dev_high.product.domain.*;
@@ -14,6 +13,8 @@ import com.dev_high.product.exception.CategoryNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import com.dev_high.product.exception.ProductUpdateStatusException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -39,6 +40,7 @@ public class ProductService {
     private final ProductCategoryRelRepository productCategoryRelRepository;
     private final CategoryRepository categoryRepository;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
     private static final String FILE_SERVICE_URL = "http://FILE-SERVICE/api/v1/files/groups/";
@@ -161,7 +163,11 @@ public class ProductService {
     private UserInfo ensureSellerRole() {
         UserInfo userInfo = UserContext.get();
         if (userInfo == null || userInfo.userId() == null || !"SELLER".equalsIgnoreCase(userInfo.role())) {
-            throw new ProductUnauthorizedException("판매자만 상품을 등록/수정할 수 있습니다.", "PRODUCT_SELLER_ONLY");
+
+            if (!"ADMIN".equals(userInfo.role())) {
+                throw new ProductUnauthorizedException("판매자만 상품을 등록/수정할 수 있습니다.", "PRODUCT_SELLER_ONLY");
+            }
+
         }
         return userInfo;
     }
@@ -436,7 +442,12 @@ public class ProductService {
                     }
             );
             if (response.getBody() != null && response.getBody().getData() != null) {
-                return JsonUtil.fromPayload(response.getBody().getData(), FileGroupResponse.class);
+                return objectMapper.convertValue(
+                        response.getBody().getData(),
+                        new TypeReference<FileGroupResponse>() {
+                        }
+                );
+
             }
         } catch (Exception e) {
             if (e instanceof org.springframework.web.client.RestClientResponseException rex) {
