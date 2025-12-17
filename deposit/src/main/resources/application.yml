@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: deposit-service
+  profiles:
+    active: ${env.SPRING_PROFILES_ACTIVE:local}
+  config:
+    import:
+      - configserver:http://localhost:8888
+      - optional:file:.env[.properties]
+server:
+  port: 8083
+
+payment:
+  toss:
+    secret-key: ${TOSS_SECRET_KEY}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"

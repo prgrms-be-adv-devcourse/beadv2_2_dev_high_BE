@@ -1,0 +1,31 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.dev_high'
+version = '0.0.1-SNAPSHOT'
+description = 'product-domain'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+dependencies {
+    implementation project(':common')
+
+    // JPA annotations
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'com.h2database:h2'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.8"
+    }
+}

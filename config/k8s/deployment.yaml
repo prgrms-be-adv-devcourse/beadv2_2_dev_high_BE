@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config
+  labels:
+    app: config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config
+  template:
+    metadata:
+      labels:
+        app: config
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: config
+          image: ghcr.io/prgrms-be-adv-devcourse/config:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8888
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "git"
+
+            - name: EUREKA_HOST
+              value: "discovery"
+
+            - name: CONFIG_GIT_URI
+              value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE" # 배포용 설정 리포 주소로 교체
+
+            - name: CONFIG_GIT_LABEL
+              value: "main"
+
+            - name: CONFIG_GIT_SEARCH_PATHS
+              value: "config/config"
+
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 200
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 200
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "100m"
+              memory: "256Mi"

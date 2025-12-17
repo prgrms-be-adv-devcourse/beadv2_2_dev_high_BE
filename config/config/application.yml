@@ -1,0 +1,57 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+---
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jackson:
+    time-zone: Asia/Seoul
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        globally_quoted_identifiers: true
+        jdbc:
+          time_zone: Asia/Seoul
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      table-prefix: public.batch_
+      isolation-level-for-create: read_committed
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost}:${KAFKA_BOOT_PORT:29092}
+    username: ${KAFKA_USER}
+    password: ${KAFKA_PASSWORD}
+
+eureka:
+  client:
+      register-with-eureka: true
+      fetch-registry: true
+      service-url:
+        defaultZone: http://admin:admin@${EUREKA_HOST:localhost}:8761/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, info
+
+logging:
+  level:
+    root: INFO
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    com.dev_high: INFO
