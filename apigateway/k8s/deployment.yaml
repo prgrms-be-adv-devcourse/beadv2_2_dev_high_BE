@@ -24,6 +24,9 @@ spec:
             - name: http
               containerPort: 8000
           env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
+
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
 
@@ -135,14 +138,6 @@ spec:
                   name: apigateway-secret
                   key: TOSS_SECRET_KEY
 
-
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "256m"
-              memory: "512Mi"
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -160,3 +155,11 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 6
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "100m"
+              memory: "256Mi"
