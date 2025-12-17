@@ -148,14 +148,16 @@ spec:
                   key: AWS_SECRET_ACCESS_KEY
 
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
-
+              value: >
+                -Xms128m
+                -Xmx256m
+                -XX:MaxMetaspaceSize=128m
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 9027
-            initialDelaySeconds: 100
+            initialDelaySeconds: 360
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 12
@@ -164,14 +166,14 @@ spec:
             httpGet:
               path: /actuator/health
               port: 9027
-            initialDelaySeconds: 100
+            initialDelaySeconds: 360
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 6
           resources:
             requests:
-              cpu: "50m"
-              memory: "128Mi"
-            limits:
               cpu: "100m"
-              memory: "256Mi"
+              memory: "250Mi"
+            limits:
+              cpu: "300m"
+              memory: "350Mi"

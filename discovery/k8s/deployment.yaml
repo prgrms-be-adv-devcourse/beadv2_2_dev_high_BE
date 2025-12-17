@@ -32,13 +32,16 @@ spec:
               value: discovery
 
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
+              value: >
+                -Xms128m
+                -Xmx256m
+                -XX:MaxMetaspaceSize=128m
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 200
+            initialDelaySeconds: 360
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 20
@@ -47,15 +50,15 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 200
+            initialDelaySeconds: 360
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 10
 
           resources:
             requests:
-              cpu: "50m"
-              memory: "128Mi"
-            limits:
               cpu: "100m"
-              memory: "256Mi"
+              memory: "250Mi"
+            limits:
+              cpu: "300m"
+              memory: "350Mi"
