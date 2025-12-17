@@ -35,9 +35,9 @@ public class SettlementProcessor implements ItemProcessor<Settlement, Settlement
         map.put("depositOrderId", settlement.getId());
         map.put("amount", settlement.getFinalAmount());
 
-        HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(map);
+        HttpEntity<Map<String, Object>> entity = HttpUtil.createDirectEntity(map);
 
-        String url = "http://APIGATEWAY/api/v1/deposit/usages";
+        String url = "http://DEPOSIT-SERVICE/api/v1/deposit/usages";
 
         ResponseEntity<ApiResponseDto<?>> response;
         response = restTemplate.exchange(
