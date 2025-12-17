@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
 
-    boolean existsByProductIdAndStatusIn(String productId, List<AuctionStatus> statuses);
+    boolean existsByProductIdAndStatusInAndDeletedYn(String productId, List<AuctionStatus> statuses ,String deletedYn);
 
     List<Auction> findByProduct_IdAndDeletedYnOrderByIdDesc(String productId, String deletedYn);
 

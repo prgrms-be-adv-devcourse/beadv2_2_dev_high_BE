@@ -71,9 +71,9 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     }
 
     @Override
-    public boolean existsByProductIdAndStatusIn(String productId, List<AuctionStatus> statuses) {
+    public boolean existsByProductIdAndStatusInAndDeletedYn(String productId, List<AuctionStatus> statuses, String deletedYn) {
 
-        return auctionJpaRepository.existsByProductIdAndStatusIn(productId, statuses);
+        return auctionJpaRepository.existsByProductIdAndStatusInAndDeletedYn(productId, statuses ,deletedYn);
     }
 
     @Override
