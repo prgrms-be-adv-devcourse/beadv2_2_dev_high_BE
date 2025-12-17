@@ -1,32 +1,33 @@
 package com.dev_high.settlement.domain;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 public interface SettlementRepository {
 
-  List<Settlement> saveAll(List<Settlement> settlements);
+    List<Settlement> saveAll(List<Settlement> settlements);
 
-  Optional<Settlement> findById(String id);
+    Optional<Settlement> findById(String id);
 
-  List<Settlement> findAllByOrderId(String sellerId);
+    List<Settlement> findAllByOrderId(String sellerId);
 
-  List<Settlement> findAllBySellerId(String sellerId);
+    Page<Settlement> findAllBySellerId(String sellerId, Pageable pageable);
 
-  boolean existsByOrderId(String orderId);
+    boolean existsByOrderId(String orderId);
 
-  Settlement save(Settlement settlement);
+    Settlement save(Settlement settlement);
 
 
-  Set<String> findAllOrderIdsByDueDateRangeAndStatus(LocalDateTime from, LocalDateTime to,
-      SettlementStatus status);
+    Set<String> findAllOrderIdsByDueDateRangeAndStatus(LocalDateTime from, LocalDateTime to,
+                                                       SettlementStatus status);
 
-  Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime nextMonth3rd,
-      Pageable pageable);
+    Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime nextMonth3rd,
+                                                  Pageable pageable);
 
 
 }
