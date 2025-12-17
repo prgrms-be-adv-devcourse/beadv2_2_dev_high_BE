@@ -41,19 +41,25 @@ public interface SettlementJpaRepository extends JpaRepository<Settlement, Strin
     Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime dueDate,
                                                   Pageable pageable);
 
-    @Query("""
-                SELECT new com.dev_high.settlement.application.dto.SettlementDailySummary(
-                    FUNCTION('DATE', s.completeDate),
-                    SUM(s.winningAmount),
-                    SUM(s.charge),
-                    SUM(s.finalAmount),
-                    COUNT(s)
-                )
-                FROM Settlement s
-                WHERE s.sellerId = :sellerId
-                GROUP BY FUNCTION('DATE', s.completeDate)
-                ORDER BY FUNCTION('DATE', s.completeDate) DESC
-            """)
+    @Query(
+            value = """
+            SELECT DATE(s.complete_date) as date,
+                   SUM(s.winning_amount) as totalWinningAmount,
+                   SUM(s.charge) as totalCharge,
+                   SUM(s.final_amount) as totalFinalAmount,
+                   COUNT(*) as count
+            FROM settlement s
+            WHERE s.seller_id = :sellerId
+            GROUP BY DATE(s.complete_date)
+            ORDER BY DATE(s.complete_date) DESC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT DATE(s.complete_date))
+            FROM settlement s
+            WHERE s.seller_id = :sellerId
+            """,
+            nativeQuery = true
+    )
     Page<SettlementDailySummary> findDailySummaryBySellerId(@Param("sellerId") String sellerId, Pageable pageable);
 
 
