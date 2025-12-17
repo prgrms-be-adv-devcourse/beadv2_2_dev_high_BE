@@ -1,6 +1,6 @@
 package com.dev_high.deposit.domain;
 
-import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -76,7 +76,7 @@ public class Deposit {
 
     public void decreaseBalance(long amount) {
         if (this.balance < amount) {
-            throw new IllegalArgumentException(String.format("잔액이 부족합니다. (현재 잔액: %d, 요청 금액: %d)", this.balance, amount));
+            throw new CustomException(String.format("잔액이 부족합니다. (현재 잔액: %d, 요청 금액: %d)", this.balance, amount));
         }
         this.balance -= amount;
     }
