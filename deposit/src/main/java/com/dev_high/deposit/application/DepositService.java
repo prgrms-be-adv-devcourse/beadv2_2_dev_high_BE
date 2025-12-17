@@ -148,7 +148,7 @@ public class DepositService {
 
         // 8. 예치금 결제완료 카프카 이벤트 발행
         // depositOrderId가 null이 아니고, depositOrderId가 "ORD"로 시작하고, 타입이 REFUND 경우
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.USAGE) {
+        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ORD") && command.type() == DepositType.USAGE) {
             try {
                 eventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE,
                         new DepositOrderCompletedEvent(command.depositOrderId(), "PAID"));
