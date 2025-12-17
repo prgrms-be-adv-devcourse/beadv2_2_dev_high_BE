@@ -17,6 +17,7 @@ import com.dev_high.user.user.exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import com.dev_high.common.dto.ApiResponseDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,8 @@ public class UserService {
     private final SellerService sellerService;
     private final AuthService authService;
     private final UserDomainService userDomainService;
-    private final KafkaEventPublisher eventPublisher;
+    private final ApplicationEventPublisher publisher;
+
 
     @Transactional
     public ApiResponseDto<UserResponse> create(CreateUserCommand command){
@@ -55,8 +57,7 @@ public class UserService {
 
         if (saved != null) {
             try {
-                eventPublisher.publish(KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED,
-                        saved.getId());
+                publisher.publishEvent(saved.getId());
             } catch (Exception e) {
                 log.error(">>{ }", e);
             }
