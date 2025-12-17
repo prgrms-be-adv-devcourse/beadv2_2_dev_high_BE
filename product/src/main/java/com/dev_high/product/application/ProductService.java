@@ -97,8 +97,14 @@ public class ProductService {
         product.updateDetails(command.name(), command.description(), command.fileGrpId(), userInfo.userId());
 
         List<Category> categories = replaceCategories(product, command.categoryIds(), userInfo.userId());
-
+    if(command.auctionId() != null) {
         updateAuction(productId, command, userInfo.userId());
+
+    }else{
+        createAuction(productId, new ProductCommand("","",List.of() ,"",command.startBid(),
+                command.auctionStartAt(),
+                command.auctionEndAt()) , userInfo.userId());
+    }
         return toCreateResult(product, categories);
     }
 
