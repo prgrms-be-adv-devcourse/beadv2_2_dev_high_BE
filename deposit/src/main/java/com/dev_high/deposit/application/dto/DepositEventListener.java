@@ -1,7 +1,6 @@
 package com.dev_high.deposit.application.dto;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
-import com.dev_high.deposit.application.DepositHistoryService;
 import com.dev_high.deposit.application.DepositService;
 import com.dev_high.deposit.domain.DepositType;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DepositEventListener {
     private final DepositService depositService;
-    private final DepositHistoryService depositHistoryService; // 의존성 추가
 
     /*
     * user 서비스에서 발행한 메시지
@@ -68,13 +66,13 @@ public class DepositEventListener {
             log.info("Processing deposit refund for auction [{}], amount [{}], for {} users.", auctionId, amount, userIds.size());
 
             userIds.forEach(userId -> {
-                DepositHistoryCreateCommand command = new DepositHistoryCreateCommand(
+                DepositUsageCommand command = new DepositUsageCommand(
                         userId,
                         auctionId, // auctionId를 depositOrderId 필드에 저장하여 추적
                         DepositType.REFUND,
                         amount.longValue() // BigDecimal을 long으로 변환
                 );
-                depositHistoryService.createHistory(command);
+                depositService.updateBalance(command);
             });
 
         } catch (Exception e) {

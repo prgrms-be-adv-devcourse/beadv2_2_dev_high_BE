@@ -1,10 +1,7 @@
 package com.dev_high.deposit.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.deposit.application.dto.DepositHistoryCreateCommand;
-import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
-import com.dev_high.deposit.application.dto.DepositPaymentCreateCommand;
-import com.dev_high.deposit.application.dto.DepositPaymentInfo;
+import com.dev_high.deposit.application.dto.*;
 import com.dev_high.deposit.client.TossPaymentClient;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
 import com.dev_high.deposit.domain.*;
@@ -24,7 +21,7 @@ import java.util.NoSuchElementException;
 public class DepositPaymentService {
     private final DepositPaymentRepository depositPaymentRepository;
     private final DepositOrderRepository depositOrderRepository;
-    private final DepositHistoryService depositHistoryService;
+    private final DepositService depositService;
     private final DepositPaymentFailureHistoryRepository historyRepository;
     private final TossPaymentClient tossPaymentClient;
 
@@ -85,14 +82,14 @@ public class DepositPaymentService {
 
             payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
 
-            DepositHistoryCreateCommand historyCommand = new DepositHistoryCreateCommand(
+            DepositUsageCommand Command = new DepositUsageCommand(
                     userId,
                     command.orderId(),
                     DepositType.CHARGE,
                     command.amount()
             );
 
-            depositHistoryService.createHistory(historyCommand);
+            depositService.updateBalance(Command);
 
             return DepositPaymentInfo.from(depositPaymentRepository.save(payment));
         } catch (Exception e) {
