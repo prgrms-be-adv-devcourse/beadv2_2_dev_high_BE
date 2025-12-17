@@ -30,6 +30,10 @@ spec:
               value: "prod"
             - name: EUREKA_INSTANCE_HOSTNAME
               value: discovery
+
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
+
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -50,8 +54,8 @@ spec:
 
           resources:
             requests:
-              cpu: "100m"
+              cpu: "50m"
               memory: "128Mi"
             limits:
-              cpu: "256m"
-              memory: "512Mi"
+              cpu: "100m"
+              memory: "256Mi"
