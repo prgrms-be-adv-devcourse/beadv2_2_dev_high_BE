@@ -43,10 +43,17 @@ public class SettlementService {
      */
     public ApiResponseDto<Page<SettlementResponse>> findBySellerId(Pageable pageable) {
         String sellerId = UserContext.get().userId();
-        Page<Settlement> found = settlementRepository.findAllBySellerId(sellerId, pageable);
+        Page<Settlement> found = settlementRepository.findAllBySellerIdOrderByCompleteDateDesc(sellerId, pageable);
         Page<SettlementResponse> settlementResponseList = found.map(Settlement::toResponse);
 
+
         return ApiResponseDto.success(settlementResponseList);
+    }
+
+    public ApiResponseDto<Page<SettlementDailySummary>> findSettlementSummary(Pageable pageable) {
+        String sellerId = UserContext.get().userId();
+
+        return ApiResponseDto.success(settlementRepository.findDailySummaryBySellerId(sellerId, pageable));
     }
 
     /**

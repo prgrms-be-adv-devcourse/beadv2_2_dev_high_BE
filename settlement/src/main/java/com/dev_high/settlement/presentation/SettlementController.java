@@ -1,6 +1,7 @@
 package com.dev_high.settlement.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.settlement.application.SettlementDailySummary;
 import com.dev_high.settlement.application.SettlementService;
 import com.dev_high.settlement.presentation.dto.SettlementModifyRequest;
 import com.dev_high.settlement.presentation.dto.SettlementResponse;
@@ -21,12 +22,18 @@ public class SettlementController {
         return settlementService.findBySellerId(pageable);
     }
 
-    @GetMapping("/{settleId}")
+    @GetMapping("/summary")
+    public ApiResponseDto<Page<SettlementDailySummary>> getSettlementSummary(Pageable pageable) {
+
+        return settlementService.findSettlementSummary(pageable);
+    }
+
+    @GetMapping("{settleId}")
     public ApiResponseDto<SettlementResponse> findById(@PathVariable String settleId) {
         return settlementService.findById(settleId);
     }
 
-    @PutMapping("/update")
+    @PutMapping("{settleId}")
     public ApiResponseDto<SettlementResponse> update(@RequestBody SettlementModifyRequest request) {
         return settlementService.update(request);
     }

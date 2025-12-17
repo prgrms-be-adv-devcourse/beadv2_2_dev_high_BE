@@ -136,7 +136,7 @@ public class BidRecordService {
 
             HttpEntity<Map<String, Object>> entity = HttpUtil.createGatewayEntity(map);
 
-            String url = "http://APIGATEWAY/api/v1/deposit/histories";
+            String url = "http://APIGATEWAY/api/v1/deposit/usages";
 
             ResponseEntity<ApiResponseDto<?>> response;
             response = restTemplate.exchange(
