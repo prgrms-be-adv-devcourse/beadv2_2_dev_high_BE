@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
  * @param depositOrderId 예치금 주문 ID
  * @param type 예치금 유형 (CHARGE/USAGE)
  * @param amount 금액
+ * @param nowBalance 현재 예치금 잔액
  * */
 public record DepositHistoryCreateRequest(
         @Schema(description = "예치금 사용자 ID")
@@ -31,9 +32,14 @@ public record DepositHistoryCreateRequest(
         @Schema(description = "금액")
         @NotNull(message = "금액은 필수입니다.")
         @Min(value = 1, message = "최소 금액은 1원 입니다.")
-        long amount
+        long amount,
+
+        @Schema(description = "현재 예치금 잔액")
+        @NotNull(message = "금액은 필수입니다.")
+        @Min(value = 1, message = "최소 금액은 1원 입니다.")
+        long nowBalance
 ) {
     public DepositHistoryCreateCommand toCommand() {
-        return new DepositHistoryCreateCommand(userId, depositOrderId, type, amount);
+        return new DepositHistoryCreateCommand(userId, depositOrderId, type, amount, nowBalance);
     }
 }

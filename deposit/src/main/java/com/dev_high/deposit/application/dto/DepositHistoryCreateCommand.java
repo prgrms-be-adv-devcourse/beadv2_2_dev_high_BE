@@ -9,6 +9,7 @@ public record DepositHistoryCreateCommand(
         String userId,
         String depositOrderId,
         DepositType type,
-        long amount
+        long amount,
+        long nowBalance
 ) {
 }
