@@ -32,8 +32,9 @@ public class WebFluxSecurityConfig {
     private final static String AUTH_ANTPATTERNS = "/api/v1/auth/**";
     private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
             "/ws-auction/**"};
-    private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*", "/api/v1/categories/*", "/api/v1/products/internal"};
+    private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*", "/api/v1/categories/**", "/api/v1/products/internal"};
     private final static String[] SEARCH_ANTPATTERNS = {"/api/v1/search/**"};
+    private final static String[] FILE_ANTPATTERNS = {"/api/v1/files/**"};
 
     @Bean
     public SecurityWebFilterChain configure(ServerHttpSecurity http,
@@ -69,6 +70,8 @@ public class WebFluxSecurityConfig {
                         .pathMatchers(HttpMethod.POST, USER_JOIN_ANTPATTERNS).permitAll()
                         .pathMatchers(HttpMethod.GET, AUCTION_ANTPATTERNS).permitAll()
                         .pathMatchers(HttpMethod.GET, PRODUCT_ANTPATTERNS).permitAll()
+                        .pathMatchers(HttpMethod.GET, FILE_ANTPATTERNS).permitAll()
+
                         .anyExchange().access(check)
                 );
 
