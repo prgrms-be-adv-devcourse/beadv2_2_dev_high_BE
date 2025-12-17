@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -19,11 +21,15 @@ public class AuctionSearchController {
 
     @GetMapping()
     public ApiResponseDto<Page<AuctionDocument>> searchProductDocument(
-            @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") List<String> categories,
-            @RequestParam(defaultValue = "") String status,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<String> categories,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) BigDecimal minStartPrice,
+            @RequestParam(required = false) BigDecimal maxStartPrice,
+            @RequestParam(required = false) LocalDateTime startFrom,
+            @RequestParam(required = false) LocalDateTime startTo,
             Pageable pageable
     ) {
-        return auctionSearchService.searchAuctions(keyword, categories, status, pageable);
+        return auctionSearchService.searchAuctions(keyword, categories, status, minStartPrice, maxStartPrice, startFrom, startTo, pageable);
     }
 }

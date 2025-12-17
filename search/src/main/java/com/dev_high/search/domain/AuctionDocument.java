@@ -41,10 +41,9 @@ public class AuctionDocument {
 
     private String sellerId;
 
-    private String redirectUrl;
-
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
+
     private LocalDateTime auctionStartAt;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
