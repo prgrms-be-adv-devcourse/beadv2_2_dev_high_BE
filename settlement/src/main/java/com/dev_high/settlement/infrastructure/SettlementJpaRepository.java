@@ -1,5 +1,6 @@
 package com.dev_high.settlement.infrastructure;
 
+import com.dev_high.settlement.application.SettlementDailySummary;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementStatus;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ import java.util.Set;
 
 public interface SettlementJpaRepository extends JpaRepository<Settlement, String> {
 
-    Page<Settlement> findAllBySellerId(String sellerId, Pageable pageable);
+    Page<Settlement> findAllBySellerIdOrderByCompleteDateDesc(String sellerId, Pageable pageable);
 
     boolean existsByOrderId(String orderId);
 
@@ -39,6 +40,21 @@ public interface SettlementJpaRepository extends JpaRepository<Settlement, Strin
 
     Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime dueDate,
                                                   Pageable pageable);
+
+    @Query("""
+                SELECT new com.dev_high.settlement.application.dto.SettlementDailySummary(
+                    FUNCTION('DATE', s.completeDate),
+                    SUM(s.winningAmount),
+                    SUM(s.charge),
+                    SUM(s.finalAmount),
+                    COUNT(s)
+                )
+                FROM Settlement s
+                WHERE s.sellerId = :sellerId
+                GROUP BY FUNCTION('DATE', s.completeDate)
+                ORDER BY FUNCTION('DATE', s.completeDate) DESC
+            """)
+    Page<SettlementDailySummary> findDailySummaryBySellerId(@Param("sellerId") String sellerId, Pageable pageable);
 
 
 }

@@ -1,5 +1,6 @@
 package com.dev_high.settlement.infrastructure;
 
+import com.dev_high.settlement.application.SettlementDailySummary;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
@@ -36,8 +37,8 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
-    public Page<Settlement> findAllBySellerId(String sellerId, Pageable pageable) {
-        return settlementRepository.findAllBySellerId(sellerId, pageable);
+    public Page<Settlement> findAllBySellerIdOrderByCompleteDateDesc(String sellerId, Pageable pageable) {
+        return settlementRepository.findAllBySellerIdOrderByCompleteDateDesc(sellerId, pageable);
     }
 
     @Override
@@ -61,6 +62,11 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     public Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status,
                                                          LocalDateTime nextMonth3rd, Pageable pageable) {
         return settlementRepository.findByStatusAndDueDateBefore(status, nextMonth3rd, pageable);
+    }
+
+    @Override
+    public Page<SettlementDailySummary> findDailySummaryBySellerId(String sellerId, Pageable pageable) {
+        return settlementRepository.findDailySummaryBySellerId(sellerId, pageable);
     }
 
 

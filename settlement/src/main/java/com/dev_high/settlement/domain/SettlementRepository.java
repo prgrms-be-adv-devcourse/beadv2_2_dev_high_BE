@@ -1,5 +1,6 @@
 package com.dev_high.settlement.domain;
 
+import com.dev_high.settlement.application.SettlementDailySummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -16,7 +17,7 @@ public interface SettlementRepository {
 
     List<Settlement> findAllByOrderId(String sellerId);
 
-    Page<Settlement> findAllBySellerId(String sellerId, Pageable pageable);
+    Page<Settlement> findAllBySellerIdOrderByCompleteDateDesc(String sellerId, Pageable pageable);
 
     boolean existsByOrderId(String orderId);
 
@@ -28,6 +29,8 @@ public interface SettlementRepository {
 
     Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status, LocalDateTime nextMonth3rd,
                                                   Pageable pageable);
+
+    Page<SettlementDailySummary> findDailySummaryBySellerId(String sellerId, Pageable pageable);
 
 
 }

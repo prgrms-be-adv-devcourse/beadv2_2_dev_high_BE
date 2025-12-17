@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record AuctionDetailResponse(String id, AuctionStatus status,
+public record AuctionDetailResponse(String id, String productId, AuctionStatus status,
                                     BigDecimal startBid,
                                     BigDecimal currentBid,
                                     String highestUserId,
@@ -31,7 +31,7 @@ public record AuctionDetailResponse(String id, AuctionStatus status,
 
         // 파일 이미지 >> 상품연관관계 아직 미구현
 
-        return new AuctionDetailResponse(auction.getId(), auction.getStatus(),
+        return new AuctionDetailResponse(auction.getId(), product.getId(), auction.getStatus(),
                 auction.getStartBid(), current, highestUserId, product.getDescription(), product.getName(),
                 product.getSellerId(), auction.getAuctionStartAt(),
                 auction.getAuctionEndAt(), auction.getDepositAmount(), delYn, files);
