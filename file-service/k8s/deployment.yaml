@@ -147,6 +147,9 @@ spec:
                   name: file-service-secret
                   key: AWS_SECRET_ACCESS_KEY
 
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms64m -Xmx160m -XX:MaxMetaspaceSize=96m"
+
 
           readinessProbe:
             httpGet:
@@ -167,8 +170,8 @@ spec:
             failureThreshold: 6
           resources:
             requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
               cpu: "100m"
               memory: "256Mi"
-            limits:
-              cpu: "256m"
-              memory: "512Mi"
