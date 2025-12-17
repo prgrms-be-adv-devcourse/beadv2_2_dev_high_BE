@@ -125,12 +125,6 @@ public class DepositPayment {
     }
 
     public void failPayment() {
-        if (this.status != DepositPaymentStatus.IN_PROGRESS) {
-            throw new IllegalStateException(
-                    String.format("현재 결제 상태 (%s)에서는 실패 처리할 수 없습니다.", this.status.name())
-            );
-        }
-
         this.status = DepositPaymentStatus.FAILED;
     }
 }
