@@ -105,19 +105,23 @@ spec:
                   name: product-secret
                   key: KAFKA_USER
 
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secret
+                  key: KAFKA_PASSWORD
+
             - name: ELASTIC_SEARCH_URL
               valueFrom:
                 secretKeyRef:
                   name: product-secret
                   key: ELASTIC_SEARCH_URL
 
-
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
                   name: product-secret
                   key: REDIS_HOST
-
 
             - name: REDIS_PORT
               valueFrom:
