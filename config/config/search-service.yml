@@ -1,0 +1,5 @@
+spring:
+  elasticsearch:
+    uris: ${ELASTIC_SEARCH_URL}
+    connection-timeout: 5s
+    socket-timeout: 10s

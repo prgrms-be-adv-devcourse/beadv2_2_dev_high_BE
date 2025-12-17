@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: search-service
+  profiles:
+    active: ${env.SPRING_PROFILES_ACTIVE:local}
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:configserver:http://localhost:8888
+server:
+  port: 8086
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "configserver:http://config:8888"
