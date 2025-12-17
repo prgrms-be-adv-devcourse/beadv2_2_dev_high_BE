@@ -48,14 +48,14 @@ public interface SettlementJpaRepository extends JpaRepository<Settlement, Strin
                    SUM(s.charge) as totalCharge,
                    SUM(s.final_amount) as totalFinalAmount,
                    COUNT(*) as count
-            FROM settlement s
+            FROM settlement.settlement s
             WHERE s.seller_id = :sellerId
             GROUP BY DATE(s.complete_date)
             ORDER BY DATE(s.complete_date) DESC
             """,
             countQuery = """
             SELECT COUNT(DISTINCT DATE(s.complete_date))
-            FROM settlement s
+            FROM settlement.settlement s
             WHERE s.seller_id = :sellerId
             """,
             nativeQuery = true
