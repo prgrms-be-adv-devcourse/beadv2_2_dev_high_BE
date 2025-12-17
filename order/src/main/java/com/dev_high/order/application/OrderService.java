@@ -79,45 +79,6 @@ public class OrderService {
     }
 
 
-    public ApiResponseDto<List<OrderResponse>> getAllOrders() {
-        List<Order> found = orderRepository.findAllOrders();
-        if (found == null || found.isEmpty()) {
-            return ApiResponseDto.fail("주문 없음");
-        }
-        List<OrderResponse> result = found.stream().map(OrderResponse::fromEntity).toList();
-        return ApiResponseDto.success("주문 목록 전체 조회", result);
-    }
-
-    public ApiResponseDto<List<OrderResponse>> soldList() {
-        String role = UserContext.get().role();
-        String userId = UserContext.get().userId();
-
-        List<Order> found = orderRepository.findAllOrdersBySellerIdOrderByUpdatedAtDesc(userId);
-
-        List<OrderResponse> result = found.stream().map(item -> {
-                    AuctionDto dto = getAuction(item.getAuctionId());
-                    return OrderResponse.fromEntity(item, dto);
-                }
-
-        ).toList();
-        return ApiResponseDto.success(result);
-    }
-
-    public ApiResponseDto<List<OrderResponse>> boughtList() {
-
-        String userId = UserContext.get().userId();
-
-        List<Order> found = orderRepository.findAllOrdersByBuyerIdOrderByUpdatedAtDesc(userId);
-
-        List<OrderResponse> result = found.stream().map(item -> {
-                    AuctionDto dto = getAuction(item.getAuctionId());
-                    return OrderResponse.fromEntity(item, dto);
-                }
-
-        ).toList();
-        return ApiResponseDto.success(result);
-    }
-
     public ApiResponseDto<OrderResponse> findOne(String id) {
         Order found = orderRepository.findById(id).orElse(null);
         if (found == null) {
@@ -214,5 +175,38 @@ public class OrderService {
             return "변경할 상태가 필요합니다.";
         }
         return null;
+    }
+
+    public ApiResponseDto<Long> getStatusCount(OrderStatus status) {
+
+
+        return ApiResponseDto.success(orderRepository.getStatusCount(UserContext.get().userId(), status));
+    }
+
+
+    public ApiResponseDto<List<OrderResponse>> getOrders(OrderStatus status, String type) {
+
+        String userId = UserContext.get().userId();
+
+        List<Order> found;
+
+        if ("bought".equals(type)) {
+            found = (status == null)
+                    ? orderRepository.findAllOrdersByBuyerIdOrderByUpdatedAtDesc(userId)
+                    : orderRepository.findByBuyerIdAndStatusOrderByUpdatedAtDesc(userId, status);
+        } else {
+            found = (status == null)
+                    ? orderRepository.findAllOrdersBySellerIdOrderByUpdatedAtDesc(userId)
+                    : orderRepository.findBySellerIdAndStatusOrderByUpdatedAtDesc(userId, status);
+        }
+
+
+        List<OrderResponse> result = found.stream().map(item -> {
+                    AuctionDto dto = getAuction(item.getAuctionId());
+                    return OrderResponse.fromEntity(item, dto);
+                }
+        ).toList();
+        return ApiResponseDto.success(result);
+
     }
 }

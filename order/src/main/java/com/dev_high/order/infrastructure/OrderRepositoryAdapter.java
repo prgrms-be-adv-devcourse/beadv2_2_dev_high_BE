@@ -58,5 +58,21 @@ public class OrderRepositoryAdapter implements OrderRepository {
                 targetDate);
     }
 
+    @Override
+    public Long getStatusCount(String buyerId, OrderStatus status) {
+
+        return orderRepository.countByBuyerIdAndStatus(buyerId, status);
+    }
+
+    @Override
+    public List<Order> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status) {
+        return orderRepository.findByBuyerIdAndStatusOrderByUpdatedAtDesc(buyerId, status);
+    }
+
+    @Override
+    public List<Order> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status) {
+        return orderRepository.findBySellerIdAndStatusOrderByUpdatedAtDesc(sellerId, status);
+    }
+
 
 }
