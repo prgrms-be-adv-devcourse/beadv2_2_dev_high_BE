@@ -29,7 +29,7 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
             WHERE status = 'READY'
               AND auction_start_at <= NOW()
             RETURNING
-                id AS auctionId,
+                id,
                 product_id AS productId
             """, nativeQuery = true)
     List<AuctionProductProjection> bulkUpdateStart();
@@ -42,7 +42,7 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
                   updated_by = 'SYSTEM'
               WHERE status = 'IN_PROGRESS' AND auction_end_at <= NOW()
               RETURNING
-                id AS auctionId,
+                id,
                 product_id AS productId
             """, nativeQuery = true)
     List<AuctionProductProjection> bulkUpdateEnd();
@@ -50,13 +50,12 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
 
     @Modifying
     @Query(value = """
-            
               UPDATE auction.auction
             SET status = :status,
                 updated_at = NOW(),
                 updated_by = 'SYSTEM'
             WHERE id IN (:auctionIds)
-            RETURNING product_id AS productId
+            RETURNING product_id
             """, nativeQuery = true)
     List<String> bulkUpdateStatus(
             @Param("auctionIds") List<String> auctionIds,
