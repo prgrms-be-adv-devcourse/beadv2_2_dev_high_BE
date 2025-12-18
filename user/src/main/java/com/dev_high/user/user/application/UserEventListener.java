@@ -18,6 +18,6 @@ public class UserEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(String event) {
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_CREATED_REQUESTED, event);
+        eventPublisher.publish(KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED, event);
     }
 }

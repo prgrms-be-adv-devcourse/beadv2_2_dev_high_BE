@@ -1,6 +1,7 @@
 package com.dev_high.deposit.application.dto;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
+import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.deposit.application.DepositService;
 import com.dev_high.deposit.domain.DepositType;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class DepositEventListener {
     * user 서비스에서 발행한 메시지
     * topics "user-deposit-create" 토픽 구독
     * */
-    @KafkaListener(topics = "user-deposit-create-requested")
+    @KafkaListener(topics = KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED)
     public void handleUserDepositCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         try {
             Map<String, Object> payload = envelope.payload();
@@ -47,7 +48,7 @@ public class DepositEventListener {
     /**
      * 경매 서비스에서 발행한 예치금 환불 요청 메시지를 처리합니다.
      */
-    @KafkaListener(topics = "auction-deposit-refund-requested")
+    @KafkaListener(topics = KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED)
     public void handleDepositRefund(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         try {
             Map<String, Object> payload = envelope.payload();
