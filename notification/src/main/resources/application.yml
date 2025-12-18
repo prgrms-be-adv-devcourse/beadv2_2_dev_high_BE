@@ -3,12 +3,20 @@ spring:
     name: notification-service
   profiles:
     active: ${env.SPRING_PROFILES_ACTIVE:local}
-  config:
-    import:
-      - configserver:http://localhost:8888
-      - optional:file:.env[.properties]
 server:
-  port: 8080
+  port: 8089
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+    import:
+      - optional:configserver:http://localhost:8888
+      - optional:file:.env[.properties]
+
+
 ---
 spring:
   config:
