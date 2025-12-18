@@ -28,6 +28,7 @@ public class NotificationEventListener {
      * 각 서비스에서 발행한 메시지
      * topics "notification-requested" 토픽 구독
      * */
+    @KafkaListener(topics = "notification-requested")
     public void handleNotificationCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         try {
             Map<String, Object> payload = envelope.payload();
