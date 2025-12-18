@@ -125,9 +125,16 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductCreateResult> getProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(this::toCreateResult);
+    public Page<ProductCreateResult> getProducts(Pageable pageable ,ProductStatus status) {
+        Page<Product> products;
+
+        if (status == null) {
+            products = productRepository.findAll(pageable);
+        } else {
+            products = productRepository.findByStatus(status, pageable);
+        }
+
+        return products.map(this::toCreateResult);
     }
 
     @Transactional(readOnly = true)

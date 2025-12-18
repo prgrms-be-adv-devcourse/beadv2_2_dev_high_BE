@@ -11,7 +11,7 @@ public interface ProductRepository {
 
     Optional<Product> findById(String id);
 
-    List<Product> findAll();
+    Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 
     Page<Product> findAll(Pageable pageable);
 
