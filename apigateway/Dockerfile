@@ -16,6 +16,6 @@ WORKDIR /app
 
 COPY --from=builder /app/apigateway/build/libs/apigateway-*.jar /app/apigateway.jar
 
-EXPOSE 8089
+EXPOSE 8080
 
 ENTRYPOINT ["java","-jar","/app/apigateway.jar"]
