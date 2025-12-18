@@ -1,7 +1,6 @@
 package com.dev_high.notification.application.dto;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
-import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.notification.application.NotificationService;
 import com.dev_high.notification.domain.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ public class NotificationEventListener {
      * 각 서비스에서 발행한 메시지
      * topics "notification-requested" 토픽 구독
      * */
-    @KafkaListener(topics = KafkaTopics.NOTIFICATION_REQUEST)
     public void handleNotificationCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         try {
             Map<String, Object> payload = envelope.payload();

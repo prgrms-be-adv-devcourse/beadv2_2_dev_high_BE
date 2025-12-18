@@ -28,10 +28,10 @@ public class DepositEventListener {
     * topics "user-deposit-create" 토픽 구독
     * */
     @KafkaListener(topics = KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED)
-    public void handleUserDepositCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
+    public void handleUserDepositCreate(KafkaEventEnvelope<String> envelope, ConsumerRecord<?, ?> record) {
         try {
-            Map<String, Object> payload = envelope.payload();
-            String userId = (String) payload.get("userId");
+            String userId = envelope.payload();
+
             if (userId == null) {
                 log.warn("User ID is null for user deposit create event: {}", envelope);
                 return;
