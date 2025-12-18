@@ -125,9 +125,16 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductCreateResult> getProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(this::toCreateResult);
+    public Page<ProductCreateResult> getProducts(Pageable pageable ,ProductStatus status) {
+        Page<Product> products;
+
+        if (status == null) {
+            products = productRepository.findAll(pageable);
+        } else {
+            products = productRepository.findByStatus(status, pageable);
+        }
+
+        return products.map(this::toCreateResult);
     }
 
     @Transactional(readOnly = true)
@@ -261,25 +268,30 @@ public class ProductService {
             return;
         }
 
-        HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
-                productId,
-                command.startBid(),
-                command.auctionStartAt(),
-                command.auctionEndAt(),
-                sellerId
-        );
-        ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
-                restTemplate.exchange(
-                        AUCTION_SERVICE_URL + "/" + command.auctionId(),
-                        HttpMethod.PUT,
-                        httpEntity,
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
+        try{
+            HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
+                    productId,
+                    command.startBid(),
+                    command.auctionStartAt(),
+                    command.auctionEndAt(),
+                    sellerId
+            );
+            ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
+                    restTemplate.exchange(
+                            AUCTION_SERVICE_URL + "/" + command.auctionId(),
+                            HttpMethod.PUT,
+                            httpEntity,
+                            new ParameterizedTypeReference<>() {
+                            }
+                    );
 
-        if (response.getBody() == null || response.getBody().getData() == null) {
+            if (response.getBody() == null || response.getBody().getData() == null) {
+                throw new CustomException("경매 수정에 실패했습니다.");
+            }
+        }catch (Exception e){
             throw new CustomException("경매 수정에 실패했습니다.");
         }
+
     }
 
     // auction 요청 시 http객체 생성
@@ -311,25 +323,31 @@ public class ProductService {
         HttpHeaders headers = new HttpHeaders();
         applyAuthHeaders(headers);
 
-        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-        ResponseEntity<ApiResponseDto<List<Map<String, Object>>>> response = restTemplate.exchange(
-                AUCTION_SERVICE_URL + "/by-product?productId=" + productId,
-                HttpMethod.GET,
-                httpEntity,
-                new ParameterizedTypeReference<>() {
-                }
+        try{
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            ResponseEntity<ApiResponseDto<List<Map<String, Object>>>> response = restTemplate.exchange(
+                    AUCTION_SERVICE_URL + "/by-product?productId=" + productId,
+                    HttpMethod.GET,
+                    httpEntity,
+                    new ParameterizedTypeReference<>() {
+                    }
 
-        );
+            );
 
-        if (response.getBody() == null || response.getBody().getData() == null) {
-            return null;
+            if (response.getBody() == null || response.getBody().getData() == null) {
+                return null;
+            }
+
+            List<Map<String, Object>> auctions = response.getBody().getData();
+            if (auctions.isEmpty()) {
+                return null;
+            }
+            return auctions.stream().map(a -> toAuctionResponse(a)).toList();
+
+        }catch (Exception e){
+            log.warn("경매 조회 실패: {}",e.getMessage());
         }
-
-        List<Map<String, Object>> auctions = response.getBody().getData();
-        if (auctions.isEmpty()) {
-            return null;
-        }
-        return auctions.stream().map(a -> toAuctionResponse(a)).toList();
+        return List.of();
     }
 
     //

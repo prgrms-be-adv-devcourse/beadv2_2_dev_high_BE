@@ -106,7 +106,7 @@ public class BidRecordService {
         }
         AuctionLiveState liveState = participation.getAuction().getLiveState();
 
-        if (liveState.getHighestUserId().equals(userId)) {
+        if (userId.equals(liveState.getHighestUserId())) {
             throw new CannotWithdrawHighestBidderException();
         }
 

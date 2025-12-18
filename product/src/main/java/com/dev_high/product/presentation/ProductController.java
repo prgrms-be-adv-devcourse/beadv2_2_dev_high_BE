@@ -4,6 +4,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductCreateResult;
+import com.dev_high.product.domain.ProductStatus;
 import com.dev_high.product.presentation.dto.ProductRequest;
 import com.dev_high.product.presentation.dto.ProductUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,8 +36,8 @@ public class ProductController {
 
     @Operation(summary = "상품 목록 조회", description = "페이지네이션으로 상품 목록을 조회합니다.")
     @GetMapping
-    public ApiResponseDto<Page<ProductCreateResult>> getProducts(Pageable pageable) {
-        return ApiResponseDto.success(productService.getProducts(pageable));
+    public ApiResponseDto<Page<ProductCreateResult>> getProducts(Pageable pageable, @RequestParam(required = false) ProductStatus status) {
+        return ApiResponseDto.success(productService.getProducts(pageable,status));
     }
 
     @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")

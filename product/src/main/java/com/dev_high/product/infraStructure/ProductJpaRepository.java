@@ -2,6 +2,7 @@ package com.dev_high.product.infraStructure;
 
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.Product.DeleteStatus;
+import com.dev_high.product.domain.ProductStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,7 @@ public interface ProductJpaRepository extends JpaRepository<Product, String> {
 
     Optional<Product> findByIdAndDeletedYn(String id, DeleteStatus deletedYn);
 
-    List<Product> findByDeletedYn(DeleteStatus deletedYn);
+    Page<Product> findByDeletedYnAndStatus(DeleteStatus deletedYn , ProductStatus productStatus, Pageable pageable);
 
     Page<Product> findByDeletedYn(DeleteStatus deletedYn, Pageable pageable);
 

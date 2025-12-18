@@ -135,17 +135,17 @@ spec:
                   name: product-secret
                   key: TOSS_SECRET_KEY
 
-            - name: JAVA_TOOL_OPTIONS
-              value: >
-                -Xms128m
-                -Xmx256m
-                -XX:MaxMetaspaceSize=128m
+#            - name: JAVA_TOOL_OPTIONS
+#              value: >
+#                -Xms128m
+#                -Xmx256m
+#                -XX:MaxMetaspaceSize=128m
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8085
-            initialDelaySeconds: 360
+            initialDelaySeconds: 200
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 12
@@ -154,15 +154,9 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8085
-            initialDelaySeconds: 360
+            initialDelaySeconds: 210
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 6
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "250Mi"
-            limits:
-              cpu: "300m"
-              memory: "350Mi"
+          resources: {}
 
