@@ -22,9 +22,13 @@ public class BatchConfig {
 
   //  경매시작, 시작후처리  매시간 정각에 수행
   @Bean
-  public Job startAuctionsJob() {
-    return new JobBuilder("startAuctionsJob", jobRepository).start(startAuctionsUpdateStep())
-        .next(startAuctionsPostProcessingStep()).build();
+  public Job auctionLifecycleJob() {
+      return new JobBuilder("auctionLifecycleJob", jobRepository)
+              .start(startAuctionsUpdateStep())
+              .next(startAuctionsPostProcessingStep())
+              .next(endAuctionsUpdateStep())
+              .next(endAuctionsPostProcessingStep())
+              .build();
   }
 
   @Bean
@@ -38,13 +42,7 @@ public class BatchConfig {
     return new StepBuilder("startAuctionsPostProcessingStep", jobRepository).tasklet(
         batchHelper::startAuctionsPostProcessing, txManager).build();
   }
-
-  //  경매종료, 종료후처리  매시간 정각에 수행
-  @Bean
-  public Job endAuctionsJob() {
-    return new JobBuilder("endAuctionsJob", jobRepository).start(endAuctionsUpdateStep())
-        .next(endAuctionsPostProcessingStep()).build();
-  }
+  
 
   @Bean
   public Step endAuctionsUpdateStep() {
