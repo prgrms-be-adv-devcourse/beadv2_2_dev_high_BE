@@ -1,24 +1,24 @@
 name: Config CI/CD
 
 on:
-#  push:
-#    branches:
-#      - main
-#    paths:
-#      - 'config/**'
-#      - '!config/config/**' # ignore data-only changes
-#      - '.github/workflows/config-ci-cd.yml'
-#      - 'build.gradle'
-#      - 'settings.gradle'
-#      - '.dockerignore'
-#  pull_request:
-#    paths:
-#      - 'config/**'
-#      - '!config/config/**' # ignore data-only changes
-#      - '.github/workflows/config-ci-cd.yml'
-#      - 'build.gradle'
-#      - 'settings.gradle'
-#      - '.dockerignore'
+  push:
+    branches:
+      - main
+    paths:
+      - 'config/**'
+      - '!config/config/**' # ignore data-only changes
+      - '.github/workflows/config-ci-cd.yml'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.dockerignore'
+  pull_request:
+    paths:
+      - 'config/**'
+      - '!config/config/**' # ignore data-only changes
+      - '.github/workflows/config-ci-cd.yml'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.dockerignore'
   workflow_dispatch:
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
@@ -92,6 +92,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Limit deploy concurrency
+        uses: softprops/turnstyle@v1
+        with:
+          resource: deploy-resource   # 모든 모듈에서 동일
+          concurrency: 2
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -116,6 +122,9 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         run: |
-          kubectl apply -f config/k8s --namespace ${{ env.NAMESPACE }}
+          if ! kubectl get deployment ${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            kubectl apply -f config/k8s --namespace ${{ env.NAMESPACE }}
+          fi
           kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
           kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
+        
