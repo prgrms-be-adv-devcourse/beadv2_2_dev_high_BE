@@ -43,6 +43,7 @@ public class BatchHelper {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
+    /* TODO: 이부분 유저서비스로 이벤트 발행해서 > 알림전송 위임시킬*/
     private List<String> getWishlistUserIds(String productId) {
 
         try {
