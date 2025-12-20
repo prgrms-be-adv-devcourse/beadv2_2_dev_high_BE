@@ -5,7 +5,7 @@ import com.dev_high.deposit.domain.DepositPaymentMethod;
 import com.dev_high.deposit.domain.DepositPaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /*
  * 외부에 노출되는 예치금 결제 응답(Response) DTO
@@ -41,7 +41,7 @@ public record DepositPaymentInfo(
         long amount,
 
         @Schema(description = "요청일시")
-        LocalDateTime requestedAt,
+        OffsetDateTime requestedAt,
 
         @Schema(description = "결제 상태")
         DepositPaymentStatus status,
@@ -50,10 +50,10 @@ public record DepositPaymentInfo(
         String approvalNum,
 
         @Schema(description = "승인일시")
-        LocalDateTime approvedAt,
+        OffsetDateTime approvedAt,
 
         @Schema(description = "생성일시")
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
     public static DepositPaymentInfo from(DepositPayment depositPayment) {
         return new DepositPaymentInfo(

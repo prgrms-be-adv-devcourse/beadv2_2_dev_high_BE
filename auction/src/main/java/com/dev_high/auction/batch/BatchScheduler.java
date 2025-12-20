@@ -20,7 +20,7 @@ public class BatchScheduler {
     // 매시간 정각마다 시작 배치 실행
 //  @Scheduled(cron = "0 0 * * * *") // 초 분 시 일 월 요일
     // 매 5분마다 실행 테스트용
-    @Scheduled(cron = "0 */5 * * * *") // 초 분 시 일 월 요일
+    @Scheduled(cron = "0 */10 * * * *") // 초 분 시 일 월 요일
 
     public void runAuctionLifecycleJob() {
         try {

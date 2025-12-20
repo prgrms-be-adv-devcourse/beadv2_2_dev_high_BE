@@ -8,7 +8,7 @@ import com.dev_high.order.application.OrderService;
 import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.OrderStatus;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +61,7 @@ public class OrderStatusBatchConfig {
     return new StepBuilder(oldStatus + "To" + newStatus + "Step", jobRepository)
         .tasklet((contribution, ctx) -> {
 
-          LocalDateTime targetTime = LocalDateTime.now().minus(duration);
+          OffsetDateTime targetTime = OffsetDateTime.now().minus(duration);
 
           List<UpdateOrderProjection> orderData = orderService.updateStatusBulk(
               oldStatus,

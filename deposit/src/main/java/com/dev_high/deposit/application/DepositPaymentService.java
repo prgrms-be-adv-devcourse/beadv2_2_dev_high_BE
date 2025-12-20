@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -116,8 +116,8 @@ public class DepositPaymentService {
         }
 
         // 4. 예치금 계좌 정보 수정
-        LocalDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toLocalDateTime() : null;
-        LocalDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toLocalDateTime() : null;
+        OffsetDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toOffsetDateTime() : null;
+        OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toOffsetDateTime() : null;
 
         DepositUsageCommand Command = new DepositUsageCommand(
                 userId,

@@ -8,7 +8,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "auction", schema = "auction")
@@ -40,10 +40,10 @@ public class Auction {
     private BigDecimal startBid;
 
     @Column(name = "auction_start_at", nullable = false)
-    private LocalDateTime auctionStartAt;
+    private OffsetDateTime auctionStartAt;
 
     @Column(name = "auction_end_at", nullable = false)
-    private LocalDateTime auctionEndAt;
+    private OffsetDateTime auctionEndAt;
 
     @Column(name = "deposit_amount")
     private BigDecimal depositAmount;
@@ -53,20 +53,20 @@ public class Auction {
     private String deletedYn;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
 
 
     @Column(name = "created_by", length = 50, nullable = false)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "updated_by", length = 50, nullable = false)
     private String updatedBy;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
 
 
     @PrePersist
@@ -84,8 +84,8 @@ public class Auction {
     protected Auction() {
     }
 
-    public Auction(BigDecimal startBid, LocalDateTime auctionStartAt,
-                   LocalDateTime auctionEndAt, String creatorId, String productId) {
+    public Auction(BigDecimal startBid, OffsetDateTime auctionStartAt,
+                   OffsetDateTime auctionEndAt, String creatorId, String productId) {
 
         this.status = AuctionStatus.READY;
         this.productId = productId;
@@ -109,8 +109,8 @@ public class Auction {
         return deposit;
     }
 
-    public void modify(BigDecimal startBid, LocalDateTime auctionStartAt,
-                       LocalDateTime auctionEndAt, String updatedBy) {
+    public void modify(BigDecimal startBid, OffsetDateTime auctionStartAt,
+                       OffsetDateTime auctionEndAt, String updatedBy) {
 
         this.startBid = startBid;
         this.depositAmount = depositMax(startBid);

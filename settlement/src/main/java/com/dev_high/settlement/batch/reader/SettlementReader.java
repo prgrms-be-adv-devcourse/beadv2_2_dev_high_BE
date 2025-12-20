@@ -4,7 +4,7 @@ import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.Iterator;
@@ -36,7 +36,7 @@ public class SettlementReader implements ItemReader<Settlement> {
       return currentBatch.next();
     }
 
-    LocalDateTime executionTime = LocalDateTime.of(
+    OffsetDateTime executionTime = OffsetDateTime.of(
         LocalDate.now().withDayOfMonth(15), LocalTime.of(9, 0));
     Page<Settlement> settlements = settlementRepository.findByStatusAndDueDateBefore(
         SettlementStatus.valueOf(statusParam), executionTime,

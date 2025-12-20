@@ -5,24 +5,24 @@ import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
 public record AuctionFilterCondition(List<AuctionStatus> status, BigDecimal startBid,
-                                     LocalDateTime startAt,
-                                     LocalDateTime endAt, int pageNumber, int pageSize, Sort sort) {
+                                     OffsetDateTime startAt,
+                                     OffsetDateTime endAt, int pageNumber, int pageSize, Sort sort) {
 
 
   public static AuctionFilterCondition fromRequest(AuctionRequest request, Pageable pageable) {
 
-    LocalDateTime start = StringUtils.hasText(request.auctionStartAt())
+    OffsetDateTime start = StringUtils.hasText(request.auctionStartAt())
         ? DateUtil.parse(request.auctionStartAt()).withMinute(0).withSecond(0).withNano(0)
         : null;
 
-    LocalDateTime end = StringUtils.hasText(request.auctionEndAt())
+    OffsetDateTime end = StringUtils.hasText(request.auctionEndAt())
         ? DateUtil.parse(request.auctionEndAt()).withMinute(0).withSecond(0).withNano(0)
         : null;
     if (start != null) {

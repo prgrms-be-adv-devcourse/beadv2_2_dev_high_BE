@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @Schema(description = "알림")
@@ -57,7 +57,7 @@ public class Notification{
 
     @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Schema(description = "생성자")
     @Column(name = "created_by", length = 20, nullable = false, updatable = false)
@@ -65,11 +65,11 @@ public class Notification{
 
     @Schema(description = "만료일자")
     @Column(name = "expired_at")
-    private LocalDateTime expiredAt;
+    private OffsetDateTime expiredAt;
 
     @Schema(description = "수정일시")
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Schema(description = "수정자")
     @Column(name = "updated_by", length = 20, nullable = false)
@@ -90,7 +90,7 @@ public class Notification{
 
     @PrePersist
     public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
         this.expiredAt = now.plusDays(30);
@@ -98,7 +98,7 @@ public class Notification{
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public static Notification create(
@@ -120,7 +120,7 @@ public class Notification{
 
     public void markAsRead(String userId) {
         this.readYn = true;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
         this.updatedBy = userId;
     }
 }
