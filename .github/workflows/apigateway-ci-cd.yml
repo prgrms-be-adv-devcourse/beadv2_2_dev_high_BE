@@ -24,7 +24,6 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/apigateway
   SERVICE_NAME: apigateway
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
-
 jobs:
 #  test:
 #    runs-on: ubuntu-latest
@@ -86,7 +85,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/main'
+#    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
