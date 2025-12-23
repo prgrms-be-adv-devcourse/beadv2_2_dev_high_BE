@@ -39,10 +39,10 @@ spec:
             - name: CONFIG_GIT_SEARCH_PATHS
               value: "config/config"
 
-#            - name: JAVA_TOOL_OPTIONS
-#              value: >
-#                -Xms128m
-#                -Xmx256m
+            - name: JAVA_TOOL_OPTIONS
+              value: >
+                -Xms128m
+                -Xmx256m
 #                -XX:MaxMetaspaceSize=128m
           readinessProbe:
             httpGet:
