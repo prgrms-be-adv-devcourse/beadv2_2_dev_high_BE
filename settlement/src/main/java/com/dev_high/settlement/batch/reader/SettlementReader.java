@@ -3,9 +3,8 @@ package com.dev_high.settlement.batch.reader;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.LocalTime;
+
+import java.time.*;
 import java.util.Collections;
 import java.util.Iterator;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +35,11 @@ public class SettlementReader implements ItemReader<Settlement> {
       return currentBatch.next();
     }
 
-    OffsetDateTime executionTime = OffsetDateTime.of(
-        LocalDate.now().withDayOfMonth(15), LocalTime.of(9, 0));
+      LocalDateTime nextMonth15 = LocalDate.now()
+              .plusMonths(1)
+              .withDayOfMonth(15).atTime(9, 0);
+
+      OffsetDateTime executionTime = nextMonth15.atOffset(ZoneOffset.ofHours(9));
     Page<Settlement> settlements = settlementRepository.findByStatusAndDueDateBefore(
         SettlementStatus.valueOf(statusParam), executionTime,
         PageRequest.of(page, pageSize));

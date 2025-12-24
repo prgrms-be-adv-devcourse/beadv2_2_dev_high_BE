@@ -3,6 +3,7 @@ package com.dev_high.settlement.batch.processor;
 import com.dev_high.settlement.domain.Settlement;
 import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.NonNull;
@@ -55,7 +56,7 @@ public class OrderToSettlementProcessor implements
   private Settlement toSettlement(SettlementRegisterRequest order) {
     return new Settlement(
         order,
-        LocalDate.now().plusMonths(1).withDayOfMonth(15).atStartOfDay()
+        LocalDate.now().plusMonths(1).withDayOfMonth(15).atStartOfDay().atOffset(ZoneOffset.ofHours(9))
     );
   }
 }

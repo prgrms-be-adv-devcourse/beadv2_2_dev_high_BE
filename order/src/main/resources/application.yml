@@ -16,11 +16,12 @@ spring:
       - optional:configserver:http://localhost:8888
       - optional:file:.env[.properties]
 
-
 ---
 spring:
   config:
     activate:
       on-profile: prod
-    import: "configserver:http://config:8888"
+    import:
+      - optional:configserver:http://config:8888
+
 
