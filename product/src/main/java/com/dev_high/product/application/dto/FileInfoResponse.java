@@ -1,6 +1,6 @@
 package com.dev_high.product.application.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record FileInfoResponse(
         String id,
@@ -9,7 +9,7 @@ public record FileInfoResponse(
         String filePath,
         String fileGroupId,
         String createdBy,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
 }
 

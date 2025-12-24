@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,15 +45,15 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public Page<Order> findAllByStatusAndUpdatedAtBetween(OrderStatus status, LocalDateTime start,
-                                                          LocalDateTime end, Pageable pageable) {
+    public Page<Order> findAllByStatusAndUpdatedAtBetween(OrderStatus status, OffsetDateTime start,
+                                                          OffsetDateTime end, Pageable pageable) {
         return orderRepository.findAllByStatusAndUpdatedAtBetween(status, start, end, pageable);
     }
 
     @Override
     public List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
                                                                              OrderStatus newStatus,
-                                                                             LocalDateTime targetDate) {
+                                                                             OffsetDateTime targetDate) {
         return orderRepository.updateStatusByUpdatedAtAndReturnBuyer(oldStatus.name(), newStatus.name(),
                 targetDate);
     }

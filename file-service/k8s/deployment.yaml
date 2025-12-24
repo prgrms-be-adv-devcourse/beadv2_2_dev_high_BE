@@ -149,7 +149,8 @@ spec:
                   name: file-service-secret
                   key: AWS_SECRET_ACCESS_KEY
 
-#            - name: JAVA_TOOL_OPTIONS
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Duser.timezone=Asia/Seoul"
 #              value: >
 #                -Xms128m
 #                -Xmx256m

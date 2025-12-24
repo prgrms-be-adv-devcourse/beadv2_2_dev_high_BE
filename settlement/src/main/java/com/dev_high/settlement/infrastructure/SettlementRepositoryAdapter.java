@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -53,14 +53,14 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
 
 
     @Override
-    public Set<String> findAllOrderIdsByDueDateRangeAndStatus(LocalDateTime from, LocalDateTime to,
+    public Set<String> findAllOrderIdsByDueDateRangeAndStatus(OffsetDateTime from, OffsetDateTime to,
                                                               SettlementStatus status) {
         return settlementRepository.findAllOrderIdsByDueDateRangeAndStatus(from, to, status);
     }
 
     @Override
     public Page<Settlement> findByStatusAndDueDateBefore(SettlementStatus status,
-                                                         LocalDateTime nextMonth3rd, Pageable pageable) {
+                                                         OffsetDateTime nextMonth3rd, Pageable pageable) {
         return settlementRepository.findByStatusAndDueDateBefore(status, nextMonth3rd, pageable);
     }
 

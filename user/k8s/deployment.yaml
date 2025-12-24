@@ -14,6 +14,8 @@ spec:
       labels:
         app: user-service
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -135,7 +137,8 @@ spec:
                   name: user-secret
                   key: TOSS_SECRET_KEY
 
-#            - name: JAVA_TOOL_OPTIONS
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Duser.timezone=Asia/Seoul"
 #              value: >
 #                -Xms128m
 #                -Xmx256m

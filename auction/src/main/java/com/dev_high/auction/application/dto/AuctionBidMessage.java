@@ -3,14 +3,14 @@ package com.dev_high.auction.application.dto;
 import com.dev_high.auction.domain.AuctionBidHistory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record AuctionBidMessage(
     String type,
     String auctionId,
     String highestUserId,
     BigDecimal bidPrice,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime bidAt,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") OffsetDateTime bidAt,
     long bidSrno,
     int currentUsers
 ) {

@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -145,11 +145,11 @@ public class AuctionService {
         }
 
         validateAuction(request);
-        LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+        OffsetDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
                 .withSecond(0)
                 .withNano(0);
 
-        LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+        OffsetDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
                 .withSecond(0)
                 .withNano(0);
 
@@ -218,10 +218,10 @@ public class AuctionService {
         }
 
         validateAuction(request);
-        LocalDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+        OffsetDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
                 .withSecond(0)
                 .withNano(0);
-        LocalDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+        OffsetDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
                 .withSecond(0)
                 .withNano(0);
         validateAuctionTime(start, end);
@@ -285,10 +285,10 @@ public class AuctionService {
     }
 
     // 시간 검증
-    private void validateAuctionTime(LocalDateTime start, LocalDateTime end) {
+    private void validateAuctionTime(OffsetDateTime start, OffsetDateTime end) {
         /*TODO: 즉시시작 추가여부에 따라서 변경*/
 
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         // 1. 시작 시간 > 현재 시간
         if (!start.isAfter(now)) {
@@ -303,7 +303,7 @@ public class AuctionService {
         // 3. 등록 가능한 분 체크
         int currentSecond = now.getSecond();
         if (currentSecond > 55) {
-            LocalDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+            OffsetDateTime earliest = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
             if (start.isBefore(earliest)) {
                 throw new CustomException(DateUtil.format(earliest, "HH:mm") + " 이후에 다시 시도해주세요.");
             }

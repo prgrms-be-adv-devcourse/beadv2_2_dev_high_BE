@@ -1,0 +1,38 @@
+name: "🧩 Issue"
+description: "개발 작업 공통 이슈 템플릿"
+labels: []
+body:
+  - type: textarea
+    attributes:
+      label: 📄 배경
+      description: 이 작업이 필요하게 된 배경을 작성해 주세요.
+      placeholder: |
+        - 어떤 문제/요구사항이 있었나요?
+        - 현재 어떤 상황인가요?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🎯 의도
+      description: 이 작업을 통해 달성하고자 하는 목표를 작성해 주세요.
+      placeholder: |
+        - 해결하려는 문제는 무엇인가요?
+        - 작업 후 기대되는 변화는 무엇인가요?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ✅ 작업 내용
+      description: 해야 할 작업을 체크박스 형태로 작성해 주세요.
+      placeholder: |
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🙋🏻 참고 자료
+      description: 관련 문서, 링크, 이슈, PR 등을 작성해 주세요.
+      placeholder: 선택 사항입니다.

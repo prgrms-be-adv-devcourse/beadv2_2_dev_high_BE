@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -286,7 +286,7 @@ public class BatchHelper {
                 eventPublisher.publish(
                         KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
                         new AuctionCreateOrderRequestEvent(targetId, product.getId(), highestUserId, sellerId,
-                                bid, LocalDateTime.now()));
+                                bid, OffsetDateTime.now()));
             } catch (Exception e) {
                 log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
             }

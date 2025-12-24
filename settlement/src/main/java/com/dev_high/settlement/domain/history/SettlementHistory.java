@@ -11,7 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -45,11 +45,11 @@ public class SettlementHistory {
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   @UpdateTimestamp
   @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 
   public SettlementHistory(String settlementId, String sellerId, SettlementStatus status,
       String message) {

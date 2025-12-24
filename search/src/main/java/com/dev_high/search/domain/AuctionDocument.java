@@ -8,7 +8,7 @@ import org.springframework.data.elasticsearch.annotations.*;
 import lombok.Getter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Getter
@@ -44,11 +44,11 @@ public class AuctionDocument {
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
 
-    private LocalDateTime auctionStartAt;
+    private OffsetDateTime auctionStartAt;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
-    private LocalDateTime auctionEndAt;
+    private OffsetDateTime auctionEndAt;
 
 
     public void updateAuction(AuctionUpdateSearchRequestEvent request) {

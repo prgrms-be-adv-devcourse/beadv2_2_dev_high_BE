@@ -11,7 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -36,7 +36,7 @@ public class AuctionBidHistory {
   private String userId;
 
   @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   @Column(name = "type", length = 50, nullable = false)
   @Enumerated(EnumType.STRING)
@@ -55,7 +55,7 @@ public class AuctionBidHistory {
 
   @PrePersist
   public void prePersist() {
-    this.createdAt = LocalDateTime.now();
+    this.createdAt = OffsetDateTime.now();
   }
 
   public void changeType(BidType type) {

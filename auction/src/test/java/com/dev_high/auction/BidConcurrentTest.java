@@ -23,7 +23,7 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import jakarta.persistence.OptimisticLockException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,8 +76,8 @@ class BidConcurrentTest {
     // --- Auction 생성 ---
     Auction auction = new Auction(
         BigDecimal.valueOf(5000),
-        LocalDateTime.now(),
-        LocalDateTime.now().plusMinutes(10),
+        OffsetDateTime.now(),
+        OffsetDateTime.now().plusMinutes(10),
         "TEST",
         "PR"
     );
@@ -117,7 +117,7 @@ class BidConcurrentTest {
         try {
           Field createdAtField = AuctionBidHistory.class.getDeclaredField("createdAt");
           createdAtField.setAccessible(true);
-          createdAtField.set(history, LocalDateTime.now());
+          createdAtField.set(history, OffsetDateTime.now());
         } catch (NoSuchFieldException | IllegalAccessException e) {
           throw new RuntimeException(e);
         }
@@ -129,8 +129,8 @@ class BidConcurrentTest {
     when(auctionRepository.findById(any()))
         .thenAnswer(invocation -> Optional.of(
             new Auction(BigDecimal.valueOf(5000),
-                LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(10),
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusMinutes(10),
                 "TEST", "PR")
         ));
   }

@@ -2,13 +2,13 @@ package com.dev_high.auction.application.dto;
 
 import com.dev_high.auction.domain.AuctionParticipation;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record AuctionParticipationResponse(boolean isParticipated, boolean isWithdrawn,
                                            boolean isRefund,
                                            BigDecimal depositAmount,
-                                           LocalDateTime withdrawnAt,
-                                           LocalDateTime refundAt,
+                                           OffsetDateTime withdrawnAt,
+                                           OffsetDateTime refundAt,
                                            BigDecimal lastBidPrice
 ) {
 

@@ -4,7 +4,7 @@ import com.dev_high.order.application.dto.UpdateOrderProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,14 +22,14 @@ public interface OrderRepository {
 
     Page<Order> findAllByStatusAndUpdatedAtBetween(
             OrderStatus status,
-            LocalDateTime start,
-            LocalDateTime end,
+            OffsetDateTime start,
+            OffsetDateTime end,
             Pageable pageable
     );
 
     List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(OrderStatus oldStatus,
                                                                       OrderStatus newStatus,
-                                                                      LocalDateTime targetDate);
+                                                                      OffsetDateTime targetDate);
 
     Long getStatusCount(String buyerId, OrderStatus status);
 

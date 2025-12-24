@@ -4,7 +4,7 @@ import com.dev_high.settlement.domain.SettlementRepository;
 import com.dev_high.settlement.domain.SettlementStatus;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +23,11 @@ public class RegistrStepExecutionListener implements StepExecutionListener {
 
   @Override
   public void beforeStep(StepExecution stepExecution) {
-    LocalDateTime to = LocalDate.now()
+    OffsetDateTime to = LocalDate.now()
         .plusMonths(1)
         .withDayOfMonth(3)
         .atStartOfDay();
-    LocalDateTime from = to.minusMonths(1);
+    OffsetDateTime from = to.minusMonths(1);
 
     Set<String> existingOrderIds = new HashSet<>(
         settlementRepository.findAllOrderIdsByDueDateRangeAndStatus(from, to,

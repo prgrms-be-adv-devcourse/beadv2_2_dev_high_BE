@@ -37,13 +37,13 @@ spec:
               value: >
                 -Xms128m
                 -Xmx256m
-#                -XX:MaxMetaspaceSize=128m
+                -Duser.timezone=Asia/Seoul
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 100
+            initialDelaySeconds: 200
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 20
@@ -52,7 +52,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 110
+            initialDelaySeconds: 210
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 10

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -26,8 +26,8 @@ public class AuctionSearchController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) BigDecimal minStartPrice,
             @RequestParam(required = false) BigDecimal maxStartPrice,
-            @RequestParam(required = false) LocalDateTime startFrom,
-            @RequestParam(required = false) LocalDateTime startTo,
+            @RequestParam(required = false) OffsetDateTime startFrom,
+            @RequestParam(required = false) OffsetDateTime startTo,
             Pageable pageable
     ) {
         return auctionSearchService.searchAuctions(keyword, categories, status, minStartPrice, maxStartPrice, startFrom, startTo, pageable);
