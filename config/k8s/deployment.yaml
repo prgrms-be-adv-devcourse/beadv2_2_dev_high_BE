@@ -39,8 +39,9 @@ spec:
             - name: CONFIG_GIT_SEARCH_PATHS
               value: "config/config"
 
-#            - name: JAVA_TOOL_OPTIONS
-#              value: >
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Duser.timezone=Asia/Seoul"
+          #              value: >
 #                -Xms128m
 #                -Xmx256m
 #                -XX:MaxMetaspaceSize=128m

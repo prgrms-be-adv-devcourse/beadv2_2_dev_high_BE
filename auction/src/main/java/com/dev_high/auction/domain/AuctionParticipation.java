@@ -13,7 +13,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Entity
@@ -44,26 +44,26 @@ public class AuctionParticipation {
   private String withdrawnYn;
 
   @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   @Column(name = "created_by", length = 50, nullable = false, updatable = false)
   private String createdBy;
 
   @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 
   @Column(name = "updated_by", length = 50, nullable = false)
   private String updatedBy;
 
   @Column(name = "withdrawn_at")
-  private LocalDateTime withdrawnAt;
+  private OffsetDateTime withdrawnAt;
 
 
   @Column(name = "deposit_refunded_yn", length = 1, nullable = false)
   private String depositRefundedYn;
 
   @Column(name = "deposit_refunded_at")
-  private LocalDateTime depositRefundedAt;
+  private OffsetDateTime depositRefundedAt;
 
   protected AuctionParticipation() {
   }
@@ -81,14 +81,14 @@ public class AuctionParticipation {
 
   @PrePersist
   public void prePersist() {
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = LocalDateTime.now();
+    this.createdAt = OffsetDateTime.now();
+    this.updatedAt = OffsetDateTime.now();
 
   }
 
   @PreUpdate
   public void preUpdate() {
-    this.updatedAt = LocalDateTime.now();
+    this.updatedAt = OffsetDateTime.now();
   }
 
   public void placeBid(BigDecimal bidPrice) {
@@ -97,13 +97,13 @@ public class AuctionParticipation {
 
   public void markWithdraw() {
     this.withdrawnYn = "Y";
-    this.withdrawnAt = LocalDateTime.now();
+    this.withdrawnAt = OffsetDateTime.now();
     this.updatedBy = this.userId;
   }
 
   public void markDepositRefunded() {
     this.depositRefundedYn = "Y";
-    depositRefundedAt = LocalDateTime.now();
+    depositRefundedAt = OffsetDateTime.now();
     this.updatedBy = "SYSTEM";
   }
 

@@ -5,7 +5,7 @@ import com.dev_high.order.domain.Order;
 import com.dev_high.order.domain.OrderStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record OrderResponse(
         String id,
@@ -15,11 +15,11 @@ public record OrderResponse(
         Long winningAmount,
         BigDecimal depositAmount,
         String productName,
-        LocalDateTime confirmDate,
+        OffsetDateTime confirmDate,
         OrderStatus status,
-        LocalDateTime payCompleteDate,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
+        OffsetDateTime payCompleteDate,
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt,
         String payYn
 ) {
 

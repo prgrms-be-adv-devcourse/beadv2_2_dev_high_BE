@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface OrderJpaRepository extends JpaRepository<Order, String> {
@@ -35,14 +35,14 @@ public interface OrderJpaRepository extends JpaRepository<Order, String> {
     List<UpdateOrderProjection> updateStatusByUpdatedAtAndReturnBuyer(
             @Param("oldStatus") String oldStatus,
             @Param("newStatus") String newStatus,
-            @Param("targetDate") LocalDateTime targetDate
+            @Param("targetDate") OffsetDateTime targetDate
     );
 
 
     Page<Order> findAllByStatusAndUpdatedAtBetween(
             OrderStatus status,
-            LocalDateTime start,
-            LocalDateTime end,
+            OffsetDateTime start,
+            OffsetDateTime end,
             Pageable pageable
     );
 

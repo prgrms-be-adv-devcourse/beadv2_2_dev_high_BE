@@ -1,7 +1,7 @@
 package com.dev_high.product.application.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record AuctionCreateResponse(
         String auctionId,
@@ -10,7 +10,7 @@ public record AuctionCreateResponse(
         String status,
         BigDecimal startBid,
         BigDecimal currentBid,
-        LocalDateTime auctionStartAt,
-        LocalDateTime auctionEndAt
+        OffsetDateTime auctionStartAt,
+        OffsetDateTime auctionEndAt
 ) {
 }

@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "category", schema = "product")
@@ -23,16 +23,16 @@ public class Category {
     private String deletedYn = "N";
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "created_by", nullable = false)
     private String createdBy;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Column(name = "updated_by", nullable = false)
     private String updatedBy;
@@ -60,20 +60,20 @@ public class Category {
 
     public void markDeleted(String updatedBy) {
         this.deletedYn = "Y";
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = OffsetDateTime.now();
         this.updatedBy = updatedBy;
     }
 
     @PrePersist
     public void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     /**

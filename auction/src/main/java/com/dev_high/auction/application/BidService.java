@@ -20,7 +20,7 @@ import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository
 import com.dev_high.common.context.UserContext;
 import jakarta.persistence.OptimisticLockException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -109,7 +109,7 @@ public class BidService {
 
   private void validateBid(AuctionParticipation participation, BigDecimal bidPrice,
       AuctionLiveState liveState) {
-    LocalDateTime now = LocalDateTime.now();
+    OffsetDateTime now = OffsetDateTime.now();
     if (now.isBefore(liveState.getAuction().getAuctionStartAt()) ||
         now.isAfter(liveState.getAuction().getAuctionEndAt())) {
       bidRecordService.recordHistory(

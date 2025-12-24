@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Schema(description = "예치금 결제")
 @Table(name = "deposit_payment", schema = "deposit")
@@ -47,7 +47,7 @@ public class DepositPayment {
 
     @Schema(description = "요청일시")
     @Column(name = "requested_at")
-    private LocalDateTime requestedAt;
+    private OffsetDateTime requestedAt;
 
     @Schema(description = "결제 상태")
     @Enumerated(EnumType.STRING)
@@ -60,11 +60,11 @@ public class DepositPayment {
 
     @Schema(description = "승인일시")
     @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
+    private OffsetDateTime approvedAt;
 
     @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Schema(description = "생성자")
     @Column(name = "created_by", nullable = false, updatable = false, length = 20)
@@ -72,14 +72,14 @@ public class DepositPayment {
 
     @Schema(description = "수정일시")
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Schema(description = "수정자")
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
     @Builder
-    public DepositPayment(String orderId, String userId, String paymentKey, String method, long amount, LocalDateTime requestedAt, DepositPaymentStatus status, String approvalNum, LocalDateTime approvedAt) {
+    public DepositPayment(String orderId, String userId, String paymentKey, String method, long amount, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt) {
         this.orderId = orderId;
         this.userId = userId;
         this.paymentKey = paymentKey;
@@ -95,14 +95,14 @@ public class DepositPayment {
 
     @PrePersist
     public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public static DepositPayment create(String orderId, String userId, long amount, String paymentKey) {
@@ -116,7 +116,7 @@ public class DepositPayment {
                 .build();
     }
 
-    public void confirmPayment(String paymentKey, String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
+    public void confirmPayment(String paymentKey, String method, OffsetDateTime approvedAt, OffsetDateTime requestedAt) {
         this.paymentKey = paymentKey;
         this.status = DepositPaymentStatus.CONFIRMED;
         this.method = method;

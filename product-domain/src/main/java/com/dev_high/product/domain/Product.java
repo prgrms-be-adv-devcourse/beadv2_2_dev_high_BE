@@ -11,7 +11,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -38,7 +38,7 @@ public class Product {
   private DeleteStatus deletedYn = DeleteStatus.N;
 
   @Column(name = "deleted_at")
-  private LocalDateTime deletedAt;
+  private OffsetDateTime deletedAt;
 
   @Column(name = "name", nullable = false)
   private String name;
@@ -53,13 +53,13 @@ public class Product {
   private String fileId;
 
   @Column(name = "created_at")
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   @Column(name = "created_by")
   private String createdBy;
 
   @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 
   @Column(name = "updated_by")
   private String updatedBy;
@@ -119,7 +119,7 @@ public class Product {
 
   public void markDeleted(String updatedBy) {
     this.deletedYn = DeleteStatus.Y;
-    this.deletedAt = LocalDateTime.now();
+    this.deletedAt = OffsetDateTime.now();
     this.updatedBy = updatedBy;
   }
 
@@ -131,14 +131,14 @@ public class Product {
 
   @PrePersist
   public void onCreate() {
-    LocalDateTime now = LocalDateTime.now();
+    OffsetDateTime now = OffsetDateTime.now();
     this.createdAt = now;
     this.updatedAt = now;
   }
 
   @PreUpdate
   public void onUpdate() {
-    this.updatedAt = LocalDateTime.now();
+    this.updatedAt = OffsetDateTime.now();
   }
 
   public enum DeleteStatus {

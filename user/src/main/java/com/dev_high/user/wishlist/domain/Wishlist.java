@@ -6,7 +6,7 @@ import com.dev_high.user.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "wishlist", schema = "\"user\"")
@@ -30,12 +30,12 @@ public class Wishlist {
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @PrePersist
     public void prePersist() {
         createdBy = user.getId();
-        createdAt = LocalDateTime.now();
+        createdAt = OffsetDateTime.now();
     }
 
     protected Wishlist() {
