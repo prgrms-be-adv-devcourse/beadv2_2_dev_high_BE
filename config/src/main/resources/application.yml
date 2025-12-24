@@ -19,3 +19,12 @@ spring:
           clone-on-start: true
           force-pull: false
           refresh-rate: ${CONFIG_GIT_REFRESH_RATE:60} # 0=매 요청마다 최신 확인
+
+management:
+  health:
+    config:
+      enabled: false
+
+logging:
+  level:
+    org.springframework.cloud.config.server: WARN

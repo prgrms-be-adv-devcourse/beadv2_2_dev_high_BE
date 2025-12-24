@@ -5,11 +5,18 @@ spring:
 
 ---
 spring:
+  main:
+    lazy-initialization: true
+  jmx:
+    enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
   jackson:
     time-zone: Asia/Seoul
   jpa:
@@ -44,13 +51,10 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
 
 management:
-  health:
-    config:
-      enabled: false
   endpoints:
     web:
       exposure:
-        include: refresh, health, beans, info
+        include: refresh, health, info
 
 logging:
   level:
