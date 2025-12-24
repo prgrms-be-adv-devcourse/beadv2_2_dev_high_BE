@@ -5,10 +5,16 @@ metadata:
   labels:
     app: discovery # deployment 검색을 위해 붙는 태그(콘솔에서 kubectl get deployments -l app=discovery과 같은 검색 시 필요)
 spec:
-  replicas: 1
+  replicas: 1 
+  revisionHistoryLimit: 1
   selector:
     matchLabels:
       app: discovery # discovery 라벨이 붙은 Pod(template.metadata.labels.app에 명시)만 관리한다는 선언
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 신규 Pod 동시에 추가하지 않음 → 최초 배포 1개만
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -35,26 +41,31 @@ spec:
 
             - name: JAVA_TOOL_OPTIONS
               value: >
-                -Xms128m
-                -Xmx256m
                 -Duser.timezone=Asia/Seoul
+                -Xmx96m
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 200
+            initialDelaySeconds: 80
             periodSeconds: 15
             timeoutSeconds: 5
-            failureThreshold: 20
+            failureThreshold: 12
 
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 210
-            periodSeconds: 20
+            initialDelaySeconds: 120
+            periodSeconds: 30
             timeoutSeconds: 5
-            failureThreshold: 10
+            failureThreshold: 6
 
-          resources: {}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "192Mi"
+            limits:
+              cpu: "500m"
+              memory: "320Mi"

@@ -5,15 +5,23 @@ metadata:
   labels:
     app: order-service
 spec:
-  replicas: 1
+  replicas: 1 
+  revisionHistoryLimit: 1
   selector:
     matchLabels:
       app: order-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 신규 Pod 동시에 추가하지 않음 → 최초 배포 1개만
+      maxUnavailable: 0
   template:
     metadata:
       labels:
         app: order-service
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker-1
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -136,17 +144,17 @@ spec:
                   key: TOSS_SECRET_KEY
 
             - name: JAVA_TOOL_OPTIONS
-              value: "-Duser.timezone=Asia/Seoul"
-#              value: >
-#                -Xms128m
-#                -Xmx256m
-#                -XX:MaxMetaspaceSize=128m
+              value: >
+                -Duser.timezone=Asia/Seoul
+                
+                -Xmx160m 
+                 
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8084
-            initialDelaySeconds: 200
+            initialDelaySeconds: 80
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 12
@@ -155,9 +163,15 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8084
-            initialDelaySeconds: 210
+            initialDelaySeconds: 110
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 6
-          resources: {}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "352Mi"
 
