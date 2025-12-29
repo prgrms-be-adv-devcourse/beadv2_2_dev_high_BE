@@ -11,7 +11,6 @@ public record ProductUpdateRequest(
         String description,
         List<String> categoryIds,
         String fileGrpId,
-        String auctionId,
         @NotNull(message = "경매 시작가는 필수입니다.") BigDecimal startBid,
         @NotBlank(message = "경매 시작 시간은 필수입니다.") String auctionStartAt,
         @NotBlank(message = "경매 종료 시간은 필수입니다.") String auctionEndAt
@@ -22,7 +21,6 @@ public record ProductUpdateRequest(
                 description,
                 categoryIds,
                 fileGrpId,
-                auctionId,
                 startBid,
                 auctionStartAt,
                 auctionEndAt

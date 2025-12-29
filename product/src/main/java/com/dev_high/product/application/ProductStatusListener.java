@@ -7,12 +7,11 @@ import com.dev_high.common.util.JsonUtil;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
 import com.dev_high.product.domain.ProductStatus;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,7 +27,7 @@ public class ProductStatusListener {
     @KafkaListener(topics = KafkaTopics.AUCTION_PRODUCT_UPDATE, groupId = "product-status-updater")
     public void handleAuctionProductUpdate(KafkaEventEnvelope<AuctionProductUpdateEvent> envelope) {
         AuctionProductUpdateEvent event = JsonUtil.fromPayload(envelope.payload(), AuctionProductUpdateEvent.class);
-        
+
         if (event == null || event.productIds() == null || event.productIds().isEmpty()) {
             return;
         }

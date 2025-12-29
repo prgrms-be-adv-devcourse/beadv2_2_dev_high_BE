@@ -6,13 +6,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "product_dtl", schema = "product")
 public class ProductDtl {
+    public static final String DEFAULT_STATUS = "READY";
+    public static final String NOT_DELETED = "N";
+
     @Id
     @NotNull
     @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
@@ -21,7 +24,7 @@ public class ProductDtl {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
-    private com.dev_high.product.domain.Product product;
+    private Product product;
 
     @NotNull
     @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
@@ -33,11 +36,11 @@ public class ProductDtl {
 
     @NotNull
     @Column(name = "auction_start_at", nullable = false)
-    private Instant auctionStartAt;
+    private OffsetDateTime auctionStartAt;
 
     @NotNull
     @Column(name = "auction_end_at", nullable = false)
-    private Instant auctionEndAt;
+    private OffsetDateTime auctionEndAt;
 
     @Column(name = "deposit_amount")
     private Long depositAmount;
@@ -48,7 +51,7 @@ public class ProductDtl {
     private String deletedYn;
 
     @Column(name = "deleted_at")
-    private Instant deletedAt;
+    private OffsetDateTime deletedAt;
 
     @NotNull
     @Column(name = "created_by", nullable = false, length = Integer.MAX_VALUE)
@@ -56,7 +59,7 @@ public class ProductDtl {
 
     @NotNull
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private OffsetDateTime createdAt;
 
     @NotNull
     @Column(name = "updated_by", nullable = false, length = Integer.MAX_VALUE)
@@ -64,6 +67,48 @@ public class ProductDtl {
 
     @NotNull
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private OffsetDateTime updatedAt;
 
+    protected ProductDtl() {
+    }
+
+    private ProductDtl(Product product,
+                       String status,
+                       Long startBid,
+                       OffsetDateTime auctionStartAt,
+                       OffsetDateTime auctionEndAt,
+                       String createdBy) {
+        this.id = product.getId();
+        this.product = product;
+        this.status = status;
+        this.startBid = startBid;
+        this.auctionStartAt = auctionStartAt;
+        this.auctionEndAt = auctionEndAt;
+        this.deletedYn = NOT_DELETED;
+        this.createdBy = createdBy;
+        this.updatedBy = createdBy;
+        OffsetDateTime now = OffsetDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    public static ProductDtl create(Product product,
+                                    String status,
+                                    Long startBid,
+                                    OffsetDateTime auctionStartAt,
+                                    OffsetDateTime auctionEndAt,
+                                    String createdBy) {
+        return new ProductDtl(product, status, startBid, auctionStartAt, auctionEndAt, createdBy);
+    }
+
+    public void updateDetails(Long startBid,
+                              OffsetDateTime auctionStartAt,
+                              OffsetDateTime auctionEndAt,
+                              String updatedBy) {
+        this.startBid = startBid;
+        this.auctionStartAt = auctionStartAt;
+        this.auctionEndAt = auctionEndAt;
+        this.updatedBy = updatedBy;
+        this.updatedAt = OffsetDateTime.now();
+    }
 }

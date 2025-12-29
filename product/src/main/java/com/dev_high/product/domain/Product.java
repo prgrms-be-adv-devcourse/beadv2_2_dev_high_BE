@@ -1,16 +1,8 @@
 package com.dev_high.product.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +26,9 @@ public class Product {
 
   @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
   private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
+
+  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+  private List<ProductDtl> productDtls = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.CHAR)
@@ -129,9 +124,6 @@ public class Product {
     Y, N
   }
 
-  /**
-   * 연결된 카테고리 엔티티 목록 반환 (LAZY 로딩 주의).
-   */
   public List<Category> getCategories() {
     return categoryRelations.stream()
         .map(ProductCategoryRel::getCategory)

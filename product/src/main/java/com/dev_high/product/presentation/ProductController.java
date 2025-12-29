@@ -27,7 +27,7 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다. (경매 생성 포함)")
+    @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다.")
     @PostMapping
     public ApiResponseDto<ProductCreateResult> createProduct(@Valid @RequestBody ProductRequest request) {
         ProductCreateResult result = productService.registerProduct(request.toCommand());
@@ -46,14 +46,14 @@ public class ProductController {
         return ApiResponseDto.success(productService.getProductsBySeller(sellerId));
     }
 
-    @Operation(summary = "상품 단건 조회", description = "카테고리/경매/이미지 URL 정보를 포함한 상품 단건을 조회합니다.")
+    @Operation(summary = "상품 단건 조회", description = "카테고리 정보를 포함한 상품 단건을 조회합니다.")
     @GetMapping("/{productId}")
     public ApiResponseDto<ProductCreateResult> getProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
         return ApiResponseDto.success(productService.getProduct(productId));
     }
 
     @Deprecated
-    @Operation(summary = "상품 단건 조회(카테고리/경매 포함)", description = "카테고리와 경매 정보를 포함하여 상품을 조회합니다.")
+    @Operation(summary = "상품 단건 조회(카테고리 포함)", description = "카테고리를 포함하여 상품을 조회합니다.")
     @GetMapping("/{productId}/categories")
     public ApiResponseDto<ProductCreateResult> getProductWithCategories(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
         return ApiResponseDto.success(productService.getProductWithCategories(productId));

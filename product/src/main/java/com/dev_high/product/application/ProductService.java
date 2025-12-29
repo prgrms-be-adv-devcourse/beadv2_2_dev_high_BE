@@ -2,48 +2,36 @@ package com.dev_high.product.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
-import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
-import com.dev_high.common.exception.CustomException;
-import com.dev_high.common.util.DateUtil;
-import com.dev_high.product.application.dto.*;
+import com.dev_high.product.application.dto.ProductCommand;
+import com.dev_high.product.application.dto.ProductCreateResult;
+import com.dev_high.product.application.dto.ProductInfo;
+import com.dev_high.product.application.dto.ProductUpdateCommand;
 import com.dev_high.product.domain.*;
 import com.dev_high.product.domain.Product.DeleteStatus;
 import com.dev_high.product.exception.CategoryNotFoundException;
+import com.dev_high.product.exception.ProductDtlNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import com.dev_high.product.exception.ProductUpdateStatusException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductCategoryRelRepository productCategoryRelRepository;
     private final CategoryRepository categoryRepository;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-
-    private static final String AUCTION_SERVICE_URL = "http://AUCTION-SERVICE/api/v1/auctions";
-    private static final String FILE_SERVICE_URL = "http://FILE-SERVICE/api/v1/files/groups/";
+    private final ProductDtlRepository productDtlRepository;
 
     // 상품저장 트랜잭션
     @Transactional
@@ -65,16 +53,14 @@ public class ProductService {
     }
 
     //상품생성
+    @Transactional
     public ProductCreateResult registerProduct(ProductCommand command) {
-        UserInfo userInfo = ensureSellerRole();
-        String sellerId = userInfo.userId();
-
         Product saved = saveProduct(command);
-        List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
-        FileGroupResponse fileGroup = fetchFileGroup(command.fileGrpId());
+        String sellerId = saved.getSellerId();
 
-        AuctionCreateResponse auctionResponse = createAuction(saved.getId(), command, sellerId);
-        return new ProductCreateResult(ProductInfo.from(saved, categories, fileGroup), List.of(auctionResponse));
+        createProductDtl(saved, command, sellerId);
+        attachCategories(saved, command.categoryIds(), sellerId);
+        return toCreateResult(saved);
     }
 
     //상품수정
@@ -96,16 +82,9 @@ public class ProductService {
 
         product.updateDetails(command.name(), command.description(), command.fileGrpId(), userInfo.userId());
 
-        List<Category> categories = replaceCategories(product, command.categoryIds(), userInfo.userId());
-    if(command.auctionId() != null) {
-        updateAuction(productId, command, userInfo.userId());
-
-    }else{
-        createAuction(productId, new ProductCommand("","",List.of() ,"",command.startBid(),
-                command.auctionStartAt(),
-                command.auctionEndAt()) , userInfo.userId());
-    }
-        return toCreateResult(product, categories);
+        updateProductDtl(product, command, userInfo.userId());
+        replaceCategories(product, command.categoryIds(), userInfo.userId());
+        return toCreateResult(product);
     }
 
     @Transactional(readOnly = true)
@@ -120,8 +99,7 @@ public class ProductService {
     public ProductCreateResult getProductWithCategories(String productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
-        List<Category> categories = productCategoryRelRepository.findCategoriesByProductId(productId);
-        return toCreateResult(product, categories);
+        return toCreateResult(product);
     }
 
     @Transactional(readOnly = true)
@@ -147,10 +125,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Page<ProductCreateResult> getProductsByCategory(String categoryId, Pageable pageable) {
         return productCategoryRelRepository.findProductsByCategoryId(categoryId, DeleteStatus.N, pageable)
-                .map(product -> {
-                    List<Category> categories = product.getCategories();
-                    return toCreateResult(product, categories);
-                });
+                .map(this::toCreateResult);
     }
 
     @Transactional
@@ -199,236 +174,27 @@ public class ProductService {
     private List<Category> attachCategories(Product product, List<String> categoryIds, String sellerId) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return List.of();
-        } // null이거나 카테고리 없으면 바로 빈 List 반환
+        }
 
-        //주어진 카테고리들의 테이블 정보를 조회해서 List로 정리
         List<Category> categories = categoryIds.stream()
                 .map(id -> categoryRepository.findById(id).orElseThrow(CategoryNotFoundException::new))
                 .toList();
 
-        // 상품+카테고리 rel 생성
         List<ProductCategoryRel> relations = categories.stream()
                 .map(category -> ProductCategoryRel.create(product, category, sellerId))
                 .toList();
 
-        //저장
         productCategoryRelRepository.saveAll(relations);
         return categories;
     }
 
 
     private ProductCreateResult toCreateResult(Product product) {
+        // TODO: 페이지 크기/트래픽 증가 시 N+1 방지를 위해 fetch join/DTO 조회로 최적화 검토.
         List<Category> categories = product.getCategories();
-        return toCreateResult(product, categories);
-    }
-
-    private ProductCreateResult toCreateResult(Product product, List<Category> categories) {
-        FileGroupResponse fileGroup = fetchFileGroup(product.getFileId());
-        ProductInfo productInfo = ProductInfo.from(product, categories, fileGroup);
-        List<AuctionCreateResponse> auction = fetchAuction(product.getId());
-        return new ProductCreateResult(productInfo, auction);
-    }
-
-    /*
-     *
-     * 여기서 부터는
-     * Auction 생성 및 수정
-     * (http요청)
-     *
-     */
-
-    private AuctionCreateResponse createAuction(String productId, ProductCommand command, String sellerId) {
-        HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
-                productId,
-                command.startBid(),
-                command.auctionStartAt(),
-                command.auctionEndAt(),
-                sellerId
-        );
-
-        ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
-                restTemplate.exchange(
-                        AUCTION_SERVICE_URL,
-                        HttpMethod.POST,
-                        httpEntity,
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-
-        if (response.getBody() == null || response.getBody().getData() == null) {
-            throw new CustomException("경매 생성에 실패했습니다.");
-        }
-
-        return toAuctionResponse(response.getBody().getData());
-    }
-
-    //auction update
-    private void updateAuction(String productId, ProductUpdateCommand command, String sellerId) {
-        if (command.auctionId() == null || command.auctionId().isBlank()) {
-            return;
-        }
-
-        try{
-            HttpEntity<AuctionCreateRequest> httpEntity = buildAuctionRequestBody(
-                    productId,
-                    command.startBid(),
-                    command.auctionStartAt(),
-                    command.auctionEndAt(),
-                    sellerId
-            );
-            ResponseEntity<ApiResponseDto<Map<String, Object>>> response =
-                    restTemplate.exchange(
-                            AUCTION_SERVICE_URL + "/" + command.auctionId(),
-                            HttpMethod.PUT,
-                            httpEntity,
-                            new ParameterizedTypeReference<>() {
-                            }
-                    );
-
-            if (response.getBody() == null || response.getBody().getData() == null) {
-                throw new CustomException("경매 수정에 실패했습니다.");
-            }
-        }catch (Exception e){
-            throw new CustomException("경매 수정에 실패했습니다.");
-        }
-
-    }
-
-    // auction 요청 시 http객체 생성
-    private HttpEntity<AuctionCreateRequest> buildAuctionRequestBody(
-            String productId,
-            BigDecimal startBid,
-            String auctionStartAt,
-            String auctionEndAt,
-            String sellerId
-    ) {
-        //body 생성
-        AuctionCreateRequest request = new AuctionCreateRequest(
-                productId,
-                startBid,
-                auctionStartAt,
-                auctionEndAt,
-                sellerId
-        );
-        //header 생성
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        applyAuthHeaders(headers);
-
-        return new HttpEntity<>(request, headers);
-    }
-
-    // 옥션 정보 가져오기
-    private List<AuctionCreateResponse> fetchAuction(String productId) {
-        HttpHeaders headers = new HttpHeaders();
-        applyAuthHeaders(headers);
-
-        try{
-            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            ResponseEntity<ApiResponseDto<List<Map<String, Object>>>> response = restTemplate.exchange(
-                    AUCTION_SERVICE_URL + "/by-product?productId=" + productId,
-                    HttpMethod.GET,
-                    httpEntity,
-                    new ParameterizedTypeReference<>() {
-                    }
-
-            );
-
-            if (response.getBody() == null || response.getBody().getData() == null) {
-                return null;
-            }
-
-            List<Map<String, Object>> auctions = response.getBody().getData();
-            if (auctions.isEmpty()) {
-                return null;
-            }
-            return auctions.stream().map(a -> toAuctionResponse(a)).toList();
-
-        }catch (Exception e){
-            log.warn("경매 조회 실패: {}",e.getMessage());
-        }
-        return List.of();
-    }
-
-    //
-    private AuctionCreateResponse toAuctionResponse(Map<String, Object> map) {
-        if (map == null) {
-            return null;
-        }
-        return new AuctionCreateResponse(
-                map.getOrDefault("auctionId", "").toString(),
-                map.getOrDefault("sellerId", "").toString(),
-                map.getOrDefault("productName", "").toString(),
-                map.getOrDefault("status", "").toString(),
-                toBigDecimal(map.get("startBid")),
-                toBigDecimal(map.get("currentBid")),
-                toOffsetDateTime(map.get("auctionStartAt")),
-                toOffsetDateTime(map.get("auctionEndAt"))
-        );
-    }
-
-    private BigDecimal toBigDecimal(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof BigDecimal bigDecimal) {
-            return bigDecimal;
-        }
-        if (value instanceof Number number) {
-            return new BigDecimal(number.toString());
-        }
-        if (value instanceof String s && !s.isBlank()) {
-            try {
-                return new BigDecimal(s);
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    private OffsetDateTime toOffsetDateTime(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof OffsetDateTime ldt) {
-            return ldt;
-        }
-
-        if (value instanceof String s && !s.isBlank()) {
-            try {
-                return DateUtil.parse(s);
-            } catch (Exception ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    //요청 헤더 설정 템플릿
-    private void applyAuthHeaders(HttpHeaders headers) {
-        UserInfo userInfo = UserContext.get();
-        if (userInfo == null) {
-            return;
-        }
-        if (userInfo.token() != null && !userInfo.token().isBlank()) {
-            headers.setBearerAuth(userInfo.token());
-        }
-        if (userInfo.userId() != null) {
-            headers.set("X-User-Id", userInfo.userId());
-        }
-        if (userInfo.role() != null) {
-            headers.set("X-Role", userInfo.role());
-        }
-    }
-
-    private record AuctionCreateRequest(
-            String productId,
-            BigDecimal startBid,
-            String auctionStartAt,
-            String auctionEndAt,
-            String sellerId
-    ) {
+        ProductDtl productDtl = findProductDtl(product.getId());
+        ProductInfo productInfo = ProductInfo.from(product, categories, productDtl);
+        return new ProductCreateResult(productInfo);
     }
 
     public List<WishlistProductResponse> getProductInfos(List<String> productIds) {
@@ -440,46 +206,55 @@ public class ProductService {
                 productRepository.findByIdIn(productIds);
 
         return products.stream()
-                .map(p -> new WishlistProductResponse(
-                        p.getId(),
-                        p.getName()
+                .map(product -> new WishlistProductResponse(
+                        product.getId(),
+                        product.getName()
                 ))
                 .toList();
     }
 
-    // fileGroup 가져오기
-    private FileGroupResponse fetchFileGroup(String fileGroupId) {
-        if (fileGroupId == null || fileGroupId.isBlank()) {
-            return new FileGroupResponse(null, Collections.emptyList());
+    private ProductDtl createProductDtl(Product product, ProductCommand command, String createdBy) {
+        ProductDtl productDtl = ProductDtl.create(
+                product,
+                product.getStatus().name(),
+                toStartBid(command.startBid()),
+                parseOffsetDateTime(command.auctionStartAt()),
+                parseOffsetDateTime(command.auctionEndAt()),
+                createdBy
+        );
+        return productDtlRepository.save(productDtl);
+    }
+
+    private ProductDtl updateProductDtl(Product product, ProductUpdateCommand command, String updatedBy) {
+        ProductDtl productDtl = findProductDtl(product.getId());
+        if (productDtl == null) {
+            throw new ProductDtlNotFoundException();
         }
 
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            applyAuthHeaders(headers);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
+        productDtl.updateDetails(
+                toStartBid(command.startBid()),
+                parseOffsetDateTime(command.auctionStartAt()),
+                parseOffsetDateTime(command.auctionEndAt()),
+                updatedBy
+        );
+        return productDtl;
+    }
 
-            ResponseEntity<ApiResponseDto<Map<String, Object>>> response = restTemplate.exchange(
-                    FILE_SERVICE_URL + fileGroupId,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<>() {
-                    }
-            );
-            if (response.getBody() != null && response.getBody().getData() != null) {
-                return objectMapper.convertValue(
-                        response.getBody().getData(),
-                        new TypeReference<FileGroupResponse>() {
-                        }
-                );
+    private ProductDtl findProductDtl(String productId) {
+        return productDtlRepository.findByProductId(productId).orElse(null);
+    }
 
-            }
-        } catch (Exception e) {
-            if (e instanceof org.springframework.web.client.RestClientResponseException rex) {
-                log.warn("파일 그룹 조회 실패 fileGroupId={}, status={}, body={}", fileGroupId, rex.getRawStatusCode(), rex.getResponseBodyAsString());
-            } else {
-                log.warn("파일 그룹 조회 실패 fileGroupId={}, reason={}", fileGroupId, e.getMessage());
-            }
+    private Long toStartBid(BigDecimal startBid) {
+        if (startBid == null) {
+            return null;
         }
-        return new FileGroupResponse(fileGroupId, Collections.emptyList());
+        return startBid.longValue();
+    }
+
+    private OffsetDateTime parseOffsetDateTime(String value) {
+        if (value == null) {
+            return null;
+        }
+        return com.dev_high.common.util.DateUtil.parse(value);
     }
 }

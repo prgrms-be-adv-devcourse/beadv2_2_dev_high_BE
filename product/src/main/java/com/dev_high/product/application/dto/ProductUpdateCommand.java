@@ -7,7 +7,6 @@ public record ProductUpdateCommand(
         String description,
         List<String> categoryIds,
         String fileGrpId,
-        String auctionId,
         java.math.BigDecimal startBid,
         String auctionStartAt,
         String auctionEndAt
