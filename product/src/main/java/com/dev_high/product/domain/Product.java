@@ -32,6 +32,9 @@ public class Product {
   @Column(nullable = false)
   private ProductStatus status;
 
+  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+  private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
+
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.CHAR)
   @Column(name = "deleted_yn", nullable = false, length = 1, columnDefinition = "char(1)")
@@ -49,8 +52,8 @@ public class Product {
   @Column(name = "seller_id", nullable = false)
   private String sellerId;
 
-  @Column(name = "file_id")
-  private String fileId;
+  @Column(name = "file_grp_id")
+  private String fileGrpId;
 
   @Column(name = "created_at")
   private OffsetDateTime createdAt;
@@ -64,10 +67,6 @@ public class Product {
   @Column(name = "updated_by")
   private String updatedBy;
 
-  // 카테고리 연결(중간 테이블 기준)
-  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-  private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
-
   protected Product() {
   }
 
@@ -75,14 +74,14 @@ public class Product {
       String description,
       String sellerId,
       String createdBy,
-      String fileId) {
+      String fileGrpId) {
 
     this.name = name;
     this.description = description;
     this.sellerId = sellerId;
     this.createdBy = createdBy;
     this.updatedBy = createdBy;
-    this.fileId = fileId;
+    this.fileGrpId = fileGrpId;
 
     this.status = ProductStatus.READY;
     this.deletedYn = DeleteStatus.N;
@@ -92,24 +91,14 @@ public class Product {
       String description,
       String sellerId,
       String createdBy,
-      String fileId) {
-    return new Product(name, description, sellerId, createdBy, fileId);
+      String fileGrpId) {
+    return new Product(name, description, sellerId, createdBy, fileGrpId);
   }
 
-  public void ChangeStart(String updatedBy) {
-    this.status = ProductStatus.IN_PROGRESS;
-    this.updatedBy = updatedBy;
-  }
-
-  public void ChangeComplete(String updatedBy) {
-    this.status = ProductStatus.COMPLETED;
-    this.updatedBy = updatedBy;
-  }
-
-  public void updateDetails(String name, String description, String fileId, String updatedBy) {
+  public void updateDetails(String name, String description, String fileGrpId, String updatedBy) {
     this.name = name;
     this.description = description;
-    this.fileId = fileId;
+    this.fileGrpId = fileGrpId;
     this.updatedBy = updatedBy;
   }
 
@@ -123,18 +112,13 @@ public class Product {
     this.updatedBy = updatedBy;
   }
 
-  public void restore(String updatedBy) {
-    this.deletedYn = DeleteStatus.N;
-    this.deletedAt = null;
-    this.updatedBy = updatedBy;
-  }
-
   @PrePersist
   public void onCreate() {
     OffsetDateTime now = OffsetDateTime.now();
     this.createdAt = now;
     this.updatedAt = now;
   }
+
 
   @PreUpdate
   public void onUpdate() {

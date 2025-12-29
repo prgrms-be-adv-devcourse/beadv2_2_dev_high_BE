@@ -37,11 +37,9 @@ public class Category {
     @Column(name = "updated_by", nullable = false)
     private String updatedBy;
 
-//    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-//    private List<ProductCategoryRel> productRelations = new ArrayList<>();
-
     protected Category() {
     }
+
     private Category(String id, String categoryName, String createdBy) {
         this.id = id;
         this.categoryName = categoryName;
@@ -76,13 +74,4 @@ public class Category {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    /**
-     * 이 카테고리에 속한 상품들을 반환합니다.
-     * LAZY 로딩이므로 트랜잭션 내에서 접근해야 합니다.
-     */
-//    public List<Product> getProducts() {
-//        return productRelations.stream()
-//                .map(ProductCategoryRel::getProduct)
-//                .toList();
-//    }
 }
