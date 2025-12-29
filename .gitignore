@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 .env
 
+
 ### STS ###
 .apt_generated
 .classpath
@@ -42,6 +43,7 @@ out/
 product/.env
 product/.env.*
 .productSQL.sql
+product/docs/product.md
 
 ### file env ###
 ex.sql
