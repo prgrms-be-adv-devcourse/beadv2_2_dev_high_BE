@@ -44,7 +44,7 @@ product/.env
 product/.env.*
 .productSQL.sql
 product/docs/product.md
-prodcut/docs/*
+prodcut/docs/
 
 ### file env ###
 ex.sql
