@@ -1,4 +1,4 @@
-HELP.md
+﻿HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -43,8 +43,7 @@ out/
 product/.env
 product/.env.*
 .productSQL.sql
-product/docs/product.md
-prodcut/docs/
+product/docs/
 
 ### file env ###
 ex.sql
@@ -56,4 +55,5 @@ user/.env
 
 ### apigateway env ###
 apigateway/.env
+
 
