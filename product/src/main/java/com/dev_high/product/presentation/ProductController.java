@@ -36,8 +36,9 @@ public class ProductController {
 
     @Operation(summary = "상품 목록 조회", description = "페이지네이션으로 상품 목록을 조회합니다.")
     @GetMapping
-    public ApiResponseDto<Page<ProductCreateResult>> getProducts(Pageable pageable, @RequestParam(required = false) ProductStatus status) {
-        return ApiResponseDto.success(productService.getProducts(pageable,status));
+    public ApiResponseDto<Page<ProductCreateResult>> getProducts(Pageable pageable,
+                                                                 @RequestParam(required = false) ProductStatus status) {
+        return ApiResponseDto.success(productService.getProducts(pageable, status));
     }
 
     @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")
@@ -50,13 +51,6 @@ public class ProductController {
     @GetMapping("/{productId}")
     public ApiResponseDto<ProductCreateResult> getProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
         return ApiResponseDto.success(productService.getProduct(productId));
-    }
-
-    @Deprecated
-    @Operation(summary = "상품 단건 조회(카테고리 포함)", description = "카테고리를 포함하여 상품을 조회합니다.")
-    @GetMapping("/{productId}/categories")
-    public ApiResponseDto<ProductCreateResult> getProductWithCategories(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
-        return ApiResponseDto.success(productService.getProductWithCategories(productId));
     }
 
     @Operation(summary = "상품 수정", description = "판매자 본인이고 READY 상태일 때 상품 정보를 수정합니다.")
@@ -74,6 +68,7 @@ public class ProductController {
         productService.deleteProduct(productId, sellerId);
         return ApiResponseDto.success(null);
     }
+
 
     @GetMapping("/internal")
     public List<WishlistProductResponse> getProductInfos(@RequestBody List<String> productIds) {

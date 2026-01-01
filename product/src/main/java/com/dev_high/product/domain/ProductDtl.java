@@ -13,12 +13,12 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "product_dtl", schema = "product")
 public class ProductDtl {
-    public static final String DEFAULT_STATUS = "READY";
+
     public static final String NOT_DELETED = "N";
 
     @Id
     @NotNull
-    @Column(name = "id", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "id", nullable = false)
     private String id;
 
     @NotNull
@@ -27,7 +27,7 @@ public class ProductDtl {
     private Product product;
 
     @NotNull
-    @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "status", nullable = false)
     private String status;
 
     @NotNull
@@ -47,14 +47,14 @@ public class ProductDtl {
 
     @NotNull
     @ColumnDefault("'N'")
-    @Column(name = "deleted_yn", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "deleted_yn", nullable = false, length = 1, columnDefinition = "char(1)")
     private String deletedYn;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
     @NotNull
-    @Column(name = "created_by", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "created_by", nullable = false)
     private String createdBy;
 
     @NotNull
@@ -62,7 +62,7 @@ public class ProductDtl {
     private OffsetDateTime createdAt;
 
     @NotNull
-    @Column(name = "updated_by", nullable = false, length = Integer.MAX_VALUE)
+    @Column(name = "updated_by", nullable = false)
     private String updatedBy;
 
     @NotNull
@@ -109,6 +109,11 @@ public class ProductDtl {
         this.auctionStartAt = auctionStartAt;
         this.auctionEndAt = auctionEndAt;
         this.updatedBy = updatedBy;
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    public void changeStatus(String status) {
+        this.status = status;
         this.updatedAt = OffsetDateTime.now();
     }
 }

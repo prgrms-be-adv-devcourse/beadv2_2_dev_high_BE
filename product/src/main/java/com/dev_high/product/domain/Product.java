@@ -1,4 +1,4 @@
-package com.dev_high.product.domain;
+﻿package com.dev_high.product.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
 import jakarta.persistence.*;
@@ -20,10 +20,6 @@ public class Product {
   @Column(length = 20)
   private String id;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private ProductStatus status;
-
   @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
   private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
 
@@ -38,28 +34,28 @@ public class Product {
   @Column(name = "deleted_at")
   private OffsetDateTime deletedAt;
 
-  @Column(name = "name", nullable = false)
+  @Column(name = "name", nullable = false, length = 255)
   private String name;
 
-  @Column(name = "description")
+  @Column(name = "description", length = 255)
   private String description;
 
-  @Column(name = "seller_id", nullable = false)
+  @Column(name = "seller_id", nullable = false, length = 255)
   private String sellerId;
 
-  @Column(name = "file_grp_id")
-  private String fileGrpId;
+  @Column(name = "file_id", length = 255)
+  private String fileId;
 
-  @Column(name = "created_at")
+  @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
 
-  @Column(name = "created_by")
+  @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "updated_at")
+  @Column(name = "updated_at", nullable = false)
   private OffsetDateTime updatedAt;
 
-  @Column(name = "updated_by")
+  @Column(name = "updated_by", nullable = false)
   private String updatedBy;
 
   protected Product() {
@@ -69,16 +65,15 @@ public class Product {
       String description,
       String sellerId,
       String createdBy,
-      String fileGrpId) {
+      String fileId) {
 
     this.name = name;
     this.description = description;
     this.sellerId = sellerId;
     this.createdBy = createdBy;
     this.updatedBy = createdBy;
-    this.fileGrpId = fileGrpId;
+    this.fileId = fileId;
 
-    this.status = ProductStatus.READY;
     this.deletedYn = DeleteStatus.N;
   }
 
@@ -86,19 +81,15 @@ public class Product {
       String description,
       String sellerId,
       String createdBy,
-      String fileGrpId) {
-    return new Product(name, description, sellerId, createdBy, fileGrpId);
+      String fileId) {
+    return new Product(name, description, sellerId, createdBy, fileId);
   }
 
-  public void updateDetails(String name, String description, String fileGrpId, String updatedBy) {
+  public void updateDetails(String name, String description, String fileId, String updatedBy) {
     this.name = name;
     this.description = description;
-    this.fileGrpId = fileGrpId;
+    this.fileId = fileId;
     this.updatedBy = updatedBy;
-  }
-
-  public void changeStatus(ProductStatus status) {
-    this.status = status;
   }
 
   public void markDeleted(String updatedBy) {
@@ -130,3 +121,4 @@ public class Product {
         .toList();
   }
 }
+

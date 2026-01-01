@@ -4,9 +4,10 @@ import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.event.auction.AuctionProductUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.util.JsonUtil;
-import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.ProductRepository;
+import com.dev_high.product.domain.ProductDtl;
+import com.dev_high.product.domain.ProductDtlRepository;
 import com.dev_high.product.domain.ProductStatus;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ProductStatusListener {
 
-    private final ProductRepository productRepository;
+    private final ProductDtlRepository productDtlRepository;
 
     /**
      * 경매에서 상품 상태 변경 이벤트 발행 시 상품 상태를 동기화합니다.
@@ -40,13 +41,17 @@ public class ProductStatusListener {
             return;
         }
 
-        List<Product> products = productRepository.findAllById(event.productIds());
-        if (products.isEmpty()) {
+        List<ProductDtl> productDtls = new ArrayList<>();
+        for (String productId : event.productIds()) {
+            productDtlRepository.findByProductId(productId).ifPresent(productDtls::add);
+        }
+
+        if (productDtls.isEmpty()) {
             return;
         }
 
-        products.forEach(p -> p.changeStatus(newStatus));
+        productDtls.forEach(dtl -> dtl.changeStatus(newStatus.name()));
 
-        productRepository.saveAll(products);
+        productDtls.forEach(productDtlRepository::save);
     }
 }

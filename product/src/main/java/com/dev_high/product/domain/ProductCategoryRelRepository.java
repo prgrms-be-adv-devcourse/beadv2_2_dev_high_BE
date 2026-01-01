@@ -7,10 +7,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface ProductCategoryRelRepository {
 
-    List<Category> findCategoriesByProductId(String productId);
-
-    List<Product> findProductsByCategoryId(String categoryId, DeleteStatus status);
-
     Page<Product> findProductsByCategoryId(String categoryId, DeleteStatus status, Pageable pageable);
 
     void saveAll(List<ProductCategoryRel> relations);
