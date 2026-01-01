@@ -15,7 +15,7 @@ public class Category {
     @Id
     private String id;
 
-    @Column(name = "category_name", nullable = false)
+    @Column(name = "category_name", length = 255)
     private String categoryName;
 
     @JdbcTypeCode(SqlTypes.CHAR)

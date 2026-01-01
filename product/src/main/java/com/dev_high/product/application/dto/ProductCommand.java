@@ -7,7 +7,7 @@ public record ProductCommand(
         String name,
         String description,
         List<String> categoryIds,
-        String fileGrpId,
+        String fileId,
         BigDecimal startBid,
         String auctionStartAt,
         String auctionEndAt

@@ -11,12 +11,10 @@ public interface ProductRepository {
 
     Optional<Product> findById(String id);
 
-    Page<Product> findByStatus(ProductStatus status, Pageable pageable);
+    Page<Product> findByDtlStatus(String status, Pageable pageable);
 
     Page<Product> findAll(Pageable pageable);
 
-
-    List<Product> findAllById(List<String> strings);
 
     void saveAll(List<Product> products);
 
