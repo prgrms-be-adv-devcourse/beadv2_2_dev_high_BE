@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class KafkaListenerLoggingAspect {
 
   private final ObjectMapper objectMapper;
+  private  final KafkaIdempotencySupport kafkaIdempotencySupport;
   private static final Logger log = LoggerFactory.getLogger("KAFKA_LOG");
 
   @Value("${spring.application.name:unknown-module}")
@@ -51,6 +52,11 @@ public class KafkaListenerLoggingAspect {
 
       return joinPoint.proceed();
     }
+    // uuid , module name으로 유니크체크
+    if(kafkaIdempotencySupport.alreadyConsumed(envelope.eventId(),envelope.module())){
+
+          return null;
+      }
 
     // latency
     long receiveTimestamp = System.currentTimeMillis();
