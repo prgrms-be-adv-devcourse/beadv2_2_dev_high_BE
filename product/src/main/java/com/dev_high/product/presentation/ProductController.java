@@ -4,7 +4,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductInfo;
-import com.dev_high.product.domain.ProductStatus;
+import com.dev_high.product.presentation.dto.ProductLatestAuctionUpdateRequest;
 import com.dev_high.product.presentation.dto.ProductRequest;
 import com.dev_high.product.presentation.dto.ProductUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +64,14 @@ public class ProductController {
     public ApiResponseDto<Void> deleteProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
                                               @Parameter(description = "판매자 ID", required = true) @RequestParam String sellerId) {
         productService.deleteProduct(productId, sellerId);
+        return ApiResponseDto.success(null);
+    }
+
+    @Operation(summary = "상품 최신 경매 ID 업데이트", description = "상품의 최신 경매 ID를 업데이트합니다.")
+    @PutMapping("/{productId}/latest-auction")
+    public ApiResponseDto<Void> updateLatestAuctionId(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
+                                                      @Valid @RequestBody ProductLatestAuctionUpdateRequest request) {
+        productService.updateLatestAuctionId(productId, request.latestAuctionId());
         return ApiResponseDto.success(null);
     }
 
