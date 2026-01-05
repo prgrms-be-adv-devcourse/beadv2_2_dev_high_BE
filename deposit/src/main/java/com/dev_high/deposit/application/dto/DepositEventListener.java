@@ -37,7 +37,7 @@ public class DepositEventListener {
                 return;
             }
 
-            DepositCreateCommand command = new DepositCreateCommand(userId);
+            DepositDto.CreateCommand command = new DepositDto.CreateCommand(userId);
 
             depositService.createDepositAccount(command);
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class DepositEventListener {
             log.info("Processing deposit refund for auction [{}], amount [{}], for {} users.", auctionId, amount, userIds.size());
 
             userIds.forEach(userId -> {
-                DepositUsageCommand command = new DepositUsageCommand(
+                DepositDto.UsageCommand command = new DepositDto.UsageCommand(
                         userId,
                         auctionId, // auctionId를 depositOrderId 필드에 저장하여 추적
                         DepositType.REFUND,

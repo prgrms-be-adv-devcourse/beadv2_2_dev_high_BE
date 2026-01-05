@@ -1,9 +1,10 @@
 package com.dev_high.deposit.presentation;
 
+import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.deposit.application.DepositOrderService;
-import com.dev_high.deposit.application.dto.DepositOrderInfo;
-import com.dev_high.deposit.presentation.dto.DepositOrderCreateRequest;
-import com.dev_high.deposit.presentation.dto.DepositOrderUpdateRequest;
+import com.dev_high.deposit.application.dto.DepositOrderDto;
+import com.dev_high.deposit.presentation.dto.DepositOrderRequest;
+import com.dev_high.deposit.presentation.dto.DepositOrderResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,20 +24,28 @@ public class DepositOrderController {
     @Operation(summary = "예치금 주문 생성", description = "예치금 주문을 생성하고 저장")
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
-    public DepositOrderInfo createOrder(@Valid @RequestBody DepositOrderCreateRequest request) {
-        return depositOrderService.createOrder(request.toCommand());
+    public ApiResponseDto<DepositOrderResponse.Detail> createOrder(@RequestBody @Valid DepositOrderRequest.Create request) {
+        DepositOrderDto.CreateCommand command = request.toCommand(request.amount());
+        DepositOrderDto.Info info = depositOrderService.createOrder(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        return ApiResponseDto.success(response);
     }
 
     @Operation(summary = "로그인한 사용자 ID의 예치금 주문 조회", description = "사용자 ID로 예치금 주문 내역 을 조회")
     @GetMapping("/orders/me")
-    public Page<DepositOrderInfo> findByUserId(Pageable pageable) {
-        return depositOrderService.findByUserId(pageable);
+    public ApiResponseDto<Page<DepositOrderResponse.Detail>> findByUserId(Pageable pageable) {
+        Page<DepositOrderDto.Info> infos = depositOrderService.findByUserId(pageable);
+        Page<DepositOrderResponse.Detail> response = infos.map(DepositOrderResponse.Detail::from);
+        return ApiResponseDto.success(response);
     }
 
     @Operation(summary = "예치금 주문 상태 변경", description = "특정 주문의 상태를 변경")
     @PatchMapping("/orders/status")
-    public DepositOrderInfo updateOrderStatus(@Valid @RequestBody DepositOrderUpdateRequest request) {
-        return depositOrderService.updateOrderStatus(request.toCommand());
+    public ApiResponseDto<DepositOrderResponse.Detail> updateOrderStatus(@RequestBody @Valid DepositOrderRequest.Update request) {
+        DepositOrderDto.UpdateCommand command = request.toCommand(request.orderId(), request.status());
+        DepositOrderDto.Info info = depositOrderService.updateOrderStatus(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        return ApiResponseDto.success(response);
     }
 
 }
