@@ -25,7 +25,7 @@ public class DepositHistoryController {
     @PostMapping("/histories")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositHistoryRequest.Create request) {
-        DepositHistoryDto.CreateCommand command = request.toCommand(request.userId(), request.depositOrderId(), request.type(), request.amount(), request.nowBalance());
+        DepositHistoryDto.CreateCommand command = request.toCommand(request.userId(), request.orderId(), request.type(), request.amount(), request.nowBalance());
         DepositHistoryDto.Info info = historyService.createHistory(command);
         DepositHistoryResponse.Detail response = DepositHistoryResponse.Detail.from(info);
         return ApiResponseDto.success(response);

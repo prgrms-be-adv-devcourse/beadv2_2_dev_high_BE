@@ -1,6 +1,5 @@
 package com.dev_high.deposit.domain;
 
-import com.dev_high.common.annotation.CustomGeneratedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -34,7 +33,7 @@ public class DepositHistory {
      * */
     @Schema(description = "주문 ID")
     @Column(name = "order_id", length = 20, updatable = false)
-    private String depositOrderId;
+    private String orderId;
 
     @Schema(description = "예치금 유형")
     @Enumerated(EnumType.STRING)
@@ -58,9 +57,9 @@ public class DepositHistory {
     private String createdBy;
 
     @Builder
-    public DepositHistory(String userId,  String depositOrderId, DepositType type, long amount, long balance) {
+    public DepositHistory(String userId,  String orderId, DepositType type, long amount, long balance) {
         this.userId = userId;
-        this.depositOrderId = depositOrderId;
+        this.orderId = orderId;
         this.type = type;
         this.amount = amount;
         this.balance = balance;
@@ -72,10 +71,10 @@ public class DepositHistory {
         this.createdAt = OffsetDateTime.now();
     }
 
-    public static DepositHistory create(String userId, String depositOrderId, DepositType type, long amount, long currentBalance) {
+    public static DepositHistory create(String userId, String orderId, DepositType type, long amount, long currentBalance) {
         return DepositHistory.builder()
                 .userId(userId)
-                .depositOrderId(depositOrderId)
+                .orderId(orderId)
                 .type(type)
                 .amount(amount)
                 .balance(currentBalance)

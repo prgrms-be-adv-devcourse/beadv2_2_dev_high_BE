@@ -14,7 +14,7 @@ public class DepositHistoryRequest {
             String userId,
 
             @Schema(description = "주문 ID")
-            String depositOrderId,
+            String orderId,
 
             @Schema(description = "예치금 유형")
             @NotNull(message = "예치금 유형은 필수 입니다.")
@@ -30,8 +30,8 @@ public class DepositHistoryRequest {
             @Min(value = 1, message = "최소 금액은 1원 입니다.")
             long nowBalance
     ) {
-            public DepositHistoryDto.CreateCommand toCommand(String userId, String depositOrderId, DepositType type, long amount, long nowBalance) {
-                    return DepositHistoryDto.CreateCommand.of(userId, depositOrderId, type, amount, nowBalance);
+            public DepositHistoryDto.CreateCommand toCommand(String userId, String orderId, DepositType type, long amount, long nowBalance) {
+                    return DepositHistoryDto.CreateCommand.of(userId, orderId, type, amount, nowBalance);
             }
     }
 }

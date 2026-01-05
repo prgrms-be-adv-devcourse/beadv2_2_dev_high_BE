@@ -15,7 +15,7 @@ public class DepositHistoryResponse {
             String userId,
 
             @Schema(description = "주문 ID")
-            String depositOrderId,
+            String orderId,
 
             @Schema(description = "유형")
             DepositType type,
@@ -33,7 +33,7 @@ public class DepositHistoryResponse {
             return new Detail(
                     info.id(),
                     info.userId(),
-                    info.depositOrderId(),
+                    info.orderId(),
                     info.type(),
                     info.amount(),
                     info.balance(),

@@ -26,7 +26,7 @@ public class DepositHistoryService {
 
         DepositHistory history = DepositHistory.create(
                 command.userId(),
-                command.depositOrderId(),
+                command.orderId(),
                 command.type(),
                 command.amount(),
                 command.nowBalance()

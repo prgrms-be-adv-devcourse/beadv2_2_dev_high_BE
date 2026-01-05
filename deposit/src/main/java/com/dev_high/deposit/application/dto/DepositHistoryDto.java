@@ -8,20 +8,20 @@ import java.time.OffsetDateTime;
 public class DepositHistoryDto {
     public record CreateCommand(
             String userId,
-            String depositOrderId,
+            String orderId,
             DepositType type,
             long amount,
             long nowBalance
     ) {
-        public static CreateCommand of(String userId, String depositOrderId, DepositType type, long amount, long nowBalance) {
-            return new CreateCommand(userId, depositOrderId, type, amount, nowBalance);
+        public static CreateCommand of(String userId, String orderId, DepositType type, long amount, long nowBalance) {
+            return new CreateCommand(userId, orderId, type, amount, nowBalance);
         }
     }
 
     public record Info(
             long id,
             String userId,
-            String depositOrderId,
+            String orderId,
             DepositType type,
             long amount,
             long balance,
@@ -31,7 +31,7 @@ public class DepositHistoryDto {
             return new Info(
                     depositHistory.getId(),
                     depositHistory.getUserId(),
-                    depositHistory.getDepositOrderId(),
+                    depositHistory.getOrderId(),
                     depositHistory.getType(),
                     depositHistory.getAmount(),
                     depositHistory.getBalance(),
