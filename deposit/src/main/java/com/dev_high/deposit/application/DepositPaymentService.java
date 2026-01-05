@@ -27,7 +27,6 @@ public class DepositPaymentService {
     private final DepositOrderRepository depositOrderRepository;
     private final DepositService depositService;
     private final DepositPaymentFailureHistoryService failureHistoryService;
-    private final DepositPaymentFailureHistoryRepository historyRepository;
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
 
