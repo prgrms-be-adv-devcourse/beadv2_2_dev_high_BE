@@ -65,7 +65,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
     @Override
     public List<Auction> findByProductId(String productId) {
-        return auctionJpaRepository.findByProduct_IdAndDeletedYnOrderByIdDesc(productId, "N");
+        return auctionJpaRepository.findByProductIdAndDeletedYnOrderByIdDesc(productId, "N");
     }
 
     @Override
