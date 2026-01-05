@@ -1,8 +1,8 @@
 package com.dev_high.settlement.domain.history;
 
 
-import com.dev_high.settlement.domain.Settlement;
-import com.dev_high.settlement.domain.SettlementStatus;
+import com.dev_high.settlement.domain.settle.Settlement;
+import com.dev_high.settlement.domain.settle.SettlementStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

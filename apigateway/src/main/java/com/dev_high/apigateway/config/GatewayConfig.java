@@ -33,11 +33,6 @@ public class GatewayConfig {
             .path("/api/v1/deposit/**")
             .uri("lb://DEPOSIT-SERVICE"))
 
-        // Order Service
-        .route("order-service", r -> r
-            .path("/api/v1/order/**")
-            .uri("lb://ORDER-SERVICE"))
-
         // Product Service
         .route("product-service", r -> r
             .path("/api/v1/products/**", "/api/v1/categories/**")
@@ -76,7 +71,6 @@ public class GatewayConfig {
         "auction-service", "lb://AUCTION-SERVICE",
         "notification-service", "lb://NOTIFICATION-SERVICE",
         "deposit-service", "lb://DEPOSIT-SERVICE",
-        "order-service", "lb://ORDER-SERVICE",
         "product-service", "lb://PRODUCT-SERVICE",
         "search-service", "lb://SEARCH-SERVICE",
         "settlement-service", "lb://SETTLEMENT-SERVICE",
