@@ -1,8 +1,8 @@
 package com.dev_high.settlement.batch.reader;
 
-import com.dev_high.settlement.domain.Settlement;
-import com.dev_high.settlement.domain.SettlementRepository;
-import com.dev_high.settlement.domain.SettlementStatus;
+import com.dev_high.settlement.domain.settle.Settlement;
+import com.dev_high.settlement.domain.settle.SettlementRepository;
+import com.dev_high.settlement.domain.settle.SettlementStatus;
 
 import java.time.*;
 import java.util.Collections;
@@ -35,13 +35,9 @@ public class SettlementReader implements ItemReader<Settlement> {
       return currentBatch.next();
     }
 
-      LocalDateTime nextMonth15 = LocalDate.now()
-              .plusMonths(1)
-              .withDayOfMonth(15).atTime(9, 0);
 
-      OffsetDateTime executionTime = nextMonth15.atOffset(ZoneOffset.ofHours(9));
-    Page<Settlement> settlements = settlementRepository.findByStatusAndDueDateBefore(
-        SettlementStatus.valueOf(statusParam), executionTime,
+    Page<Settlement> settlements = settlementRepository.findByStatus(
+        SettlementStatus.valueOf(statusParam),
         PageRequest.of(page, pageSize));
 
     if (settlements.isEmpty()) {
