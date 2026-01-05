@@ -3,35 +3,28 @@ package com.dev_high.auction.application.dto;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionStatus;
-import com.dev_high.product.domain.Product;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public record AuctionResponse(String auctionId, String productId, String sellerId, String productName,
-                              AuctionStatus status,
-                              BigDecimal startBid, BigDecimal currentBid,
-                              OffsetDateTime auctionStartAt, OffsetDateTime auctionEndAt, String filePath) {
+public record AuctionResponse(String id, String productId, AuctionStatus status,
+                              BigDecimal startBid,
+                              BigDecimal currentBid,
+                              String highestUserId,
+                              OffsetDateTime auctionStartAt, OffsetDateTime auctionEndAt,
+                              BigDecimal depositAmount, boolean deletedYn
+) {
 
-
-    public static AuctionResponse getAuctionResponse(Auction auction, String filePath) {
-        Product product = auction.getProduct();
-        AuctionLiveState state = auction.getLiveState();
-        BigDecimal currentBid = state != null ? state.getCurrentBid() : BigDecimal.ZERO;
-        return new AuctionResponse(auction.getId(), product.getId(), product.getSellerId(), product.getName(),
-                auction.getStatus(),
-                auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
-                auction.getAuctionEndAt(), filePath);
-    }
 
     public static AuctionResponse fromEntity(Auction auction) {
-        // 상품 썸네일 ?
-        Product product = auction.getProduct();
-        AuctionLiveState state = auction.getLiveState();
-        BigDecimal currentBid = state != null ? state.getCurrentBid() : BigDecimal.ZERO;
-        return new AuctionResponse(auction.getId(), product.getId(), product.getSellerId(), product.getName(),
-                auction.getStatus(),
-                auction.getStartBid(), currentBid, auction.getAuctionStartAt(),
-                auction.getAuctionEndAt(), null);
+        AuctionLiveState liveState = auction.getLiveState();
+        BigDecimal current = liveState == null ? BigDecimal.ZERO : liveState.getCurrentBid();
+        String highestUserId = liveState == null ? "" : liveState.getHighestUserId();
+        boolean delYn = "Y".equals(auction.getDeletedYn());
+
+
+        return new AuctionResponse(auction.getId(), auction.getProductId(), auction.getStatus(),
+                auction.getStartBid(), current, highestUserId, auction.getAuctionStartAt(),
+                auction.getAuctionEndAt(), auction.getDepositAmount(), delYn);
     }
 }
