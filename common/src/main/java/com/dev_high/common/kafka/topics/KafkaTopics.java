@@ -19,6 +19,8 @@ public class KafkaTopics {
   public static final String AUCTION_SEARCH_CREATED_REQUESTED = "auction-search-create-requested";
   public static final String AUCTION_SEARCH_UPDATED_REQUESTED = "auction-search-update-requested";
   public static final String AUCTION_SEARCH_DELETED_REQUESTED = "auction-search-delete-requested";
+  public static final String AUCTION_START_EVENT = "auction-start-event";
+  @Deprecated
   public static final String AUCTION_PRODUCT_UPDATE = "auction-product-update";
   /**
    * 중도포기 시 deposit을 즉시 처리 ,경매 종료시에는 kafka로 이벤트 발송 구독대상: deposit

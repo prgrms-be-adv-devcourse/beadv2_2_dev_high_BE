@@ -5,7 +5,6 @@ import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
-import com.dev_high.common.kafka.event.auction.AuctionProductUpdateEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
@@ -14,12 +13,14 @@ import com.dev_high.common.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.errors.NetworkException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -35,6 +36,7 @@ public class AuctionEventListener {
 
     // 경매 참여자들의 보증금 환급 후 처리
     @KafkaListener(topics = KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE)
+    @Transactional
     public void refundComplete(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
 
         DepositCompletedEvent val = JsonUtil.fromPayload(envelope.payload(),
@@ -44,8 +46,13 @@ public class AuctionEventListener {
             if (val.type().equals("REFUND")) {
                 recordService.markDepositRefunded(val.auctionId(), val.userIds());
             }
+        } catch (TransientDataAccessException | NetworkException e) {
+            // 일시적 오류: 재시도
+            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            throw e;
         } catch (Exception e) {
-
+            //재시도 없이 DLQ
+            throw new RuntimeException();
         }
 
     }
@@ -56,12 +63,25 @@ public class AuctionEventListener {
         DepositCompletedEvent val = JsonUtil.fromPayload(envelope.payload(),
                 DepositCompletedEvent.class);
 
-        if (val.type().equals("DEPOSIT")) {
-            val.userIds().forEach(id -> {
-                recordService.createParticipation(val.auctionId(), val.amount(), id);
 
-            });
+        try {
+            if (val.type().equals("DEPOSIT")) {
+                val.userIds().forEach(id -> {
+                    recordService.createParticipation(val.auctionId(), val.amount(), id);
+
+                });
+            }
+        } catch (TransientDataAccessException | NetworkException e) {
+            // 일시적 오류: 재시도
+            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            throw e;
+        } catch (Exception e) {
+            //재시도 없이 DLQ
+            throw new RuntimeException();
         }
+
+
+
 
     }
 
@@ -70,17 +90,22 @@ public class AuctionEventListener {
 
         OrderToAuctionUpdateEvent val = JsonUtil.fromPayload(envelope.payload(),
                 OrderToAuctionUpdateEvent.class);
-        // 미결제로 인한 주문취소 이벤트 소비하고 상품에 상태를 전달
 
-        List<String> productIds = auctionRepository.bulkUpdateStatus(val.auctionIds(),
-                (AuctionStatus.valueOf(val.status())));
+
+
         try {
-            eventPublisher.publish(KafkaTopics.AUCTION_PRODUCT_UPDATE,
-                    new AuctionProductUpdateEvent(productIds,
-                            val.status()));
+            auctionRepository.bulkUpdateStatus(val.auctionIds(),
+                    (AuctionStatus.valueOf(val.status())));
+        } catch (TransientDataAccessException | NetworkException e) {
+            // 일시적 오류: 재시도
+            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            throw e;
         } catch (Exception e) {
-
+            //재시도 없이 DLQ
+            throw new RuntimeException();
         }
+
+
 
     }
 
