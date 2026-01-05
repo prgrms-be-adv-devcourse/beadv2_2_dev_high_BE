@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.NetworkException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -128,6 +130,10 @@ public class KafkaConfig {
               return new TopicPartition(record.topic() + ".DLQ", record.partition());
             });
     DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, fixedBackOff);
+
+    /* runtime은 재시도 제외 바로 DLQ*/
+    errorHandler.addNotRetryableExceptions(RuntimeException.class);
+
     // 재시도 로그
     errorHandler.setRetryListeners((record, ex, deliveryAttempt) ->
             {
