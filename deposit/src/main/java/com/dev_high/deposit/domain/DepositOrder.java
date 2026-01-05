@@ -1,7 +1,6 @@
 package com.dev_high.deposit.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,44 +9,35 @@ import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 
-@Schema(description = "예치금 주문")
 @Table(name = "deposit_order", schema = "deposit")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DepositOrder {
-    @Schema(description = "예치금 주문 ID")
     @Id
-    @Column(name = "id", length = 20)
+    @Column(name = "id", updatable = false, nullable = false, length = 20)
     @CustomGeneratedId(method = "deposit_order")
     private String id;
 
-    @Schema(description = "사용자 ID")
     @Column(name = "user_id", length = 20, nullable = false)
     private String userId;
 
-    @Schema(description = "금액")
     @Column(name = "amount", nullable = false)
     private long amount;
 
-    @Schema(description = "주문 상태")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private DepositOrderStatus status;
 
-    @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Schema(description = "생성자")
     @Column(name = "created_by", nullable = false, updatable = false, length = 20)
     private String createdBy;
 
-    @Schema(description = "수정일시")
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @Schema(description = "수정자")
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
