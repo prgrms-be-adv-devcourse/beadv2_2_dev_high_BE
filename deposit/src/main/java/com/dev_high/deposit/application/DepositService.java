@@ -55,20 +55,12 @@ public class DepositService {
                 .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
 
         switch (command.type()) {
-            case CHARGE:
+            case CHARGE, REFUND:
                 deposit.increaseBalance(command.amount());
                 break;
 
-            case USAGE:
+            case USAGE, DEPOSIT:
                 deposit.decreaseBalance(command.amount());
-                break;
-
-            case DEPOSIT:
-                deposit.decreaseBalance(command.amount());
-                break;
-
-            case REFUND:
-                deposit.increaseBalance(command.amount());
                 break;
 
             default:

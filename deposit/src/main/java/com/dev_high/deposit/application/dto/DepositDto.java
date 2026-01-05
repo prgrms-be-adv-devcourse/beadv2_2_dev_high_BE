@@ -29,7 +29,7 @@ public class DepositDto {
     ) {
         public static Info from(Deposit deposit) {
             return new Info(
-                    deposit.getId(),
+                    deposit.getUserId(),
                     deposit.getBalance()
             );
         }
