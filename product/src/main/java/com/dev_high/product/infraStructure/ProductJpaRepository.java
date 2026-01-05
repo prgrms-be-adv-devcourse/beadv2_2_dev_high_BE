@@ -17,19 +17,6 @@ public interface ProductJpaRepository extends JpaRepository<Product, String> {
 
     Optional<Product> findByIdAndDeletedYn(String id, DeleteStatus deletedYn);
 
-    @Query("""
-        select distinct p
-        from Product p
-        join p.productDtls d
-        where p.deletedYn = :deletedYn
-          and d.deletedYn = :dtlDeletedYn
-          and d.status = :status
-        """)
-    Page<Product> findByDeletedYnAndDtlStatus(@Param("deletedYn") DeleteStatus deletedYn,
-                                              @Param("dtlDeletedYn") String dtlDeletedYn,
-                                              @Param("status") String status,
-                                              Pageable pageable);
-
     Page<Product> findByDeletedYn(DeleteStatus deletedYn, Pageable pageable);
 
     List<Product> findByIdIn(List<String> ids);

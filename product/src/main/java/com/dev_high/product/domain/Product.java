@@ -23,8 +23,7 @@ public class Product {
   @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
   private List<ProductCategoryRel> categoryRelations = new ArrayList<>();
 
-  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-  private List<ProductDtl> productDtls = new ArrayList<>();
+
 
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.CHAR)
@@ -45,6 +44,11 @@ public class Product {
 
   @Column(name = "file_id", length = 255)
   private String fileId;
+
+  @Column(name = "latest_auction_id", length = 20)
+  private String latestAuctionId;
+
+
 
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
@@ -95,6 +99,11 @@ public class Product {
   public void markDeleted(String updatedBy) {
     this.deletedYn = DeleteStatus.Y;
     this.deletedAt = OffsetDateTime.now();
+    this.updatedBy = updatedBy;
+  }
+
+  public void updateLatestAuctionId(String latestAuctionId, String updatedBy) {
+    this.latestAuctionId = latestAuctionId;
     this.updatedBy = updatedBy;
   }
 

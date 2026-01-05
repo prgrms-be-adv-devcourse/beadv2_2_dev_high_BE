@@ -11,8 +11,6 @@ public interface ProductRepository {
 
     Optional<Product> findById(String id);
 
-    Page<Product> findByDtlStatus(String status, Pageable pageable);
-
     Page<Product> findAll(Pageable pageable);
 
 
