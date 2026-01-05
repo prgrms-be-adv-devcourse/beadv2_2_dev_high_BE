@@ -18,4 +18,23 @@ spring:
           uri: https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE
           clone-on-start: true
           force-pull: false
-          refresh-rate: ${CONFIG_GIT_REFRESH_RATE:60} # 0=매 요청마다 최신 확인
+          refresh-rate: ${CONFIG_GIT_REFRESH_RATE:600} # 0=매 요청마다 최신 확인
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, refresh
+  info:
+    git:
+      mode: off
+  health:
+    config:
+      enabled: false
+  endpoint:
+    health:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.config.server: WARN

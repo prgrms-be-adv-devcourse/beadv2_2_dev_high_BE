@@ -119,6 +119,13 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         run: |
-          kubectl apply -f auction/k8s --namespace ${{ env.NAMESPACE }}
-          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
+          if kubectl get deploy $SERVICE_NAME --namespace $NAMESPACE >/dev/null 2>&1; then
+          # 기존 배포 존재 → 롤링 업데이트
+            kubectl apply -f auction/k8s --namespace $NAMESPACE
+            kubectl set image deployment/$SERVICE_NAME $SERVICE_NAME=$IMAGE --namespace $NAMESPACE
+          else
+          # 최초 배포 → apply만
+            kubectl apply -f auction/k8s --namespace $NAMESPACE
+          fi
+        
+          kubectl rollout status deployment/$SERVICE_NAME --namespace $NAMESPACE
