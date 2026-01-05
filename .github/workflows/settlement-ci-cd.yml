@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -73,6 +75,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.deploy_ref }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
@@ -119,13 +123,7 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         run: |
-          if kubectl get deploy $SERVICE_NAME --namespace $NAMESPACE >/dev/null 2>&1; then
-          # 기존 배포 존재 → 롤링 업데이트
-           kubectl apply -f settlement/k8s --namespace $NAMESPACE
-           kubectl set image deployment/$SERVICE_NAME $SERVICE_NAME=$IMAGE --namespace $NAMESPACE
-          else
-          # 최초 배포 → apply만
-           kubectl apply -f settlement/k8s --namespace $NAMESPACE
-          fi
-          
-          kubectl rollout status deployment/$SERVICE_NAME --namespace $NAMESPACE
+          kubectl set image --local -f settlement/k8s/deployment.yaml \
+            $SERVICE_NAME=$IMAGE -o yaml | kubectl apply -f - -n $NAMESPACE
+          kubectl apply -f settlement/k8s/service.yaml -n $NAMESPACE
+          kubectl rollout status deployment/$SERVICE_NAME -n $NAMESPACE

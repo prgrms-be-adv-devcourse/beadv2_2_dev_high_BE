@@ -21,7 +21,6 @@ repositories {
 dependencies {
     // 공통모듈 불러오기
     implementation project(':common')
-    implementation project(':product-domain')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
