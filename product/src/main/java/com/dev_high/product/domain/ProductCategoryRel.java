@@ -1,4 +1,4 @@
-﻿package com.dev_high.product.domain;
+package com.dev_high.product.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
