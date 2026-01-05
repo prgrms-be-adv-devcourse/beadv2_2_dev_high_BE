@@ -2,7 +2,6 @@ package com.dev_high.auction.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.common.util.DateUtil;
-import com.dev_high.product.domain.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -20,13 +19,8 @@ public class Auction {
     @CustomGeneratedId(method = "auction")
     private String id;
 
-
     @Column(name = "product_id", nullable = false)
     private String productId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false, insertable = false, updatable = false)
-    private Product product;
 
     @Column(length = 50, nullable = false)
     @Enumerated(EnumType.STRING)
@@ -132,7 +126,4 @@ public class Auction {
 
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
 }
