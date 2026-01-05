@@ -1,7 +1,6 @@
 package com.dev_high.product.infraStructure;
 
 import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.ProductDtl;
 import com.dev_high.product.domain.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -25,16 +24,6 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public Optional<Product> findById(String id) {
         return productJpaRepository.findByIdAndDeletedYn(id, Product.DeleteStatus.N);
-    }
-
-    @Override
-    public Page<Product> findByDtlStatus(String status, Pageable pageable) {
-        return productJpaRepository.findByDeletedYnAndDtlStatus(
-                Product.DeleteStatus.N,
-                ProductDtl.NOT_DELETED,
-                status,
-                pageable
-        );
     }
 
     @Override
