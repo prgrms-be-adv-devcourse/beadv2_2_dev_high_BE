@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 public class DepositOrderRequest {
     public record Create(
+            @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Min(value = 1L, message = "최소 주문 금액은 1원 입니다.")
             Long amount
