@@ -3,7 +3,7 @@ package com.dev_high.deposit.domain;
 import java.util.Optional;
 
 public interface DepositRepository {
-    Optional<Deposit> findById(String userId);
+    Optional<Deposit> findByUserId(String userId);
 
     Deposit save(Deposit deposit);
 

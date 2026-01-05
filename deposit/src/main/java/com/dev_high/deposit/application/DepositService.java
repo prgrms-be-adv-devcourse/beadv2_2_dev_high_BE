@@ -30,7 +30,7 @@ public class DepositService {
     @Transactional
     public DepositDto.Info createDepositAccount(DepositDto.CreateCommand command) {
 
-        depositRepository.findById(command.userId())
+        depositRepository.findByUserId(command.userId())
                 .ifPresent(deposit -> {
                     throw new IllegalArgumentException("사용자 ID: " + command.userId() + "에 대한 예치금 계정이 이미 존재합니다.");
                 });
@@ -44,7 +44,7 @@ public class DepositService {
     public DepositDto.Info findDepositAccountById() {
         String userId = UserContext.get().userId();
 
-        Deposit deposit = depositRepository.findById(userId)
+        Deposit deposit = depositRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("예치금 계좌를 찾을 수 없습니다: " + userId));
         return DepositDto.Info.from(deposit);
     }

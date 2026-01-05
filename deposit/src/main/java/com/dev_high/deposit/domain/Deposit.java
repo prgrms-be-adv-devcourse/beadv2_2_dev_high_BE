@@ -3,13 +3,10 @@ package com.dev_high.deposit.domain;
 import com.dev_high.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
+import java.util.UUID;
 
 @Schema(description = "예치금")
 @Table(name = "deposit", schema = "deposit")
@@ -17,10 +14,14 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Deposit {
-    @Schema(description = "사용자 ID")
+    @Schema(description = "예치금 ID")
     @Id
-    @Column(name = "id", length = 20)
-    private String id;
+    @Column(name = "id")
+    private UUID id;
+
+    @Schema(description = "사용자 ID")
+    @Column(name = "user_id", length = 20, nullable = false)
+    private String userId;
 
     @Schema(description = "사용가능 잔액")
     @Column(name = "balance", nullable = false)
@@ -43,9 +44,10 @@ public class Deposit {
     private String updatedBy;
 
     @Builder
-    public Deposit(String id, long balance) {
+    public Deposit(UUID id, String userId, long balance) {
         this.id = id;
-        this.balance = Optional.ofNullable(balance).orElse(0L);
+        this.userId = userId;
+        this.balance = balance;
     }
 
     @PrePersist
@@ -53,19 +55,20 @@ public class Deposit {
         OffsetDateTime now = OffsetDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        this.createdBy = id;
-        this.updatedBy = id;
+        this.createdBy = userId;
+        this.updatedBy = userId;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = OffsetDateTime.now();
-        this.updatedBy = id;
+        this.updatedBy = userId;
     }
 
     public static Deposit create(String userId) {
         return Deposit.builder()
-                .id(userId)
+                .id(UUID.randomUUID())
+                .userId(userId)
                 .balance(0L)
                 .build();
     }
