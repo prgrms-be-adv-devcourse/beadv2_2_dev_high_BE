@@ -7,15 +7,11 @@ public record UserSignUpRequest(
         String password,
         String name,
         String nickname,
-        String phone_number,
-        String zip_code,
-        String state,
-        String city,
-        String detail
+        String phone_number
 
 ) {
 
     public CreateUserCommand toCommand() {
-        return new CreateUserCommand(email, password, name, nickname, phone_number, zip_code, state, city, detail);
+        return new CreateUserCommand(email, password, name, nickname, phone_number);
     }
 }

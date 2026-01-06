@@ -5,7 +5,8 @@ import java.util.Optional;
 public interface UserRepository {
 
     User save(User user);
-    Optional<User> findById(String id);
-    Optional<User> findByEmail(String email);
-    boolean existsByEmail(String email);
+    Optional<User> findById(String userId);
+    Optional<User> findByEmailAndDeletedYn(String email, String deletedYn);
+    boolean existsByEmailAndDeletedYn(String email, String deletedYn);
+    Optional<User> findByProviderAndProviderUserIdAndDeletedYn(OAuthProvider provider, String s, String deletedYn);
 }

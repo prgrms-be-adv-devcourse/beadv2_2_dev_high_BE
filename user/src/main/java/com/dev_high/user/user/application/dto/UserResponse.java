@@ -6,22 +6,14 @@ public record UserResponse(
         String email,
         String name,
         String nickname,
-        String phone_number,
-        String zip_code,
-        String state,
-        String city,
-        String detail
+        String phone_number
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
                 user.getEmail(),
                 user.getName(),
                 user.getNickname(),
-                user.getPhoneNumber(),
-                user.getZipCode(),
-                user.getState(),
-                user.getCity(),
-                user.getDetail()
+                user.getPhoneNumber()
         );
     }
 }

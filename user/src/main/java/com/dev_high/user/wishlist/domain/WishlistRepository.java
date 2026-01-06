@@ -8,9 +8,8 @@ import java.util.Optional;
 
 public interface WishlistRepository {
     Wishlist save(Wishlist wishlist);
-    void delete(Wishlist wishlist);
-    boolean existsByUserIdAndProductId(String userId, String productId);
     Optional<Wishlist> findByUserIdAndProductId(String userId, String productId);
-    Page<Wishlist> findByUserId(String userId, Pageable pageable);
-    List<String> findUserIdByProductId(String productId);
+    Optional<Wishlist> findByUserIdAndProductIdAndDeletedYn(String userId, String productId, String deletedYn);;
+    Page<Wishlist> findByUserIdAndDeletedYn(String userId, String deletedYn, Pageable pageable);
+    List<String> findUserIdByProductIdAndDeletedYn(String productId, String deletedYn);
 }

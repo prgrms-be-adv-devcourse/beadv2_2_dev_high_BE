@@ -1,6 +1,5 @@
 package com.dev_high.user.seller.domain;
 
-import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.user.user.domain.User;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
@@ -33,31 +32,34 @@ public class Seller {
     @Column(name = "deleted_yn",  nullable = false)
     private String deletedYn;
 
-    @Column(name = "created_by", length = 50)
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
+    @Column(name = "created_by", length = 50, nullable = false)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private OffsetDateTime createdAt;
 
-    @Column(name = "updated_by", length = 50)
+    @Column(name = "updated_by", length = 50, nullable = false)
     private String updatedBy;
 
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt = OffsetDateTime.now();
+    private OffsetDateTime updatedAt;
+
 
     @PrePersist
     public void prePersist() {
-        createdBy = user.getId();
-        updatedBy = user.getId();
-        this.sellerStatus = SellerStatus.ACTIVE;
-        this.deletedYn = "N";
         createdAt = OffsetDateTime.now();
+        createdBy = user.getId();
         updatedAt = OffsetDateTime.now();
+        updatedBy = user.getId();
     }
 
     @PreUpdate
     public void preUpdate() {
         updatedAt = OffsetDateTime.now();
+        updatedBy = user.getId();
     }
 
     protected Seller() {
@@ -68,14 +70,24 @@ public class Seller {
         this.user = user;
         this.bankName = bankName;
         this.bankAccount = bankAccount;
+        this.deletedYn = "N";
+        this.sellerStatus = SellerStatus.ACTIVE;
     }
 
-    public void deleteSeller(SellerStatus status) {
-        this.sellerStatus = status;
-        this.deletedYn = "Y";
+    public void remove() {
+        this.sellerStatus = SellerStatus.INACTIVE;
+        this.deletedAt = OffsetDateTime.now();
+        this.updatedBy = user.getId();
     }
 
-    public void updateSeller(String bankName, String bankAccount) {
+    public void update(String bankName, String bankAccount) {
+        this.bankName = bankName;
+        this.bankAccount = bankAccount;
+    }
+
+    public void revive(String bankName, String bankAccount) {
+        this.deletedAt = null;
+        this.deletedYn = "N";
         this.bankName = bankName;
         this.bankAccount = bankAccount;
     }
