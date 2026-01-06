@@ -38,7 +38,7 @@ public class ProductService {
     // 상품생성 트랜잭션
     @Transactional
     public Product saveProduct(ProductCommand command) {
-        UserInfo userInfo = ensureSellerRole();
+        UserInfo userInfo = UserContext.get();
         String sellerId = userInfo.userId();
 
         Product product = Product.create(
@@ -76,7 +76,7 @@ public class ProductService {
     public ProductInfo updateProduct(String productId, ProductUpdateCommand command) {
 
         //셀러 및 상품생성자 일치 검증
-        UserInfo userInfo = ensureSellerRole();
+        UserInfo userInfo = UserContext.get();
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
         if (userInfo.userId() == null || !userInfo.userId().equals(product.getSellerId())) {
@@ -146,19 +146,6 @@ public class ProductService {
     /**
 
      **/
-
-    //판매자 검증
-    private UserInfo ensureSellerRole() {
-        UserInfo userInfo = UserContext.get();
-        if (userInfo == null || userInfo.userId() == null || !"SELLER".equalsIgnoreCase(userInfo.role())) {
-
-            if (!"ADMIN".equals(userInfo.role())) {
-                throw new ProductUnauthorizedException("판매자만 상품을 등록/수정할 수 있습니다.", "PRODUCT_SELLER_ONLY");
-            }
-
-        }
-        return userInfo;
-    }
 
     public List<WishlistProductResponse> getProductInfos(List<String> productIds) {
         if (productIds == null || productIds.isEmpty()) {
