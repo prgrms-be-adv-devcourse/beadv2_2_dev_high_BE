@@ -54,23 +54,27 @@ spec:
                 -XX:MaxMetaspaceSize=64m
                 -XX:MaxDirectMemorySize=32m
                 -XX:ReservedCodeCacheSize=16m
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/readiness
               port: 8888
-            initialDelaySeconds: 80
             periodSeconds: 60
             timeoutSeconds: 5
-            failureThreshold: 2
-
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: 8888
-            initialDelaySeconds: 100
             periodSeconds: 120
             timeoutSeconds: 5
-            failureThreshold: 1
+            failureThreshold: 3
 
           resources:
             requests:

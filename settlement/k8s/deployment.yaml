@@ -146,29 +146,33 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul
-                -Xmx128m
-                -XX:MaxMetaspaceSize=96m
-                -XX:MaxDirectMemorySize=64m
-                -XX:ReservedCodeCacheSize=32m
+                -Xmx96m
+                -XX:MaxMetaspaceSize=128m
+                -XX:MaxDirectMemorySize=32m
+                -XX:ReservedCodeCacheSize=24m
                  
 
-          readinessProbe:
+          startupProbe:
             httpGet:
               path: /actuator/health
-              port: 8087
-            initialDelaySeconds: 80
+              port: 8888
             periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 12
-
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8888
+            periodSeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /actuator/health
-              port: 8087
-            initialDelaySeconds: 110
-            periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 6
+              path: /actuator/health/liveness
+              port: 8888
+            periodSeconds: 120
+            timeoutSeconds: 5
+            failureThreshold: 3
 
           resources:
             requests:
