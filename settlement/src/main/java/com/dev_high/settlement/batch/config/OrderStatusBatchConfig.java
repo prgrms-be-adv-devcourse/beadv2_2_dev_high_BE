@@ -5,7 +5,7 @@ import com.dev_high.settlement.batch.processor.OrderStatusChangeRequest;
 import com.dev_high.settlement.batch.processor.OrderStatusChangeResult;
 import com.dev_high.settlement.batch.reader.OrderStatusChangeReader;
 import com.dev_high.settlement.batch.writer.OrderStatusChangeWriter;
-import com.dev_high.settlement.domain.order.OrderStatus;
+import com.dev_high.settlement.order.domain.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;

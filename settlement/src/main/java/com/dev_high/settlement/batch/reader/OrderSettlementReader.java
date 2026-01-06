@@ -1,8 +1,8 @@
 package com.dev_high.settlement.batch.reader;
 
-import com.dev_high.settlement.domain.order.WinningOrder;
-import com.dev_high.settlement.domain.order.OrderRepository;
-import com.dev_high.settlement.domain.order.OrderStatus;
+import com.dev_high.settlement.order.domain.WinningOrder;
+import com.dev_high.settlement.order.domain.OrderRepository;
+import com.dev_high.settlement.order.domain.OrderStatus;
 import com.dev_high.settlement.batch.listener.SettlementRegistrationStepListener;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;

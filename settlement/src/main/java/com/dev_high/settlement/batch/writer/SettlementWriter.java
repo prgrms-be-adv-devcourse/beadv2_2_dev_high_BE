@@ -1,6 +1,6 @@
 package com.dev_high.settlement.batch.writer;
 
-import com.dev_high.settlement.domain.settle.Settlement;
+import com.dev_high.settlement.settle.domain.settle.Settlement;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.stereotype.Component;
