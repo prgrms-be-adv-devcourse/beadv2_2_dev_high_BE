@@ -147,6 +147,9 @@ spec:
               value: >
                 -Duser.timezone=Asia/Seoul
                 -Xmx128m
+                -XX:MaxDirectMemorySize=128m
+                -XX:MaxMetaspaceSize=96m
+                -XX:ReservedCodeCacheSize=32m
           
 
           readinessProbe:

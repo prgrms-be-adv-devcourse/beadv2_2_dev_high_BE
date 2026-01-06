@@ -52,6 +52,8 @@ spec:
                 -Duser.timezone=Asia/Seoul
                 -Xmx96m           
                 -XX:MaxMetaspaceSize=64m
+                -XX:MaxDirectMemorySize=32m
+                -XX:ReservedCodeCacheSize=16m
           readinessProbe:
             httpGet:
               path: /actuator/health

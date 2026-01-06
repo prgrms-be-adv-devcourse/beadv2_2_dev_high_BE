@@ -146,7 +146,10 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul
-                -Xmx160m 
+                -Xmx160m
+                -XX:MaxMetaspaceSize=96m
+                -XX:MaxDirectMemorySize=64m
+                -XX:ReservedCodeCacheSize=32m
                  
 
           readinessProbe:

@@ -43,6 +43,9 @@ spec:
               value: >
                 -Duser.timezone=Asia/Seoul
                 -Xmx96m
+                -XX:MaxMetaspaceSize=96m
+                -XX:MaxDirectMemorySize=32m
+                -XX:ReservedCodeCacheSize=16m
 
           readinessProbe:
             httpGet:
