@@ -1,8 +1,7 @@
 package com.dev_high.user.notification.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.user.notification.application.dto.NotificationCommand;
-import com.dev_high.user.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.application.dto.NotificationDto;
 import com.dev_high.user.notification.domain.Notification;
 import com.dev_high.user.notification.domain.NotificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public NotificationInfo createNotification(NotificationCommand command) {
+    public NotificationDto.Info createNotification(NotificationDto.CreateCommand command) {
         Notification notification = Notification.create(
                 command.userId(),
                 command.type(),
@@ -25,33 +24,30 @@ public class NotificationService {
                 command.content(),
                 command.relatedUrl()
         );
-        return NotificationInfo.from(notificationRepository.save(notification));
+        return NotificationDto.Info.from(notificationRepository.save(notification));
     }
 
     @Transactional(readOnly = true)
-    public Page<NotificationInfo> getAllNotifications(Pageable pageable) {
+    public Page<NotificationDto.Info> getAllNotifications(Pageable pageable) {
         String userId = UserContext.get().userId();
         return notificationRepository.findAllByUserId(userId, pageable);
     }
 
     @Transactional(readOnly = true)
-    public long getUnreadNotificationCount() {
+    public NotificationDto.Count getUnreadNotificationCount() {
         String userId = UserContext.get().userId();
         return notificationRepository.countUnreadByUserId(userId);
     }
 
     @Transactional
-    public NotificationInfo getNotificationById(String notificationId) {
-        // 1. notificationId로 알림 정보 조회
+    public NotificationDto.Info getNotificationById(String notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
 
-        // 2. 해당 알림을 읽음처리
         notification.markAsRead(UserContext.get().userId());
 
-        // 3. 알림 정보 업데이트
         notificationRepository.save(notification);
 
-        return NotificationInfo.from(notification);
+        return NotificationDto.Info.from(notification);
     }
 }

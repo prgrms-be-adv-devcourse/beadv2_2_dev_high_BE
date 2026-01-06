@@ -1,13 +1,13 @@
 package com.dev_high.user.notification.infrastructure;
 
-import com.dev_high.user.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.application.dto.NotificationDto;
 import com.dev_high.user.notification.domain.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NotificationJpaRepository extends JpaRepository<Notification, String> {
-    Page<NotificationInfo> findAllByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+    Page<NotificationDto.Info> findAllByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
 
-    long countByUserIdAndReadYn(String userId, Boolean readYn);
+    NotificationDto.Count countByUserIdAndReadYn(String userId, Boolean readYn);
 }

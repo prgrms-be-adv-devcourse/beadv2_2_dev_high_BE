@@ -57,7 +57,7 @@ public class NotificationEventListener {
 
             // 3. 각 사용자 ID에 대해, 위에서 결정된 title과 type으로 알림 생성
             userIds.forEach(userId -> {
-                NotificationCommand command =  new NotificationCommand(userId, attribute.type(), attribute.title(), content, relatedUrl);
+                NotificationDto.CreateCommand command = NotificationDto.CreateCommand.of(userId, attribute.type(), attribute.title(), content, relatedUrl);
 
                 notificationService.createNotification(command);
             });

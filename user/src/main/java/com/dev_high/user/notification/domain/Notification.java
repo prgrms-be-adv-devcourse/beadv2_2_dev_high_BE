@@ -91,14 +91,17 @@ public class Notification{
     @PrePersist
     public void prePersist() {
         OffsetDateTime now = OffsetDateTime.now();
+        this.expiredAt = now.plusDays(30);
         this.createdAt = now;
         this.updatedAt = now;
-        this.expiredAt = now.plusDays(30);
+        this.createdBy = userId;
+        this.updatedBy  = userId;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = OffsetDateTime.now();
+        this.updatedBy = userId;
     }
 
     public static Notification create(
@@ -107,7 +110,7 @@ public class Notification{
         String title,
         String content,
         String relatedUrl
-    ){
+    ) {
         return Notification.builder()
                 .userId(userId)
                 .type(type)
