@@ -1,12 +1,13 @@
 package com.dev_high.apigateway.config;
 
 
-import java.util.Map;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
+import java.util.Map;
 
 @Configuration
 public class GatewayConfig {
@@ -45,7 +46,7 @@ public class GatewayConfig {
 
         // Settlement Service
         .route("settlement-service", r -> r
-            .path("/api/v1/settle/**")
+            .path("/api/v1/settle/**","/api/v1/orders/**")
             .uri("lb://SETTLEMENT-SERVICE"))
 
         // User Service
@@ -62,7 +63,7 @@ public class GatewayConfig {
   }
 
   @Bean
- // @Profile("!prod")
+  @Profile("!prod")
   public RouteLocator swaggerRoutes(RouteLocatorBuilder builder) {
     RouteLocatorBuilder.Builder routesBuilder = builder.routes();
 

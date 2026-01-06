@@ -1,6 +1,6 @@
 jwt:
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
-
+  secret: ${JWT_SECRET}
 spring:
   r2dbc:
     url: ${SPRING_R2DBC_URL}
