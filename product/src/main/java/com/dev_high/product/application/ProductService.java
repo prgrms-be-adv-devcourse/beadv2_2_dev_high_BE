@@ -73,6 +73,7 @@ public class ProductService {
 
 
     //상품수정
+    @Transactional
     public ProductInfo updateProduct(String productId, ProductUpdateCommand command) {
 
         //셀러 및 상품생성자 일치 검증
@@ -133,15 +134,17 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(String productId, String sellerId) {
+    public void deleteProduct(String productId) {
+        UserInfo userInfo = UserContext.get();
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(ProductNotFoundException::new);
 
-        if (!product.getCreatedBy().equals(sellerId)) {
+        if (!product.getCreatedBy().equals(userInfo.userId())) {
             throw new ProductUnauthorizedException();
         }
 
-        product.markDeleted(sellerId);
+        product.markDeleted(userInfo.userId());
     }
 
     @Transactional
