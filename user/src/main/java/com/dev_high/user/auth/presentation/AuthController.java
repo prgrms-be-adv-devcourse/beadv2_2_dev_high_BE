@@ -42,11 +42,13 @@ public class AuthController {
         return authService.socialLogin(request, response);
     }
 
+    @PostMapping("/logout")
+    public ApiResponseDto<Void> logout(@CookieValue(name = "refresh_token", required = false) String refreshToken, HttpServletResponse response){
+        return authService.logout(refreshToken, response);
+    }
+
     @PostMapping("/refresh/token")
-    public ApiResponseDto<TokenResponse> refreshToken(@RequestBody TokenRequest request){
-        TokenCommand command = new TokenCommand(
-                request.refreshToken()
-        );
-        return authService.refreshToken(command);
+    public ApiResponseDto<TokenResponse> refreshToken(@CookieValue(name = "refresh_token", required = false) String refreshToken){
+        return authService.refreshToken(refreshToken);
     }
 }

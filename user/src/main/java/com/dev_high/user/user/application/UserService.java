@@ -1,7 +1,5 @@
 package com.dev_high.user.user.application;
 
-import com.dev_high.common.context.UserContext;
-import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.user.application.dto.CreateUserCommand;
 import com.dev_high.user.user.application.dto.UpdatePasswordCommand;
@@ -28,7 +26,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SellerService sellerService;
-    private final AuthService authService;
     private final UserDomainService userDomainService;
     private final ApplicationEventPublisher publisher;
 
@@ -108,17 +105,6 @@ public class UserService {
         user.remove();
         return ApiResponseDto.success(
                 "회원 탈퇴가 정상적으로 처리되었습니다.",
-                null
-        );
-    }
-
-
-    @Transactional
-    public ApiResponseDto<Void> logout() {
-        String userId = UserContext.get().userId();
-        authService.logout(userId);
-        return ApiResponseDto.success(
-                "정상적으로 로그아웃되었습니다.",
                 null
         );
     }

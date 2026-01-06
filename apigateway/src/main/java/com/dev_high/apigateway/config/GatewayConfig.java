@@ -16,45 +16,45 @@ public class GatewayConfig {
   @Bean
   public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
     return builder.routes()
-        // Auction Service
-        .route("auction-service", r -> r
-            .path("/api/v1/auctions/**") // 해당 경로로 요청하면 > 해당서비스로 요청전달
-            .uri("lb://AUCTION-SERVICE")) // 유레카에 등록된 서비스이름
-        .route("auction-service-ws", r -> r
-            .path("/ws-auction/**")      // 클라이언트 WebSocket 접속 경로
-            .uri("lb://AUCTION-SERVICE")) // WebSocket 업그레이드 요청도 프록시
+            // Auction Service
+            .route("auction-service", r -> r
+                    .path("/api/v1/auctions/**") // 해당 경로로 요청하면 > 해당서비스로 요청전달
+                    .uri("lb://AUCTION-SERVICE")) // 유레카에 등록된 서비스이름
+            .route("auction-service-ws", r -> r
+                    .path("/ws-auction/**")      // 클라이언트 WebSocket 접속 경로
+                    .uri("lb://AUCTION-SERVICE")) // WebSocket 업그레이드 요청도 프록시
 
-        // Deposit Service
-        .route("deposit-service", r -> r
-            .path("/api/v1/deposit/**")
-            .uri("lb://DEPOSIT-SERVICE"))
+            // Deposit Service
+            .route("deposit-service", r -> r
+                    .path("/api/v1/deposit/**")
+                    .uri("lb://DEPOSIT-SERVICE"))
 
-        // Product Service
-        .route("product-service", r -> r
-            .path("/api/v1/products/**", "/api/v1/categories/**")
-            .uri("lb://PRODUCT-SERVICE"))
+            // Product Service
+            .route("product-service", r -> r
+                    .path("/api/v1/products/**", "/api/v1/categories/**")
+                    .uri("lb://PRODUCT-SERVICE"))
 
-        // Search Service
-        .route("search-service", r -> r
-            .path("/api/v1/search/**")
-            .uri("lb://SEARCH-SERVICE"))
+            // Search Service
+            .route("search-service", r -> r
+                    .path("/api/v1/search/**")
+                    .uri("lb://SEARCH-SERVICE"))
 
-        // Settlement Service
-        .route("settlement-service", r -> r
-            .path("/api/v1/settle/**","/api/v1/orders/**")
-            .uri("lb://SETTLEMENT-SERVICE"))
+            // Settlement Service
+            .route("settlement-service", r -> r
+                    .path("/api/v1/settle/**","/api/v1/orders/**")
+                    .uri("lb://SETTLEMENT-SERVICE"))
 
-        // User Service
-        .route("user-service", r -> r
-            .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**")
-            .uri("lb://USER-SERVICE"))
+            // User Service
+            .route("user-service", r -> r
+                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**")
+                    .uri("lb://USER-SERVICE"))
 
-        // File Service
-        .route("file-service", r -> r
-            .path("/api/v1/files/**")
-            .uri("lb://FILE-SERVICE"))
+            // File Service
+            .route("file-service", r -> r
+                    .path("/api/v1/files/**")
+                    .uri("lb://FILE-SERVICE"))
 
-        .build();
+            .build();
   }
 
   @Bean
@@ -64,22 +64,22 @@ public class GatewayConfig {
 
     // 서비스 이름과 lb URI를 맵으로 관리
     Map<String, String> services = Map.of(
-        "auction-service", "lb://AUCTION-SERVICE",
-        "deposit-service", "lb://DEPOSIT-SERVICE",
-        "product-service", "lb://PRODUCT-SERVICE",
-        "search-service", "lb://SEARCH-SERVICE",
-        "settlement-service", "lb://SETTLEMENT-SERVICE",
-        "user-service", "lb://USER-SERVICE",
-        "file-service", "lb://FILE-SERVICE"
+            "auction-service", "lb://AUCTION-SERVICE",
+            "deposit-service", "lb://DEPOSIT-SERVICE",
+            "product-service", "lb://PRODUCT-SERVICE",
+            "search-service", "lb://SEARCH-SERVICE",
+            "settlement-service", "lb://SETTLEMENT-SERVICE",
+            "user-service", "lb://USER-SERVICE",
+            "file-service", "lb://FILE-SERVICE"
 
     );
 
     services.forEach((name, uri) -> {
       routesBuilder.route(name + "-swagger", r -> r
-          .path("/swagger/" + name + "/**")
-          .filters(f -> f.rewritePath("/swagger/" + name + "(/(?<segment>.*))?",
-              "/v3/api-docs${segment}"))
-          .uri(uri)
+              .path("/swagger/" + name + "/**")
+              .filters(f -> f.rewritePath("/swagger/" + name + "(/(?<segment>.*))?",
+                      "/v3/api-docs${segment}"))
+              .uri(uri)
       );
     });
 

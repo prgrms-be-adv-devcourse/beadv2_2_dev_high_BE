@@ -12,11 +12,12 @@ import com.dev_high.user.user.domain.*;
 import com.dev_high.user.user.exception.*;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,14 +105,18 @@ public class AuthService {
 
         return generateTokensAndHandleLoginResponse(user, response);
     }
-    public ApiResponseDto<TokenResponse> refreshToken(TokenCommand command) {
-        Claims claims = jwtProvider.parseToken(command.refreshToken());
+    public ApiResponseDto<TokenResponse> refreshToken(String token) {
+        if(token.isEmpty()) {
+            throw new RefreshTokenNotFoundException();
+        }
+
+        Claims claims = jwtProvider.parseToken(token);
         String userId = claims.getSubject();
 
         RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId)
                 .orElseThrow(RefreshTokenNotFoundException::new);
 
-        if(!refreshToken.getToken().equals(command.refreshToken())) {
+        if(!refreshToken.getToken().equals(token)) {
             throw new RefreshTokenMismatchException();
         }
 
@@ -125,17 +130,47 @@ public class AuthService {
         );
     }
 
-    public void logout(String userId) {
-        refreshTokenRepository.deleteByUserId(userId);
+    public ApiResponseDto<Void> logout(String refreshToken, HttpServletResponse response) {
+        if (refreshToken != null) {
+            try {
+                Claims claims = jwtProvider.parseToken(refreshToken);
+                String userId = claims.getSubject();
+                refreshTokenRepository.deleteById(userId);
+            } catch (Exception e) {
+                log.warn("JWT 검증 실패: {}", e.getMessage(), e);
+            }
+        }
+
+        deleteRefreshTokenCookie(response);
+
+        return ApiResponseDto.success(
+                "정상적으로 로그아웃되었습니다.",
+                null
+        );
     }
 
     private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge((int) (refreshTokenExpiration / 1000));
-        response.addCookie(refreshTokenCookie);
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(refreshTokenExpiration / 1000)
+                .sameSite("None")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void deleteRefreshTokenCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("None")
+                .maxAge(0)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     @Transactional

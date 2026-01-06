@@ -26,19 +26,9 @@ public class WebFluxSecurityConfig {
             "/v3/api-docs/**", "/?*-service/v3/api-docs", "/swagger*/**", "/webjars/**"
     };
 
-
-    // 인증 필요없는 url
-    private final static String USER_JOIN_ANTPATTERNS = "/api/v1/users/signup";
-    private final static String AUTH_ANTPATTERNS = "/api/v1/auth/**";
-    private final static String[] AUCTION_ANTPATTERNS = {"/api/v1/auctions", "/api/v1/auctions/*",
-            "/ws-auction/**"};
-    private final static String[] PRODUCT_ANTPATTERNS = {"/api/v1/products", "/api/v1/products/*", "/api/v1/categories/**", "/api/v1/products/internal"};
-    private final static String[] SEARCH_ANTPATTERNS = {"/api/v1/search/**"};
-    private final static String[] FILE_ANTPATTERNS = {"/api/v1/files/**"};
-
     @Bean
     public SecurityWebFilterChain configure(ServerHttpSecurity http,
-                                            ReactiveAuthorizationManager<AuthorizationContext> check) {
+                                            ReactiveAuthorizationManager<AuthorizationContext> authorizationManager) {
         http
                 .httpBasic(basic -> basic.authenticationEntryPoint(
                         new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
@@ -54,25 +44,23 @@ public class WebFluxSecurityConfig {
                             return null;
                         }
                         CorsConfiguration config = new CorsConfiguration();
-                        config.setAllowedOriginPatterns(List.of("*")); // 모든 출처 허용
+                        config.setAllowedOriginPatterns(List.of(
+                                "http://localhost:[*]",
+                                "http://127.0.0.1:[*]",
+                                "https://more-auction.kro.kr",
+                                "https://more-admin.kro.kr"
+                        ));
                         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                         config.setAllowedHeaders(List.of("*"));
                         config.setExposedHeaders(List.of("*")); // 추가
-                        config.setAllowCredentials(false);
+                        config.setAllowCredentials(true);
                         return config;
                     });
                 })
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(PERMITALL_ANTPATTERNS).permitAll()
-                        .pathMatchers(AUTH_ANTPATTERNS).permitAll()
-                        .pathMatchers(SEARCH_ANTPATTERNS).permitAll()
-                        .pathMatchers(HttpMethod.POST, USER_JOIN_ANTPATTERNS).permitAll()
-                        .pathMatchers(HttpMethod.GET, AUCTION_ANTPATTERNS).permitAll()
-                        .pathMatchers(HttpMethod.GET, PRODUCT_ANTPATTERNS).permitAll()
-                        .pathMatchers(HttpMethod.GET, FILE_ANTPATTERNS).permitAll()
-
-                        .anyExchange().access(check)
+                        .anyExchange().access(authorizationManager)
                 );
 
         return http.build();
