@@ -112,6 +112,14 @@ public class ProductService {
         return products.stream().map(ProductInfo::from).toList();
     }
 
+
+    @Transactional(readOnly = true)
+    public List<ProductInfo> getProductsByProductIds(List<String> productIds) {
+        List<Product> products;
+        products = productRepository.findByProductIds(productIds);
+        return products.stream().map(ProductInfo::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<ProductInfo> getProductsBySeller(String sellerId) {
         return productRepository.findBySellerId(sellerId).stream()

@@ -51,6 +51,13 @@ public class ProductController {
         return ApiResponseDto.success(productService.getProduct(productId));
     }
 
+
+    @Operation(summary = "상품 다건 조회", description = "카테고리 정보를 포함한 상품 여러 건을 조회합니다.")
+    @GetMapping("/{productId}/many")
+    public ApiResponseDto<List<ProductInfo>> getProduct(@Parameter(description = "상품 ID", required = true) @PathVariable List<String> productId) {
+        return ApiResponseDto.success(productService.getProductsByProductIds(productId));
+    }
+
     @Operation(summary = "상품 수정", description = "판매자 본인이고 READY 상태일 때 상품 정보를 수정합니다.")
     @PutMapping("/{productId}")
     public ApiResponseDto<ProductInfo> updateProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
