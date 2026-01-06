@@ -68,8 +68,7 @@ public class ProductController {
     @Operation(summary = "상품 삭제", description = "상품을 삭제합니다.")
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ApiResponseDto<Void> deleteProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
-                                              @Parameter(description = "판매자 ID", required = true) @RequestParam String sellerId) {
+    public ApiResponseDto<Void> deleteProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId) {
         productService.deleteProduct(productId);
         return ApiResponseDto.success(null);
     }
