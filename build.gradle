@@ -88,7 +88,6 @@ subprojects {
         configurations.configureEach {
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-config'
-            exclude group: 'org.springframework.boot', module: 'spring-boot-starter-actuator'
         }
     }
     project(':discovery') {
