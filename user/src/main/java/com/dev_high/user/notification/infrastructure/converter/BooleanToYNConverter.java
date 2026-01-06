@@ -1,4 +1,4 @@
-package com.dev_high.notification.infrastructure.converter;
+package com.dev_high.user.notification.infrastructure.converter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

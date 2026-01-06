@@ -1,8 +1,8 @@
-package com.dev_high.notification.application.dto;
+package com.dev_high.user.notification.application.dto;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
-import com.dev_high.notification.application.NotificationService;
-import com.dev_high.notification.domain.NotificationType;
+import com.dev_high.user.notification.application.NotificationService;
+import com.dev_high.user.notification.domain.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

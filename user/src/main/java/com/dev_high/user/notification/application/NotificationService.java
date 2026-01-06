@@ -1,14 +1,13 @@
-package com.dev_high.notification.application;
+package com.dev_high.user.notification.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.notification.application.dto.NotificationCommand;
-import com.dev_high.notification.application.dto.NotificationInfo;
-import com.dev_high.notification.domain.Notification;
-import com.dev_high.notification.domain.NotificationRepository;
+import com.dev_high.user.notification.application.dto.NotificationCommand;
+import com.dev_high.user.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.domain.Notification;
+import com.dev_high.user.notification.domain.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

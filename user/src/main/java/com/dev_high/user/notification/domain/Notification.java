@@ -1,7 +1,7 @@
-package com.dev_high.notification.domain;
+package com.dev_high.user.notification.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.notification.infrastructure.converter.BooleanToYNConverter;
+import com.dev_high.user.notification.infrastructure.converter.BooleanToYNConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @Schema(description = "알림")
-@Table(name = "notification", schema = "notification")
+@Table(name = "notification", schema = "\"user\"")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,7 +35,7 @@ public class Notification{
 
     @Schema(description = "알림 타입")
     @Enumerated(EnumType.STRING)
-    @Column(name = "\"type\"", length = 20, nullable = false)
+    @Column(name = "type", length = 20, nullable = false)
     private NotificationType type;
 
     @Schema(description = "제목")
@@ -55,6 +55,10 @@ public class Notification{
     @Column(name = "read_yn", length = 1, nullable = false)
     private Boolean readYn;
 
+    @Schema(description = "만료일자")
+    @Column(name = "expired_at")
+    private OffsetDateTime expiredAt;
+
     @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -62,10 +66,6 @@ public class Notification{
     @Schema(description = "생성자")
     @Column(name = "created_by", length = 20, nullable = false, updatable = false)
     private String createdBy;
-
-    @Schema(description = "만료일자")
-    @Column(name = "expired_at")
-    private OffsetDateTime expiredAt;
 
     @Schema(description = "수정일시")
     @Column(name = "updated_at", nullable = false)

@@ -1,4 +1,4 @@
-package com.dev_high.notification.domain;
+package com.dev_high.user.notification.domain;
 
 /*
 * 알림 타입 정의

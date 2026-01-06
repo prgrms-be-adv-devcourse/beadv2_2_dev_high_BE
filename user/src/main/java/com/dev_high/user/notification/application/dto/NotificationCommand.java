@@ -1,6 +1,6 @@
-package com.dev_high.notification.application.dto;
+package com.dev_high.user.notification.application.dto;
 
-import com.dev_high.notification.domain.NotificationType;
+import com.dev_high.user.notification.domain.NotificationType;
 
 /*
 * 비즈니스 로직 실행을 위한 DTO

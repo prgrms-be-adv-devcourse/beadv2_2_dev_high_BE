@@ -1,8 +1,8 @@
-package com.dev_high.notification.infrastructure;
+package com.dev_high.user.notification.infrastructure;
 
-import com.dev_high.notification.application.dto.NotificationInfo;
-import com.dev_high.notification.domain.Notification;
-import com.dev_high.notification.domain.NotificationRepository;
+import com.dev_high.user.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.domain.Notification;
+import com.dev_high.user.notification.domain.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
