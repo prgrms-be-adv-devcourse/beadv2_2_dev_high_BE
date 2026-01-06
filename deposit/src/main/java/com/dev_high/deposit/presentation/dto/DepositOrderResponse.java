@@ -4,6 +4,7 @@ import com.dev_high.deposit.application.dto.DepositOrderDto;
 import com.dev_high.deposit.domain.DepositOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositOrderResponse {
@@ -15,7 +16,7 @@ public class DepositOrderResponse {
             String userId,
 
             @Schema(description = "금액")
-            long amount,
+            BigDecimal amount,
 
             @Schema(description = "상태")
             DepositOrderStatus status,

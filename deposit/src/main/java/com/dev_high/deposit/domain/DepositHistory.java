@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Table(name = "deposit_history", schema = "deposit")
@@ -16,7 +17,7 @@ public class DepositHistory {
     @Id
     @Column(name = "id", updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private long id;
 
     @Column(name = "user_id", length = 20, nullable = false, updatable = false)
     private String userId;
@@ -32,10 +33,10 @@ public class DepositHistory {
     private DepositType type;
 
     @Column(name = "amount", nullable = false, updatable = false)
-    private long amount;
+    private BigDecimal amount;
 
     @Column(name = "balance", nullable = false, updatable = false)
-    private long balance;
+    private BigDecimal balance;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -44,7 +45,7 @@ public class DepositHistory {
     private String createdBy;
 
     @Builder
-    public DepositHistory(String userId,  String orderId, DepositType type, long amount, long balance) {
+    public DepositHistory(String userId,  String orderId, DepositType type, BigDecimal amount, BigDecimal balance) {
         this.userId = userId;
         this.orderId = orderId;
         this.type = type;
@@ -58,7 +59,7 @@ public class DepositHistory {
         this.createdAt = OffsetDateTime.now();
     }
 
-    public static DepositHistory create(String userId, String orderId, DepositType type, long amount, long currentBalance) {
+    public static DepositHistory create(String userId, String orderId, DepositType type, BigDecimal amount, BigDecimal currentBalance) {
         return DepositHistory.builder()
                 .userId(userId)
                 .orderId(orderId)

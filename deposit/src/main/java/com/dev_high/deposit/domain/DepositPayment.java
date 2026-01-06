@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Table(name = "deposit_payment", schema = "deposit")
@@ -35,7 +36,7 @@ public class DepositPayment {
     private String method;
 
     @Column(name = "amount", nullable = false)
-    private long amount;
+    private BigDecimal amount;
 
     @Column(name = "requested_at")
     private OffsetDateTime requestedAt;
@@ -63,7 +64,7 @@ public class DepositPayment {
     private String updatedBy;
 
     @Builder
-    public DepositPayment(String orderId, String userId, String paymentKey, String method, long amount, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt) {
+    public DepositPayment(String orderId, String userId, String paymentKey, String method, BigDecimal amount, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt) {
         this.orderId = orderId;
         this.userId = userId;
         this.paymentKey = paymentKey;
@@ -89,7 +90,7 @@ public class DepositPayment {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public static DepositPayment create(String orderId, String userId, long amount, String paymentKey) {
+    public static DepositPayment create(String orderId, String userId, BigDecimal amount, String paymentKey) {
         return DepositPayment.builder()
                 .orderId(orderId)
                 .userId(userId)

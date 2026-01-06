@@ -85,7 +85,7 @@ public class DepositService {
                 List<String> userIds = List.of(command.userId());
 
                 eventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_DEPOIST_RESPONSE,
-                        new DepositCompletedEvent(userIds, command.depositOrderId(), BigDecimal.valueOf(command.amount()), "DEPOSIT"));
+                        new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "DEPOSIT"));
             } catch (Exception e) {
                 log.error("보증금 차감 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
             }
@@ -97,7 +97,7 @@ public class DepositService {
                 List<String> userIds = List.of(command.userId());
 
                 eventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE,
-                        new DepositCompletedEvent(userIds, command.depositOrderId(), BigDecimal.valueOf(command.amount()), "REFUND"));
+                        new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "REFUND"));
             } catch (Exception e) {
                 log.error("보증금 환불 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
             }

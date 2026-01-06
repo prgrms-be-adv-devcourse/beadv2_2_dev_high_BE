@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 public class DepositHistoryRequest {
     public record Create(
             @Schema(description = "예치금 사용자 ID")
@@ -23,14 +25,14 @@ public class DepositHistoryRequest {
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Min(value = 1, message = "최소 금액은 1원 입니다.")
-            long amount,
+            BigDecimal amount,
 
             @Schema(description = "현재 예치금 잔액")
             @NotNull(message = "금액은 필수입니다.")
             @Min(value = 1, message = "최소 금액은 1원 입니다.")
-            long nowBalance
+            BigDecimal nowBalance
     ) {
-            public DepositHistoryDto.CreateCommand toCommand(String userId, String orderId, DepositType type, long amount, long nowBalance) {
+            public DepositHistoryDto.CreateCommand toCommand(String userId, String orderId, DepositType type, BigDecimal amount, BigDecimal nowBalance) {
                     return DepositHistoryDto.CreateCommand.of(userId, orderId, type, amount, nowBalance);
             }
     }

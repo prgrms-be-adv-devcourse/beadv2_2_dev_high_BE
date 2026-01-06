@@ -3,9 +3,11 @@ package com.dev_high.deposit.presentation.dto;
 import com.dev_high.deposit.application.dto.DepositPaymentDto;
 import com.dev_high.deposit.domain.DepositPaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import java.math.BigDecimal;
 
 public class DepositPaymentRequest {
     public record Create(
@@ -19,10 +21,10 @@ public class DepositPaymentRequest {
 
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
-            @Min(value = 1, message = "최소 금액은 1원 입니다.")
-            long amount
+            @Positive(message = "주문 금액은 0보다 커야 합니다.")
+            BigDecimal amount
     ) {
-        public DepositPaymentDto.CreateCommand toCommand(String orderId, DepositPaymentMethod method, long amount) {
+        public DepositPaymentDto.CreateCommand toCommand(String orderId, DepositPaymentMethod method, BigDecimal amount) {
             return DepositPaymentDto.CreateCommand.of(orderId, method, amount);
         }
     }
@@ -38,10 +40,10 @@ public class DepositPaymentRequest {
 
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
-            @Min(value = 1, message = "최소 금액은 1원 입니다.")
-            Long amount
+            @Positive(message = "주문 금액은 0보다 커야 합니다.")
+            BigDecimal amount
     ) {
-        public DepositPaymentDto.ConfirmCommand toCommand(String paymentKey, String orderId, Long amount) {
+        public DepositPaymentDto.ConfirmCommand toCommand(String paymentKey, String orderId, BigDecimal amount) {
             return DepositPaymentDto.ConfirmCommand.of(paymentKey, orderId, amount);
         }
     }

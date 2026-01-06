@@ -3,6 +3,7 @@ package com.dev_high.deposit.application.dto;
 import com.dev_high.deposit.domain.DepositHistory;
 import com.dev_high.deposit.domain.DepositType;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositHistoryDto {
@@ -10,21 +11,21 @@ public class DepositHistoryDto {
             String userId,
             String orderId,
             DepositType type,
-            long amount,
-            long nowBalance
+            BigDecimal amount,
+            BigDecimal nowBalance
     ) {
-        public static CreateCommand of(String userId, String orderId, DepositType type, long amount, long nowBalance) {
+        public static CreateCommand of(String userId, String orderId, DepositType type, BigDecimal amount, BigDecimal nowBalance) {
             return new CreateCommand(userId, orderId, type, amount, nowBalance);
         }
     }
 
     public record Info(
-            long id,
+            Long id,
             String userId,
             String orderId,
             DepositType type,
-            long amount,
-            long balance,
+            BigDecimal amount,
+            BigDecimal balance,
             OffsetDateTime createdAt
     ) {
         public static Info from(DepositHistory depositHistory) {

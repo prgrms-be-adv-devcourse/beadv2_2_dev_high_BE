@@ -4,12 +4,13 @@ import com.dev_high.deposit.application.dto.DepositHistoryDto;
 import com.dev_high.deposit.domain.DepositType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositHistoryResponse {
     public record Detail(
             @Schema(description = "이력 ID")
-            long id,
+            Long id,
 
             @Schema(description = "사용자 ID")
             String userId,
@@ -21,10 +22,10 @@ public class DepositHistoryResponse {
             DepositType type,
 
             @Schema(description = "금액")
-            long amount,
+            BigDecimal amount,
 
             @Schema(description = "현재 예치금 잔액")
-            long balance,
+            BigDecimal balance,
 
             @Schema(description = "생성일시")
             OffsetDateTime createdAt

@@ -16,7 +16,7 @@ public class DepositPaymentFailureHistory {
     @Id
     @Column(name = "id", updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private long id;
 
     /*
      * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음

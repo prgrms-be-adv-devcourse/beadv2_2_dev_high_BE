@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 public class DepositRequest {
     public record Create(
             @Schema(description = "사용자 ID")
@@ -33,9 +35,9 @@ public class DepositRequest {
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Min(value = 1, message = "최소 금액은 1원 입니다.")
-            long amount
+            BigDecimal amount
     ) {
-        public DepositDto.UsageCommand toCommand(String userId, String depositOrderId, DepositType type, long amount) {
+        public DepositDto.UsageCommand toCommand(String userId, String depositOrderId, DepositType type, BigDecimal amount) {
             return DepositDto.UsageCommand.of(userId, depositOrderId, type, amount);
         }
     }

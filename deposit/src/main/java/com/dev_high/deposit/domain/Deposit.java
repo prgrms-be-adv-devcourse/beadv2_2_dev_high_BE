@@ -4,10 +4,11 @@ import com.dev_high.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Table(name = "deposit", schema = "deposit")
+@Table(name = "deposit", schema = "deposit", uniqueConstraints = { @UniqueConstraint(name = "uk_deposit_user_id", columnNames = {"user_id"}) })
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -20,7 +21,7 @@ public class Deposit {
     private String userId;
 
     @Column(name = "balance", nullable = false)
-    private long balance; // 예치금 잔액
+    private BigDecimal balance; // 예치금 잔액
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -35,7 +36,7 @@ public class Deposit {
     private String updatedBy;
 
     @Builder
-    public Deposit(UUID id, String userId, long balance) {
+    public Deposit(UUID id, String userId, BigDecimal balance) {
         this.id = id;
         this.userId = userId;
         this.balance = balance;
@@ -60,18 +61,18 @@ public class Deposit {
         return Deposit.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
-                .balance(0L)
+                .balance(BigDecimal.ZERO)
                 .build();
     }
 
-    public void increaseBalance(long amount) {
-        this.balance += amount;
+    public void increaseBalance(BigDecimal amount) {
+        this.balance = this.balance.add(amount);
     }
 
-    public void decreaseBalance(long amount) {
-        if (this.balance < amount) {
-            throw new CustomException(String.format("잔액이 부족합니다. (현재 잔액: %d, 요청 금액: %d)", this.balance, amount));
+    public void decreaseBalance(BigDecimal amount) {
+        if (this.balance.compareTo(amount) < 0) {
+            throw new CustomException(String.format("잔액이 부족합니다. (현재 잔액: %s, 요청 금액: %s)", this.balance.toPlainString(), amount.toPlainString()));
         }
-        this.balance -= amount;
+        this.balance = this.balance.subtract(amount);
     }
 }

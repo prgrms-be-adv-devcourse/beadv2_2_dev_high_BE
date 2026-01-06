@@ -4,6 +4,7 @@ import com.dev_high.deposit.application.dto.DepositPaymentDto;
 import com.dev_high.deposit.domain.DepositPaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositPaymentResponse {
@@ -21,7 +22,7 @@ public class DepositPaymentResponse {
             String method,
 
             @Schema(description = "금액")
-            long amount,
+            BigDecimal amount,
 
             @Schema(description = "요청일시")
             OffsetDateTime requestedAt,

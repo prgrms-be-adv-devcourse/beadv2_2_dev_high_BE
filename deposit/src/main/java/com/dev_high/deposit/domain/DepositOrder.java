@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Table(name = "deposit_order", schema = "deposit")
@@ -23,7 +24,7 @@ public class DepositOrder {
     private String userId;
 
     @Column(name = "amount", nullable = false)
-    private long amount;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -41,10 +42,10 @@ public class DepositOrder {
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
-    private static final long MIN_ORDER_AMOUNT = 1L;
+    private static final BigDecimal MIN_ORDER_AMOUNT = BigDecimal.ONE;
 
     @Builder
-    public DepositOrder(String userId, long amount, DepositOrderStatus status) {
+    public DepositOrder(String userId, BigDecimal amount, DepositOrderStatus status) {
         this.userId = userId;
         this.amount = amount;
         this.status = status;
@@ -64,10 +65,10 @@ public class DepositOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public static DepositOrder create(String userId, long amount) {
-        if (amount < MIN_ORDER_AMOUNT) {
+    public static DepositOrder create(String userId, BigDecimal amount) {
+        if (amount.compareTo(MIN_ORDER_AMOUNT) < 0) {
             throw new IllegalArgumentException(
-                    String.format("주문 금액은 %d원 이상이어야 합니다. (요청 금액: %d원)", MIN_ORDER_AMOUNT, amount)
+                    String.format("주문 금액은 %s원 이상이어야 합니다. (요청 금액: %s원)", MIN_ORDER_AMOUNT.toPlainString(), amount.toPlainString())
             );
         }
         return DepositOrder.builder()
