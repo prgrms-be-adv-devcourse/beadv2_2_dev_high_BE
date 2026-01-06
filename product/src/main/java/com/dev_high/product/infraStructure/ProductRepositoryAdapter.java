@@ -37,6 +37,11 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public List<Product> findByProductIds(List<String> productIds) {
+        return productJpaRepository.findAllById(productIds);
+    }
+
+    @Override
     public void saveAll(List<Product> products) {
         productJpaRepository.saveAll(products);
     }
