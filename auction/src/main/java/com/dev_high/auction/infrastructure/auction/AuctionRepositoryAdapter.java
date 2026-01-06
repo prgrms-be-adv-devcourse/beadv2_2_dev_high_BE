@@ -52,7 +52,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     public List<Auction> findByIdIn(List<String> ids) {
         return queryFactory
                 .selectFrom(qAuction)
-                .where(qAuction.id.in(ids))
+                .where(qAuction.id.in(ids).and(qAuction.deletedYn.eq("N")))
                 .fetch();
 
     }
