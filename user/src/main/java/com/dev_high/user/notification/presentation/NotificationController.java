@@ -1,14 +1,13 @@
-package com.dev_high.notification.presentation;
+package com.dev_high.user.notification.presentation;
 
-import com.dev_high.notification.application.NotificationService;
-import com.dev_high.notification.application.dto.NotificationInfo;
-import com.dev_high.notification.presentation.dto.NotificationRequest;
+import com.dev_high.user.notification.application.NotificationService;
+import com.dev_high.user.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.presentation.dto.NotificationRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 

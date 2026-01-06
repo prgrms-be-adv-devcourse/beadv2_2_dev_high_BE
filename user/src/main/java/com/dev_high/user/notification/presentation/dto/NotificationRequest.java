@@ -1,7 +1,7 @@
-package com.dev_high.notification.presentation.dto;
+package com.dev_high.user.notification.presentation.dto;
 
-import com.dev_high.notification.application.dto.NotificationCommand;
-import com.dev_high.notification.domain.NotificationType;
+import com.dev_high.user.notification.application.dto.NotificationCommand;
+import com.dev_high.user.notification.domain.NotificationType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

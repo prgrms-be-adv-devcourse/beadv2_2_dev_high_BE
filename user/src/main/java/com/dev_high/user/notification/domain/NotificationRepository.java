@@ -1,6 +1,6 @@
-package com.dev_high.notification.domain;
+package com.dev_high.user.notification.domain;
 
-import com.dev_high.notification.application.dto.NotificationInfo;
+import com.dev_high.user.notification.application.dto.NotificationInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

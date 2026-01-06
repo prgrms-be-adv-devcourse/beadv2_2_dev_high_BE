@@ -1,7 +1,7 @@
-package com.dev_high.notification.application.dto;
+package com.dev_high.user.notification.application.dto;
 
-import com.dev_high.notification.domain.Notification;
-import com.dev_high.notification.domain.NotificationType;
+import com.dev_high.user.notification.domain.Notification;
+import com.dev_high.user.notification.domain.NotificationType;
 
 import java.time.OffsetDateTime;
 
