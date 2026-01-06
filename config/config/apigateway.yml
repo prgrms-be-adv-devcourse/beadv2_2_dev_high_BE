@@ -20,8 +20,6 @@ springdoc:
     urls:
       - name: Auction
         url: /swagger/auction-service
-      - name: Notification
-        url: /swagger/notification-service
       - name: Deposit
         url: /swagger/deposit-service
       - name: Product

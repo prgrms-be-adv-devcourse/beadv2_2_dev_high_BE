@@ -18,7 +18,6 @@ on:
 #      - 'settings.gradle'
 #      - '.dockerignore'
   workflow_dispatch:
-    
 
 env:
   REGISTRY: ghcr.io
@@ -102,6 +101,7 @@ jobs:
           kubectl create secret generic user-secret \
           --namespace ${{ env.NAMESPACE }} \
           --from-literal=SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
+          --from-literal=SPRING_R2DBC_URL="${{secrets.SPRING_R2DBC_URL}}" \
           --from-literal=SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
           --from-literal=SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
           --from-literal=SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
@@ -118,6 +118,12 @@ jobs:
           --from-literal=REDIS_HOST="${{secrets.REDIS_HOST}}" \
           --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
           --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}" \
+          --from-literal=GOOGLE_CLIENT_ID="${{secrets.GOOGLE_CLIENT_ID}}" \
+          --from-literal=GOOGLE_CLIENT_SECRET="${{secrets.GOOGLE_CLIENT_SECRET}}" \
+          --from-literal=GOOGLE_REDIRECT_URL="${{secrets.GOOGLE_REDIRECT_URL}}" \
+          --from-literal=NAVER_CLIENT_ID="${{secrets.NAVER_CLIENT_ID}}" \
+          --from-literal=NAVER_CLIENT_SECRET="${{secrets.NAVER_CLIENT_SECRET}}" \
+          --from-literal=NAVER_REDIRECT_URL="${{secrets.NAVER_REDIRECT_URL}}" \
           --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy
