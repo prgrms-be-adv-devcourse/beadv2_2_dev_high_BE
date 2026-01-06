@@ -21,20 +21,11 @@ spring:
           refresh-rate: ${CONFIG_GIT_REFRESH_RATE:600} # 0=매 요청마다 최신 확인
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health, refresh
-  info:
-    git:
-      mode: off
-  health:
-    config:
-      enabled: false
   endpoint:
     health:
       probes:
         enabled: true
+
 
 logging:
   level:
