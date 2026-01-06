@@ -8,8 +8,6 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     pool:
       enabled: true
-      initial-size: 2
-      max-size: 10
       validation-query: SELECT 1
       max-idle-time: 15m
       max-acquire-time: 5s

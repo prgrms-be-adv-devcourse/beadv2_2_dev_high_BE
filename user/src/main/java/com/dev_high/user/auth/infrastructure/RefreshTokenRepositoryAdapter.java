@@ -26,7 +26,7 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public void deleteByUserId(String userId) {
+    public void deleteById(String userId) {
         refreshTokenCrudRepository.deleteById(userId);
     }
 }
