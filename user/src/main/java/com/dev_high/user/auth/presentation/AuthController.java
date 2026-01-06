@@ -1,13 +1,10 @@
 package com.dev_high.user.auth.presentation;
 
-
 import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.auth.application.dto.*;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.auth.presentation.dto.LoginRequest;
-import com.dev_high.user.auth.presentation.dto.SendEmailRequest;
-import com.dev_high.user.auth.presentation.dto.TokenRequest;
-import com.dev_high.user.auth.presentation.dto.VerifyEmailRequest;
+import com.dev_high.user.auth.presentation.dto.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +29,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request){
+    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response){
         LoginCommand command = new LoginCommand(
                 request.email(),
                 request.password()
         );
-        return authService.login(command);
+        return authService.login(command, response);
+    }
+
+    @PostMapping("/social/login")
+    public ApiResponseDto<LoginResponse> socialLogin(@RequestBody SocialLoginRequest request, HttpServletResponse response){
+        return authService.socialLogin(request, response);
     }
 
     @PostMapping("/refresh/token")

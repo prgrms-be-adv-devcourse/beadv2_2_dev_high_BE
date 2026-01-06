@@ -1,6 +1,7 @@
 package com.dev_high.user.user.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.user.auth.application.dto.SocialProfileResponse;
 import com.dev_high.user.user.application.dto.UpdateUserCommand;
 import jakarta.persistence.*;
 
@@ -21,7 +22,7 @@ public class User {
     @Column(name = "email", length = 255, nullable = false)
     private String email;
 
-    @Column(name = "password", length = 500, nullable = false)
+    @Column(name = "password", length = 500)
     private String password;
 
     @Column(name = "name", length = 50, nullable = false)
@@ -30,34 +31,25 @@ public class User {
     @Column(name = "nickname", length = 50, nullable = false)
     private String nickname;
 
-    @Column(name = "phone_number", length = 20, nullable = false)
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    @Column(name = "zip_code", length = 5, nullable = false)
-    private String zipCode;
-
-    @Column(name = "state", length = 25, nullable = false)
-    private String state;
-
-    @Column(name = "city", length = 20, nullable = false)
-    private String city;
-
-    @Column(name = "detail", length = 255, nullable = false)
-    private String detail;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 15, nullable = false)
     private UserStatus userStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", length = 15, nullable = false)
-    private UserRole userRole;
+    @Column(nullable = false, length = 50)
+    private OAuthProvider provider;
+
+    @Column(name = "provider_user_id", nullable = false, length = 100)
+    private String providerUserId;
 
     @Column(name = "deleted_yn",  nullable = false)
     private String deletedYn;
 
-    @Column(name = "leave_time")
-    private OffsetDateTime leaveTime;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Column(name = "created_by", length = 50)
     private String createdBy;
@@ -75,58 +67,61 @@ public class User {
     public void prePersist() {
         createdBy = id;
         updatedBy = id;
-        this.userStatus = UserStatus.ACTIVE;
-        this.userRole = UserRole.USER;
-        this.deletedYn = "N";
+        userStatus = UserStatus.ACTIVE;
+        deletedYn = "N";
         createdAt = OffsetDateTime.now();
         updatedAt = OffsetDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
+        updatedBy = id;
         updatedAt = OffsetDateTime.now();
     }
-
 
     protected User() {
     }
 
-    public User(String email, String password, String name, String nickname, String phoneNumber, String zipCode, String state, String city, String detail) {
+    public User(String email, String password, String name, String nickname, String phoneNumber) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
-        this.zipCode = zipCode;
-        this.state = state;
-        this.city = city;
-        this.detail = detail;
     }
 
-    public void updateRole(UserRole role) {
-        this.userRole = role;
+    public User(String email, String name, String nickname, String phoneNumber, OAuthProvider provider, String providerUserId) {
+        this.email = email;
+        this.name = name;
+        this.nickname = nickname;
+        this.phoneNumber = phoneNumber;
+        this.provider = provider;
+        this.providerUserId = providerUserId;
     }
 
     public void updateUser(UpdateUserCommand command) {
         this.name = command.name();
         this.nickname = command.nickname();
         this.phoneNumber = command.phone_number();
-        this.zipCode = command.zip_code();
-        this.state = command.state();
-        this.city = command.city();
-        this.detail = command.detail();
     }
 
     public void updatePassWord(String password) {
         this.password = password;
     }
 
-    public void deleteUser() {
+    public void remove() {
         this.userStatus = UserStatus.WITHDRAWN;
+        this.deletedAt = OffsetDateTime.now();
         this.deletedYn = "Y";
     }
 
     public void updateStatus(UserStatus status) {
         this.userStatus = status;
     }
+
+    public void link(SocialProfileResponse profile) {
+        this.provider = profile.provider();
+        this.providerUserId = profile.providerUserId();
+    }
+
 }

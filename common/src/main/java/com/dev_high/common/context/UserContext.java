@@ -4,10 +4,9 @@ public class UserContext {
 
   private static final ThreadLocal<UserInfo> context = new ThreadLocal<>();
 
-  public record UserInfo(String userId, String role, String token) {
+  public record UserInfo(String userId, String token) {
 
   }
-
 
   public static void set(UserInfo userInfo) {
     context.set(userInfo);

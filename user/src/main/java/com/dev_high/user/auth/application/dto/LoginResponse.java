@@ -1,10 +1,11 @@
 package com.dev_high.user.auth.application.dto;
 
+import java.util.Set;
+
 public record LoginResponse(
         String accessToken,
-        String refreshToken,
         String userId,
         String nickname,
-        String role
+        Set<String> roles
 ) {
 }

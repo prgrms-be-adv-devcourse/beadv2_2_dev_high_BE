@@ -5,10 +5,6 @@ public record CreateUserCommand(
         String password,
         String name,
         String nickname,
-        String phone_number,
-        String zip_code,
-        String state,
-        String city,
-        String detail
+        String phone_number
 ) {
 }

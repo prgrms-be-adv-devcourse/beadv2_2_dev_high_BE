@@ -36,15 +36,20 @@ public class WishlistService {
     public ApiResponseDto<WishlistResponse> create(WishlistCommand command) {
         User user = userDomainsService.getUser();
 
-        if (wishlistRepository.existsByUserIdAndProductId(user.getId(), command.productId())) {
-            throw new WishlistItemAlreadyExistsException();
-        }
+        Wishlist wishlist = wishlistRepository
+                .findByUserIdAndProductId(user.getId(), command.productId())
+                .map(existing -> {
+                    if ("N".equals(existing.getDeletedYn())) {
+                        throw new WishlistItemAlreadyExistsException();
+                    }
+                    existing.restore();
+                    return existing;
+                })
+                .orElseGet(() -> new Wishlist(user, command.productId()));
 
-        Wishlist wishlist = new Wishlist(user, command.productId());
         Wishlist saved = wishlistRepository.save(wishlist);
 
         String productName = "상품명";
-
         try {
             JsonNode product = wishlistClient.fetchProductInfo(command.productId());
             if (product != null && product.has("data")) {
@@ -65,7 +70,7 @@ public class WishlistService {
         String userId = UserContext.get().userId();
 
         Page<Wishlist> wishlistPage =
-                wishlistRepository.findByUserId(userId, pageable);
+                wishlistRepository.findByUserIdAndDeletedYn(userId, "N", pageable);
         
         Map<String, String> productNameMap =
                 fetchProductName(wishlistPage, userId);
@@ -89,9 +94,9 @@ public class WishlistService {
     public ApiResponseDto<Void> delete(WishlistCommand command) {
         String userId = UserContext.get().userId();
         Wishlist wishlist = wishlistRepository
-                .findByUserIdAndProductId(userId, command.productId())
+                .findByUserIdAndProductIdAndDeletedYn(userId, command.productId(), "N")
                 .orElseThrow(WishlistNotFoundException::new);
-        wishlistRepository.delete(wishlist);
+        wishlist.remove();
         return ApiResponseDto.success(
                 "위시리스트가 정상적으로 삭제되었습니다.",
                 null
@@ -99,7 +104,7 @@ public class WishlistService {
     }
 
     public ApiResponseDto<List<String>> getUserIdsByProductId(String productId) {
-        List<String> userIds = wishlistRepository.findUserIdByProductId(productId);
+        List<String> userIds = wishlistRepository.findUserIdByProductIdAndDeletedYn(productId, "N");
         return ApiResponseDto.success(userIds);
     }
 

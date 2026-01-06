@@ -1,18 +1,14 @@
 package com.dev_high.user.user.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
-import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.user.application.dto.CreateUserCommand;
 import com.dev_high.user.user.application.dto.UpdatePasswordCommand;
 import com.dev_high.user.user.application.dto.UpdateUserCommand;
 import com.dev_high.user.user.application.dto.UserResponse;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
-import com.dev_high.user.user.domain.UserRole;
 import com.dev_high.user.user.exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import com.dev_high.common.dto.ApiResponseDto;
@@ -21,6 +17,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +32,9 @@ public class UserService {
     private final UserDomainService userDomainService;
     private final ApplicationEventPublisher publisher;
 
-
     @Transactional
     public ApiResponseDto<UserResponse> create(CreateUserCommand command){
-        if(userRepository.existsByEmail(command.email())) {
+        if(userRepository.existsByEmailAndDeletedYn(command.email(), "N")) {
             throw new UserAlreadyExistsException();
         }
 
@@ -46,14 +43,11 @@ public class UserService {
                 passwordEncoder.encode(command.password()),
                 command.name(),
                 command.nickname(),
-                command.phone_number(),
-                command.zip_code(),
-                command.state(),
-                command.city(),
-                command.detail()
+                command.phone_number()
         );
 
         User saved = userRepository.save(user);
+        userDomainService.assignRoleToUser(saved, "USER");
 
         if (saved != null) {
             try {
@@ -101,12 +95,17 @@ public class UserService {
     @Transactional
     public ApiResponseDto<Void> delete() {
         User user = userDomainService.getUser();
+        Set<String> roles = userDomainService.getUserRoles(user);
 
-        if(user.getUserRole() == UserRole.SELLER) {
-            sellerService.deleteSeller(SellerStatus.WITHDRAWN);
+        if (roles.contains("SELLER")) {
+            sellerService.removeSeller();
         }
 
-        user.deleteUser();
+        roles.stream()
+                .filter(roleName -> !roleName.equals("SELLER"))
+                .forEach(roleName -> userDomainService.revokeRoleFromUser(user, roleName));
+
+        user.remove();
         return ApiResponseDto.success(
                 "회원 탈퇴가 정상적으로 처리되었습니다.",
                 null
