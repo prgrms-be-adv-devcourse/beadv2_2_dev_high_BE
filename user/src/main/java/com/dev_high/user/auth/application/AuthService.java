@@ -120,7 +120,8 @@ public class AuthService {
             throw new RefreshTokenMismatchException();
         }
 
-        Set<String> roles = new HashSet<>((List<String>) claims.get("roles"));
+        User user = userDomainService.getUser(userId);
+        Set<String> roles = userDomainService.getUserRoles(user);
         String newAccess = jwtProvider.generateAccessToken(userId, roles);
         TokenResponse tokenResponse = new TokenResponse(newAccess);
 
@@ -185,8 +186,6 @@ public class AuthService {
         String accessToken = socialOAuthService.getAccessToken(request.code());
         SocialProfileResponse socialProfile = socialOAuthService.getProfile(accessToken);
 
-        log.info(socialProfile.toString());
-
         Optional<User> userOptional =
                 userRepository.findByProviderAndProviderUserIdAndDeletedYn(
                         socialProfile.provider(),
@@ -215,7 +214,7 @@ public class AuthService {
     private ApiResponseDto<LoginResponse> generateTokensAndHandleLoginResponse(User user, HttpServletResponse response) {
         Set<String> roles = userDomainService.getUserRoles(user);
         String accessToken = jwtProvider.generateAccessToken(user.getId(), roles);
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), roles);
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
 
         log.info("accessToken: {}", accessToken);
         log.info("refreshToken: {}", refreshToken);

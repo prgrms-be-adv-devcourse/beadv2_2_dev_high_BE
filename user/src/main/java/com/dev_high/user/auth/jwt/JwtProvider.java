@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 @Component
@@ -30,21 +29,27 @@ public class JwtProvider {
         return generateToken(userId, roles, accessTokenExpiration);
     }
 
-    public String generateRefreshToken(String userId, Set<String> roles){
-        return generateToken(userId, roles, refreshTokenExpiration);
+    public String generateRefreshToken(String userId){
+        return generateToken(userId, null, refreshTokenExpiration);
     }
 
 
     public String generateToken(String userId,
                                 Set<String> roles,
-                                long expirationTime){
+                                long expirationTime) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expirationTime);
-        return Jwts.builder()
+
+        var builder = Jwts.builder()
                 .setSubject(userId)
-                .claim("roles", roles)
                 .setIssuedAt(now)
-                .setExpiration(expireDate)
+                .setExpiration(expireDate);
+
+        if (roles != null && !roles.isEmpty()) {
+            builder.claim("roles", roles);
+        }
+
+        return builder
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
