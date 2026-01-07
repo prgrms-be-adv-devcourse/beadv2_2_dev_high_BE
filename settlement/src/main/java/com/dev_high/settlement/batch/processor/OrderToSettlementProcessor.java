@@ -1,9 +1,9 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.domain.order.WinningOrder;
-import com.dev_high.settlement.domain.settle.Settlement;
-import com.dev_high.settlement.domain.settle.SettlementRepository;
-import com.dev_high.settlement.domain.settle.SettlementStatus;
+import com.dev_high.settlement.order.domain.WinningOrder;
+import com.dev_high.settlement.settle.domain.settle.Settlement;
+import com.dev_high.settlement.settle.domain.settle.SettlementRepository;
+import com.dev_high.settlement.settle.domain.settle.SettlementStatus;
 import com.dev_high.settlement.batch.listener.SettlementRegistrationStepListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.scope.context.StepContext;

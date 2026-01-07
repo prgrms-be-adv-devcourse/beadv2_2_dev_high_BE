@@ -1,7 +1,7 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.domain.settle.Settlement;
-import com.dev_high.settlement.domain.settle.SettlementStatus;
+import com.dev_high.settlement.settle.domain.settle.Settlement;
+import com.dev_high.settlement.settle.domain.settle.SettlementStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
