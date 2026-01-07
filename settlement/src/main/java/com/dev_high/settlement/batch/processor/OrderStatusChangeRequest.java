@@ -8,9 +8,7 @@ public record OrderStatusChangeRequest(
     OrderStatus newStatus,
     Duration duration,
     String message,
-    String redirect,
-    String type,
-    String status
+    String redirect
 ) {
   // 주문 상태 전환 단위 작업 정보
 }

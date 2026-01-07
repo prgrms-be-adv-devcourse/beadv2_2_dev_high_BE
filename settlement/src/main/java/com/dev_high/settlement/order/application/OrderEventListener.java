@@ -43,8 +43,7 @@ public class OrderEventListener {
                     List.of(res.buyerId()),
                     "주문이 생성되었습니다. 3일내 결제를 완료해주세요. 미결제시 주문이 취소됩니다.",
                     "/orders/" + res.id(),
-                    "ORDER_CREATED",
-                    ""
+                    "ORDER_CREATED"
                     );
 
             if (res != null) {

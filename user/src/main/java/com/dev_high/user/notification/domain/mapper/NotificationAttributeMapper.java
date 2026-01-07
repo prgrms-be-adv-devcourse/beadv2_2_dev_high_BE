@@ -17,6 +17,8 @@ public class NotificationAttributeMapper {
         NotificationType type = getNotificationType(typeStr);
         String status = (statusStr == null || statusStr.isBlank()) ? "" : statusStr;
         String relatedUrl = (path == null || path.isBlank()) ? null : validateUrl(path);
+
+        // String title =type.getDefaultTitle();
         String title =  switch (type) {
             case AUCTION_NO_BID -> "경매 유찰";
             case AUCTION_CLOSED -> "경매 종료";
