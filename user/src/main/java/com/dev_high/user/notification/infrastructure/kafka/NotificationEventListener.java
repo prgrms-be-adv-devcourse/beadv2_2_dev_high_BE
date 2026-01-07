@@ -29,7 +29,7 @@ public class NotificationEventListener {
     public void handleNotificationCreate(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         Map<String, Object> payload = envelope.payload();
         List<String> userIds = Optional.ofNullable(payload.get("userIds"))
-                .map(val -> objectMapper.convertValue(payload.get("userIds"), new TypeReference<List<String>>() {}))
+                .map(val -> objectMapper.convertValue(val, new TypeReference<List<String>>() {}))
                 .orElse(Collections.emptyList());
         String content = Optional.ofNullable(payload.get("message"))
                 .map(Object::toString)
