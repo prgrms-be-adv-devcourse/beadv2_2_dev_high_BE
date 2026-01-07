@@ -179,9 +179,12 @@ public class BatchHelper {
                 // 판매자에게 알림
                 eventPublisher.publish(
                         KafkaTopics.NOTIFICATION_REQUEST,
-                        new NotificationRequestEvent(List.of(sellerId),
+                        new NotificationRequestEvent(
+                                List.of(sellerId),
                                 "경매가 유찰되었습니다.",
-                                "/auctions/" + auction.getId()));
+                                "/auctions/" + auction.getId(),
+                                "AUCTION_NO_BID",
+                                ""));
             } catch (Exception e) {
                 log.error("kafka send failed :{}", e);
             }
@@ -200,8 +203,12 @@ public class BatchHelper {
                 try {
                     eventPublisher.publish(
                             KafkaTopics.NOTIFICATION_REQUEST,
-                            new NotificationRequestEvent(userIds, " 경매가 종료되었습니다.",
-                                    "/auctions/" + auction.getId()));
+                            new NotificationRequestEvent(
+                                    userIds,
+                                    " 경매가 종료되었습니다.",
+                                    "/auctions/" + auction.getId(),
+                                    "AUCTION_CLOSED",
+                                    ""));
 
                 } catch (Exception e) {
                     log.error("경매 종료 알림 실패: auctionId={}", targetId, e);
