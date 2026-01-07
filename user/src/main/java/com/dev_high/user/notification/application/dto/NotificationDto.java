@@ -1,20 +1,20 @@
 package com.dev_high.user.notification.application.dto;
 
-import com.dev_high.user.notification.domain.Notification;
-import com.dev_high.user.notification.domain.NotificationType;
+import com.dev_high.user.notification.domain.entity.Notification;
+import com.dev_high.user.notification.domain.model.NotificationType;
 
 import java.time.OffsetDateTime;
 
 public class NotificationDto {
     public record CreateCommand(
             String userId,
-            NotificationType type,
-            String title,
+            String type,
+            String status,
             String content,
             String relatedUrl
     ) {
-        public static CreateCommand of(String userId, NotificationType type, String title, String content, String relatedUrl) {
-            return new CreateCommand(userId, type, title, content, relatedUrl);
+        public static CreateCommand of(String userId, String type, String status, String content, String relatedUrl) {
+            return new CreateCommand(userId, type, status, content, relatedUrl);
         }
     }
 

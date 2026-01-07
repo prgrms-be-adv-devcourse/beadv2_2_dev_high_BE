@@ -3,7 +3,7 @@ package com.dev_high.user.notification.infrastructure.converter;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = true)
+@Converter
 public class BooleanToYNConverter implements AttributeConverter<Boolean, Character> {
 
     @Override
@@ -13,6 +13,6 @@ public class BooleanToYNConverter implements AttributeConverter<Boolean, Charact
 
     @Override
     public Boolean convertToEntityAttribute(Character dbData) {
-        return 'Y' == dbData;
+        return 'Y' == Character.toUpperCase(dbData);
     }
 }

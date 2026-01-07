@@ -1,7 +1,9 @@
-package com.dev_high.user.notification.domain;
+package com.dev_high.user.notification.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.user.notification.domain.model.NotificationType;
 import com.dev_high.user.notification.infrastructure.converter.BooleanToYNConverter;
+import io.jsonwebtoken.lang.Assert;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -52,7 +54,7 @@ public class Notification{
 
     @Schema(description = "확인 여부")
     @Convert(converter = BooleanToYNConverter.class)
-    @Column(name = "read_yn", length = 1, nullable = false)
+    @Column(name = "read_yn", nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
     private Boolean readYn;
 
     @Schema(description = "만료일자")
@@ -82,7 +84,7 @@ public class Notification{
         this.title = title;
         this.content = content;
         this.relatedUrl = relatedUrl;
-        this.readYn = Optional.ofNullable(readYn)
+        this.readYn = Optional.of(readYn)
                 .orElse(false);
         this.createdBy = userId;
         this.updatedBy = userId;
@@ -111,6 +113,8 @@ public class Notification{
         String content,
         String relatedUrl
     ) {
+        Assert.notNull(userId, "사용자 ID는 필수입니다.");
+        Assert.hasText(title, "제목은 필수입니다.");
         return Notification.builder()
                 .userId(userId)
                 .type(type)

@@ -3,14 +3,11 @@ package com.dev_high.user.notification.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.notification.application.NotificationService;
 import com.dev_high.user.notification.application.dto.NotificationDto;
-import com.dev_high.user.notification.presentation.dto.NotificationRequest;
 import com.dev_high.user.notification.presentation.dto.NotificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,17 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService notificationService;
-
-    @Operation(summary = "알림 생성", description = "새로운 알림을 생성하고 저장")
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<NotificationResponse.Detail> createNotification(
-            @RequestBody @Validated NotificationRequest.Create request) {
-        NotificationDto.CreateCommand command = request.toCommand(request.userId(), request.type(), request.title(), request.content(), request.relatedUrl());
-        NotificationDto.Info info = notificationService.createNotification(command);
-        NotificationResponse.Detail response = NotificationResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
 
     @Operation(summary = "알림 내역 조회", description = "로그인한 사용자 ID별 알림을 조회")
     @GetMapping
