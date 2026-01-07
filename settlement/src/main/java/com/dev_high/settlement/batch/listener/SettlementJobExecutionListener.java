@@ -66,8 +66,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
                     List.of(sellerId),
                     formattedAmount + "원 정산이 완료되었습니다.",
                     "/mypage",
-                    "SETTLEMENT_SUCCESS",
-                    ""
+                    "SETTLEMENT_SUCCESS"
             )
         );
       }
@@ -83,8 +82,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
                     List.of("SYSTEM"), // 어드민 아이디 example
                     String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(), settlement.getTryCnt()),
                     "/settlement/" + settlement.getId(),
-                    "SETTLEMENT_FAILED",
-                    ""
+                    "SETTLEMENT_FAILED"
             )
         );
       }
