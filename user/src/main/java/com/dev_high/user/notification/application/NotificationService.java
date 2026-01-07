@@ -1,10 +1,11 @@
 package com.dev_high.user.notification.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.user.notification.application.dto.NotificationCommand;
-import com.dev_high.user.notification.application.dto.NotificationInfo;
-import com.dev_high.user.notification.domain.Notification;
-import com.dev_high.user.notification.domain.NotificationRepository;
+import com.dev_high.user.notification.application.dto.NotificationDto;
+import com.dev_high.user.notification.domain.entity.Notification;
+import com.dev_high.user.notification.domain.mapper.NotificationAttributeMapper;
+import com.dev_high.user.notification.domain.model.NotificationAttribute;
+import com.dev_high.user.notification.domain.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,43 +16,32 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final NotificationAttributeMapper attributeMapper;
 
     @Transactional
-    public NotificationInfo createNotification(NotificationCommand command) {
-        Notification notification = Notification.create(
-                command.userId(),
-                command.type(),
-                command.title(),
-                command.content(),
-                command.relatedUrl()
-        );
-        return NotificationInfo.from(notificationRepository.save(notification));
+    public void createNotification(NotificationDto.CreateCommand command) {
+        NotificationAttribute attribute = attributeMapper.resolve(command.type(), command.status(), command.relatedUrl());
+        notificationRepository.save(Notification.create(command.userId(), attribute.type(), attribute.title(), command.content(), command.relatedUrl()));
     }
 
     @Transactional(readOnly = true)
-    public Page<NotificationInfo> getAllNotifications(Pageable pageable) {
+    public Page<NotificationDto.Info> getAllNotifications(Pageable pageable) {
         String userId = UserContext.get().userId();
-        return notificationRepository.findAllByUserId(userId, pageable);
+        return notificationRepository.findAllByUserId(userId, pageable)
+                .map(NotificationDto.Info::from);
     }
 
     @Transactional(readOnly = true)
-    public long getUnreadNotificationCount() {
+    public NotificationDto.Count getUnreadNotificationCount() {
         String userId = UserContext.get().userId();
-        return notificationRepository.countUnreadByUserId(userId);
+        return NotificationDto.Count.from(notificationRepository.countUnreadByUserId(userId));
     }
 
     @Transactional
-    public NotificationInfo getNotificationById(String notificationId) {
-        // 1. notificationId로 알림 정보 조회
+    public NotificationDto.Info getNotificationById(String notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
-
-        // 2. 해당 알림을 읽음처리
         notification.markAsRead(UserContext.get().userId());
-
-        // 3. 알림 정보 업데이트
-        notificationRepository.save(notification);
-
-        return NotificationInfo.from(notification);
+        return NotificationDto.Info.from(notificationRepository.save(notification));
     }
 }
