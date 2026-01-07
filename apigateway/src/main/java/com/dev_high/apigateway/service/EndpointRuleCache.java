@@ -42,10 +42,9 @@ public class EndpointRuleCache {
                     cache.clear();
                     cache.putAll(grouped);
 
-                    log.info("[Rule 캐싱] loaded rules={}, methods={}",
-                            list.size(), cache.keySet());
+                    log.info("룰 캐시 로딩 완료 - 규칙 수: {}, 메서드: {}", list.size(), cache.keySet());
                 })
-                .doOnError(e -> log.error("[Rule 캐싱] warmup failed", e))
+                .doOnError(e -> log.error("룰 캐시 초기 로딩 실패", e))
                 .subscribe();
     }
 
