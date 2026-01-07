@@ -144,4 +144,28 @@ public class FileService {
         return safeGroupId + "/" + baseName + "-" + UUID.randomUUID() + extension;
     }
 
+    public ApiResponseDto<List<FileGroupResponse>> findByFileGroupIds(List<String> fileGroupIds) {
+        if (fileGroupIds == null || fileGroupIds.isEmpty()) {
+            throw new CustomException("파일 그룹 ID가 필요합니다.");
+        }
+
+        
+
+        List<FileGroup> fileGroups = fileGroupRepository.findByFileGroupIds(fileGroupIds);
+        if (fileGroups.size() != fileGroupIds.size()) {
+            throw new CustomException("파일 그룹을 찾을 수 없습니다.");
+        }
+
+        List<FileGroupResponse> responses = fileGroups.stream()
+                .map(group -> {
+                    List<FileInfo> files = group.getFiles() == null ? Collections.emptyList()
+                            : group.getFiles().stream()
+                            .map(FileInfo::from)
+                            .toList();
+                    return new FileGroupResponse(group.getId(), files);
+                })
+                .toList();
+
+        return ApiResponseDto.success(responses);
+    }
 }

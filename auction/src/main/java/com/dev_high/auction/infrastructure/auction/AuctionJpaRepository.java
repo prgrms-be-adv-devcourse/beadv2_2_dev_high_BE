@@ -27,6 +27,7 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
                 updated_at = NOW(),
                 updated_by = 'SYSTEM'
             WHERE status = 'READY'
+              AND deleted_yn = 'N'
               AND auction_start_at <= NOW()
             RETURNING
                 id,
@@ -40,7 +41,9 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
               SET status = 'COMPLETED',
                   updated_at = NOW(),
                   updated_by = 'SYSTEM'
-              WHERE status = 'IN_PROGRESS' AND auction_end_at <= NOW()
+              WHERE status = 'IN_PROGRESS'
+                AND deleted_yn = 'N'
+                AND auction_end_at <= NOW()
               RETURNING
                 id,
                 product_id AS productId
@@ -54,7 +57,7 @@ public interface AuctionJpaRepository extends JpaRepository<Auction, String> {
             SET status = :status,
                 updated_at = NOW(),
                 updated_by = 'SYSTEM'
-            WHERE id IN (:auctionIds)
+            WHERE id IN (:auctionIds) AND deleted_yn = 'N'
             RETURNING product_id
             """, nativeQuery = true)
     List<String> bulkUpdateStatus(

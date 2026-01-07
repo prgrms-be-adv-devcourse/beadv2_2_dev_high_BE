@@ -18,7 +18,6 @@ on:
 #      - 'settings.gradle'
 #      - '.dockerignore'
   workflow_dispatch:
-    
 
 env:
   REGISTRY: ghcr.io
@@ -118,6 +117,12 @@ jobs:
           --from-literal=REDIS_HOST="${{secrets.REDIS_HOST}}" \
           --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
           --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}" \
+          --from-literal=GOOGLE_CLIENT_ID="${{secrets.GOOGLE_CLIENT_ID}}" \
+          --from-literal=GOOGLE_CLIENT_SECRET="${{secrets.GOOGLE_CLIENT_SECRET}}" \
+          --from-literal=GOOGLE_REDIRECT_URL="${{secrets.GOOGLE_REDIRECT_URL}}" \
+          --from-literal=NAVER_CLIENT_ID="${{secrets.NAVER_CLIENT_ID}}" \
+          --from-literal=NAVER_CLIENT_SECRET="${{secrets.NAVER_CLIENT_SECRET}}" \
+          --from-literal=NAVER_REDIRECT_URL="${{secrets.NAVER_REDIRECT_URL}}" \
           --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy
