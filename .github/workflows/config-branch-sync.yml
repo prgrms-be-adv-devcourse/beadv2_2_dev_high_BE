@@ -18,7 +18,7 @@ jobs:
       - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: develop
           fetch-depth: 0
 
       - name: Checkout config branch
@@ -30,8 +30,7 @@ jobs:
 
       - name: Sync config files to branch root
         run: |
-          rm -rf config-branch/*
-          cp -R config/config/. config-branch/
+          rsync -a --delete --exclude ".git" config/config/ config-branch/
 
       - name: Commit and push if changed
         run: |
