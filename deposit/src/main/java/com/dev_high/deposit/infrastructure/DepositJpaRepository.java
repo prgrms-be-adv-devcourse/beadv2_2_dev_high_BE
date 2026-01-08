@@ -13,6 +13,6 @@ public interface DepositJpaRepository extends JpaRepository<Deposit, String> {
 
     // 쓰기 락을 걸고 사용자 예치금 정보를 조회
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT d FROM Deposit d WHERE d.id = :userId")
+    @Query("SELECT d FROM Deposit d WHERE d.userId = :userId")
     Optional<Deposit> findByUserIdWithLock(String userId);
 }
