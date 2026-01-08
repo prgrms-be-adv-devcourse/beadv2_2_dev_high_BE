@@ -9,8 +9,6 @@ import com.dev_high.user.wishlist.presentation.dto.WishlistRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/users/wishlist")
 @RequiredArgsConstructor
@@ -31,10 +29,5 @@ public class WishlistController {
     @DeleteMapping
     public ApiResponseDto<Void> delete(@RequestBody WishlistRequest request) {
         return wishlistService.delete(request.toCommand());
-    }
-
-    @GetMapping("/{productId}")
-    public ApiResponseDto<List<String>> getUserIdsByProductId(@PathVariable("productId") String productId) {
-        return wishlistService.getUserIdsByProductId(productId);
     }
 }

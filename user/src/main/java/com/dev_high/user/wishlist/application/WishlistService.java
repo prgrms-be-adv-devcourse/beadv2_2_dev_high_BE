@@ -3,6 +3,8 @@ package com.dev_high.user.wishlist.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
+import com.dev_high.common.kafka.event.auction.AuctionStartEvent;
+import com.dev_high.common.kafka.*;
 import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.wishlist.application.dto.WishlistCommand;
@@ -13,11 +15,11 @@ import com.dev_high.user.wishlist.exception.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ public class WishlistService {
     private final WishlistRepository wishlistRepository;
     private final UserDomainService userDomainsService;
     private final WishlistClient wishlistClient;
+    private final KafkaEventPublisher eventPublisher;
 
     @Transactional
     public ApiResponseDto<WishlistResponse> create(WishlistCommand command) {
@@ -71,10 +74,10 @@ public class WishlistService {
 
         Page<Wishlist> wishlistPage =
                 wishlistRepository.findByUserIdAndDeletedYn(userId, "N", pageable);
-        
+
         Map<String, String> productNameMap =
                 fetchProductName(wishlistPage, userId);
-        
+
         Page<WishlistResponse> responsePage = wishlistPage.map(w ->
                 new WishlistResponse(
                         w.getId(),
@@ -103,9 +106,13 @@ public class WishlistService {
         );
     }
 
-    public ApiResponseDto<List<String>> getUserIdsByProductId(String productId) {
-        List<String> userIds = wishlistRepository.findUserIdByProductIdAndDeletedYn(productId, "N");
-        return ApiResponseDto.success(userIds);
+    public List<String> publishNotificationRequestOnAuctionStart(AuctionStartEvent event) {
+        try {
+            List<String> userIds = wishlistRepository.findUserIdByProductIdAndDeletedYn(event.productId(), "N");
+            return (userIds == null) ? List.of() : userIds;
+        } catch (DataAccessException e) {
+            throw new RuntimeException("wishlist userIds 조회 실패: productId=" + event.productId(), e);
+        }
     }
 
     private Map<String, String> fetchProductName(
