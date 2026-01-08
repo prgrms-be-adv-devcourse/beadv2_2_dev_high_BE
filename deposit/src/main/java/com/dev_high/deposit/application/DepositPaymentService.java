@@ -70,7 +70,7 @@ public class DepositPaymentService {
         DepositOrder order = depositOrderRepository.findById(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + command.orderId()));
 
-        if (payment.getAmount() != command.amount()) {
+        if (payment.getAmount().compareTo(command.amount()) != 0) {
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
         }
 
