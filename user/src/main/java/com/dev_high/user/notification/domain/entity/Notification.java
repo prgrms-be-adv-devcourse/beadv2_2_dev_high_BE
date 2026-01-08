@@ -1,7 +1,7 @@
 package com.dev_high.user.notification.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.user.notification.domain.model.NotificationType;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.user.notification.infrastructure.converter.BooleanToYNConverter;
 import io.jsonwebtoken.lang.Assert;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,10 +35,15 @@ public class Notification{
     @Column(name = "user_id", length = 20, nullable = false)
     private String userId;
 
+    @Schema(description = "알림 카테고리")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 20, nullable = false)
+    private NotificationCategory category;
+
     @Schema(description = "알림 타입")
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 20, nullable = false)
-    private NotificationType type;
+    private NotificationCategory.Type type;
 
     @Schema(description = "제목")
     @Column(name = "title", length = 50, nullable = false)
@@ -78,8 +83,9 @@ public class Notification{
     private String updatedBy;
 
     @Builder
-    public Notification(String userId, NotificationType type, String title, String content, String relatedUrl, Boolean readYn) {
+    public Notification(String userId, NotificationCategory category, NotificationCategory.Type type, String title, String content, String relatedUrl, Boolean readYn) {
         this.userId = userId;
+        this.category = category;
         this.type = type;
         this.title = title;
         this.content = content;
@@ -108,7 +114,7 @@ public class Notification{
 
     public static Notification create(
         String userId,
-        NotificationType type,
+        NotificationCategory.Type type,
         String title,
         String content,
         String relatedUrl
@@ -117,6 +123,7 @@ public class Notification{
         Assert.hasText(title, "제목은 필수입니다.");
         return Notification.builder()
                 .userId(userId)
+                .category(NotificationCategory.fromType(type))
                 .type(type)
                 .title(title)
                 .content(content)

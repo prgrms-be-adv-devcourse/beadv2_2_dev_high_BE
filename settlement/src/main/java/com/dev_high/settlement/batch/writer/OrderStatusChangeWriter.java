@@ -4,6 +4,7 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.settlement.batch.processor.OrderStatusChangeResult;
 import com.dev_high.settlement.order.application.dto.UpdateOrderProjection;
 import com.dev_high.settlement.order.domain.OrderStatus;
@@ -54,22 +55,16 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
         if (buyer.isEmpty() || message == null) {
             return;
         }
-        String status = null;
-        switch (orderStatus) {
-            case SHIP_STARTED:
-                status = "STARTED";
-                break;
-            case SHIP_COMPLETED:
-                status = "COMPLETED";
-                break;
-            case UNPAID_CANCEL:
-                status = "CANCELED";
-                break;
-        }
+        NotificationCategory.Type type = switch (orderStatus) {
+            case SHIP_STARTED -> NotificationCategory.Type.ORDER_STARTED;
+            case SHIP_COMPLETED -> NotificationCategory.Type.ORDER_COMPLETED;
+            case UNPAID_CANCEL -> NotificationCategory.Type.ORDER_CANCELED;
+            default -> NotificationCategory.Type.GENERAL;
+        };
 
         try {
             publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-                    new NotificationRequestEvent(buyer, message, redirect, "ORDER_STATUS_CHANGED",status));
+                    new NotificationRequestEvent(buyer, message, redirect, type));
         } catch (Exception e) {
             log.error("알림 이벤트 실패: {}", e.getMessage());
         }
