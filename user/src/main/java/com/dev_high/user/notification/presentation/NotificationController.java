@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -32,7 +34,7 @@ public class NotificationController {
         return ApiResponseDto.success(response);
     }
 
-    @Operation(summary = "읽지 않은 알림 갯수 카운트", description = "로그인한 사용자 ID별 읽지않은 알림 갯수 카운트를 조회")
+    @Operation(summary = "읽지 않은 알림 갯수 카운트", description = "로그인한 사용자 ID별 만료일자가 지나지 않은 읽지 않은 알림 갯수 카운트를 조회")
     @GetMapping("/unread/count")
     public ApiResponseDto<NotificationResponse.Count> getUnreadNotificationCount() {
         NotificationDto.Count count = notificationService.getUnreadNotificationCount();
@@ -52,5 +54,10 @@ public class NotificationController {
         NotificationDto.Info info = notificationService.getNotificationById(notificationId);
         NotificationResponse.Detail response = NotificationResponse.Detail.from(info);
         return ApiResponseDto.success(response);
+    }
+
+    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe() {
+        return notificationService.subscribe();
     }
 }

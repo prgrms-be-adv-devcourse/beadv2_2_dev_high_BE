@@ -31,8 +31,8 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     @Override
-    public Long countUnreadByUserId(String userId) {
-        return repository.countByUserIdAndReadYn(userId, false);
+    public Long countUnreadByUserId(String userId, OffsetDateTime now) {
+        return repository.countByUserIdAndReadYnAndExpiredAtAfter(userId, false, now);
     }
 
     @Override
