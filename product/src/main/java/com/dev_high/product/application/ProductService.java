@@ -25,13 +25,16 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductCategoryRelRepository productCategoryRelRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductRecommendService productRecommendService;
 
-    //상품생성 + 상품-카테고리rel생성
+    // 상품생성 + 상품-카테고리rel생성 + 상품 인덱싱 생성
     @Transactional
     public ProductInfo registerProduct(ProductCommand command) {
         Product saved = saveProduct(command);
         String sellerId = saved.getSellerId();
         attachCategories(saved, command.categoryIds(), sellerId);
+        productRepository.save(saved);
+        productRecommendService.indexOne(saved); //상품 추천 인덱싱 추가
         return ProductInfo.from(saved);
     }
 
@@ -86,6 +89,7 @@ public class ProductService {
 
         product.updateDetails(command.name(), command.description(), command.fileId(), userInfo.userId());
         replaceCategories(product, command.categoryIds(), userInfo.userId());
+        productRecommendService.reindex(product); // 재인덱싱
         return ProductInfo.from(product);
     }
 
@@ -133,6 +137,7 @@ public class ProductService {
         return productCategoryRelRepository.findProductsByCategoryId(categoryId, DeleteStatus.N, pageable).map(ProductInfo::from);
     }
 
+    //상품 삭제
     @Transactional
     public void deleteProduct(String productId) {
         UserInfo userInfo = UserContext.get();

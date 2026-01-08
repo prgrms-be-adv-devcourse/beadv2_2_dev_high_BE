@@ -16,6 +16,8 @@ public interface ProductRepository {
 
     void saveAll(List<Product> products);
 
+    List<Product> findAll();
+
     void flush();
 
     List<Product> findByIdIn(List<String> productIds);
