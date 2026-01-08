@@ -39,13 +39,6 @@ public class DepositOrderController {
         return ApiResponseDto.success(response);
     }
 
-    @Operation(summary = "예치금 주문 상태 변경", description = "특정 주문의 상태를 변경")
-    @PatchMapping("/orders/status")
-    public ApiResponseDto<DepositOrderResponse.Detail> updateOrderStatus(@RequestBody @Valid DepositOrderRequest.Update request) {
-        DepositOrderDto.UpdateCommand command = request.toCommand(request.orderId(), request.status());
-        DepositOrderDto.Info info = depositOrderService.updateOrderStatus(command);
-        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
+
 
 }

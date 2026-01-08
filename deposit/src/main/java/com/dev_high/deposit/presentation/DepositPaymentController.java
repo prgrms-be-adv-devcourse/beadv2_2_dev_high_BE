@@ -23,15 +23,6 @@ public class DepositPaymentController {
     private final DepositPaymentService paymentService;
     private final DepositPaymentFailureHistoryService historyService;
 
-    @Operation(summary = "예치금 결제 생성", description = "결제 승인 요청 전, READY 상태의 결제를 생성")
-    @PostMapping("/payments")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositPaymentResponse.Detail> createPayment(@RequestBody @Valid DepositPaymentRequest.Create request) {
-        DepositPaymentDto.CreateCommand command = request.toCommand(request.orderId(), request.method(), request.amount());
-        DepositPaymentDto.Info info =  paymentService.createPayment(command);
-        DepositPaymentResponse.Detail response = DepositPaymentResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
 
     @Operation(summary = "로그인한 사용자 ID의 예치금 결제 조회", description = "예치금 결제 내역을 사용자 ID로 조회")
     @GetMapping("/payments/me")
@@ -60,13 +51,6 @@ public class DepositPaymentController {
         return ApiResponseDto.success(response);
     }
 
-    @Operation(summary = "결제 실패 이력 전체 조회", description = "모든 결제 실패 이력을 조회")
-    @GetMapping("/payments/fail/list")
-    public ApiResponseDto<Page<DepositPaymentFailureHistoryResponse.Detail>> findAll(Pageable pageable) {
-        Page<DepositPaymentFailureDto.Info> infos = historyService.findAll(pageable);
-        Page<DepositPaymentFailureHistoryResponse.Detail> response = infos.map(DepositPaymentFailureHistoryResponse.Detail::from);
-        return ApiResponseDto.success(response);
-    }
 
     @Operation(summary = "실패 이력 ID별 조회", description = "실패 이력 ID로 결제 실패 이력을 조회")
     @GetMapping("/payments/fail/{historyId}")
