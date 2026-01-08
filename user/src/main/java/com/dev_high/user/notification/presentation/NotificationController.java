@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -52,5 +54,10 @@ public class NotificationController {
         NotificationDto.Info info = notificationService.getNotificationById(notificationId);
         NotificationResponse.Detail response = NotificationResponse.Detail.from(info);
         return ApiResponseDto.success(response);
+    }
+
+    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe() {
+        return notificationService.subscribe();
     }
 }
