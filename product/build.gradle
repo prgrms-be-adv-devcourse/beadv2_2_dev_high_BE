@@ -16,12 +16,14 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+
 }
 
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:1.1.2"
+        mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M6"
     }
 }
 
@@ -32,8 +34,9 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-pgvector-store-spring-boot-starter'
 
-
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    // Spring AI
+    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+    implementation 'org.springframework.ai:spring-ai-pgvector-store-spring-boot-starter'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
@@ -48,3 +51,4 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
