@@ -46,7 +46,9 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public NotificationDto.Count getUnreadNotificationCount() {
         String userId = UserContext.get().userId();
-        return NotificationDto.Count.from(notificationRepository.countUnreadByUserId(userId));
+        OffsetDateTime now = OffsetDateTime.now();
+
+        return NotificationDto.Count.from(notificationRepository.countUnreadByUserId(userId, now));
     }
 
     @Transactional

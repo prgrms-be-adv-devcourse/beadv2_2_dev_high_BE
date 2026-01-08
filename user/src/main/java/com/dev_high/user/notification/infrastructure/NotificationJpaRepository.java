@@ -15,7 +15,7 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, S
 
     Page<Notification> findAllByUserIdAndExpiredAtAfterOrderByCreatedAtDesc(String userId, OffsetDateTime now, Pageable pageable);
 
-    Long countByUserIdAndReadYn(String userId, Boolean readYn);
+    Long countByUserIdAndReadYnAndExpiredAtAfter(String userId, Boolean readYn, OffsetDateTime now);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "UPDATE \"user\".notification" +
