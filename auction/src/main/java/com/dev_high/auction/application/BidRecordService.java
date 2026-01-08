@@ -81,7 +81,7 @@ public class BidRecordService {
 
         if (!isExist) {
 
-            return AuctionParticipationResponse.isNotParticipated();
+            return AuctionParticipationResponse.isNotParticipated(auctionId);
         }
 
         AuctionParticipationId participationId = new AuctionParticipationId(userId, auctionId);
