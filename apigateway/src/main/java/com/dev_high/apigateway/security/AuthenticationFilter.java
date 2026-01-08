@@ -48,15 +48,19 @@ public class AuthenticationFilter implements WebFilter {
         }
 
         EndpointRule target = selectMostSpecific(ruleCache.getCandidates(method.name()), path);
-        exchange.getAttributes().put(ENDPOINT_RULE, target);
+        if (target == null) {
+            return unauthorized(exchange,HttpStatus.FORBIDDEN);
 
-        if (target == null || !target.authRequired()) {
+        }
+        exchange.getAttributes().put(ENDPOINT_RULE, target);
+        log.info("target : {}",target);
+        if (!target.authRequired()) {
             return chain.filter(exchange);
         }
 
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return unauthorized(exchange);
+            return unauthorized(exchange,HttpStatus.UNAUTHORIZED);
         }
 
         String token = authHeader.substring(7).trim();
@@ -66,11 +70,11 @@ public class AuthenticationFilter implements WebFilter {
             claims = jwtProvider.parseToken(token);
         } catch (ExpiredJwtException e) {
             log.warn("JWT 만료: {}", e.getMessage());
-            return unauthorized(exchange);
+            return unauthorized(exchange,HttpStatus.UNAUTHORIZED);
 
         } catch (Exception e) {
             log.warn("JWT 검증 실패: {}", e.getMessage());
-            return unauthorized(exchange);
+            return unauthorized(exchange,HttpStatus.UNAUTHORIZED);
         }
 
         String userId = claims.getSubject();
@@ -103,7 +107,6 @@ public class AuthenticationFilter implements WebFilter {
         if (candidates == null || candidates.isEmpty()) {
             return null;
         }
-
         PathContainer pathContainer = PathContainer.parsePath(requestPath);
 
         return candidates.stream()
@@ -122,8 +125,8 @@ public class AuthenticationFilter implements WebFilter {
                 path.startsWith("/webjars");
     }
 
-    private Mono<Void> unauthorized(ServerWebExchange exchange) {
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+    private Mono<Void> unauthorized(ServerWebExchange exchange ,HttpStatus status) {
+        exchange.getResponse().setStatusCode(status);
         return exchange.getResponse().setComplete();
     }
 }

@@ -4,14 +4,14 @@ import com.dev_high.apigateway.security.AuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authorization.ReactiveAuthorizationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.web.server.authorization.AuthorizationContext;
 import org.springframework.web.cors.CorsConfiguration;
+
 import java.util.List;
 
 @Configuration
@@ -38,10 +38,6 @@ public class WebFluxSecurityConfig {
                 .headers(headers -> headers.frameOptions(
                         ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
                 .cors(cors -> cors.configurationSource(request -> {
-                    String path = request.getRequest().getURI().getPath();
-                    if (path.startsWith("/ws-auction")) {
-                        return null;
-                    }
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOriginPatterns(List.of(
                             "http://localhost:[*]",
@@ -56,12 +52,6 @@ public class WebFluxSecurityConfig {
                     return config;
                 }))
                 .addFilterAt(authenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-                .exceptionHandling(e -> e
-                        .accessDeniedHandler((exchange, ex) -> {
-                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-                            return exchange.getResponse().setComplete();
-                        })
-                )
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(PERMITALL_ANTPATTERNS).permitAll()
