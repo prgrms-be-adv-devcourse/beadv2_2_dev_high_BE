@@ -38,10 +38,12 @@ public class DepositHistoryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<DepositHistoryDto.Info> findHistoriesByUserId(Pageable pageable) {
+    public Page<DepositHistoryDto.Info> findHistoriesByUserId(DepositType type ,Pageable pageable) {
         String userId = UserContext.get().userId();
         log.info("Finding deposit histories for userId: {}", userId);
-
+        if(type != null){
+            return depositHistoryRepository.findByUserIdAndType(userId,type,pageable).map(DepositHistoryDto.Info::from);
+        }
         return depositHistoryRepository.findByUserId(userId, pageable)
                 .map(DepositHistoryDto.Info::from);
     }
