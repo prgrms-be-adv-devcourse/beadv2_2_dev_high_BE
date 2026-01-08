@@ -2,6 +2,7 @@ package com.dev_high.user.notification.infrastructure.kafka;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.user.notification.application.NotificationService;
 import com.dev_high.user.notification.application.dto.NotificationDto;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -37,12 +38,15 @@ public class NotificationEventListener {
         String relatedUrl = Optional.ofNullable(payload.get("redirectUrl"))
                 .map(Object::toString)
                 .orElse("");
-        String type = Optional.ofNullable(payload.get("type"))
-                .map(Object::toString)
-                .orElse("");
-        String status = Optional.ofNullable(payload.get("status"))
-                .map(Object::toString)
-                .orElse("");
+        NotificationCategory.Type type = Optional.ofNullable(payload.get("type"))
+                .map(val -> {
+                    try {
+                        return objectMapper.convertValue(val, NotificationCategory.Type.class);
+                    } catch (IllegalArgumentException e) {
+                        return NotificationCategory.Type.GENERAL;
+                    }
+                })
+                .orElse(NotificationCategory.Type.GENERAL);
 
         if (userIds.isEmpty()) {
             log.warn("알림을 수신할 userId가 없습니다.: {}, Topic: {}, Patition: {}, Offset: {}", envelope, record.topic(), record.partition(), record.offset());
@@ -51,7 +55,7 @@ public class NotificationEventListener {
 
         try {
             userIds.forEach(userId -> {
-                NotificationDto.CreateCommand command = NotificationDto.CreateCommand.of(userId, type, status, content, relatedUrl);
+                NotificationDto.CreateCommand command = NotificationDto.CreateCommand.of(userId, type, content, relatedUrl);
                 notificationService.createNotification(command);
             });
         } catch (IllegalArgumentException | DataIntegrityViolationException e) {

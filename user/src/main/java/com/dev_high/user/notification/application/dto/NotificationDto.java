@@ -1,27 +1,27 @@
 package com.dev_high.user.notification.application.dto;
 
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.user.notification.domain.entity.Notification;
-import com.dev_high.user.notification.domain.model.NotificationType;
 
 import java.time.OffsetDateTime;
 
 public class NotificationDto {
     public record CreateCommand(
             String userId,
-            String type,
-            String status,
+            NotificationCategory.Type type,
             String content,
             String relatedUrl
     ) {
-        public static CreateCommand of(String userId, String type, String status, String content, String relatedUrl) {
-            return new CreateCommand(userId, type, status, content, relatedUrl);
+        public static CreateCommand of(String userId, NotificationCategory.Type type, String content, String relatedUrl) {
+            return new CreateCommand(userId, type, content, relatedUrl);
         }
     }
 
     public record Info(
             String id,
             String userId,
-            NotificationType type,
+            NotificationCategory category,
+            NotificationCategory.Type type,
             String title,
             String content,
             String relatedUrl,
@@ -33,6 +33,7 @@ public class NotificationDto {
             return new Info(
                     notification.getId(),
                     notification.getUserId(),
+                    notification.getCategory(),
                     notification.getType(),
                     notification.getTitle(),
                     notification.getContent(),

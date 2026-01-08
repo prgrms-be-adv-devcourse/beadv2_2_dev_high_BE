@@ -6,6 +6,7 @@ import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionCreateOrderRequestEvent;
 import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.common.util.JsonUtil;
 
 import com.dev_high.settlement.order.domain.OrderStatus;
@@ -43,7 +44,7 @@ public class OrderEventListener {
                     List.of(res.buyerId()),
                     "주문이 생성되었습니다. 3일내 결제를 완료해주세요. 미결제시 주문이 취소됩니다.",
                     "/orders/" + res.id(),
-                    "ORDER_CREATED"
+                    NotificationCategory.Type.ORDER_CREATED
                     );
 
             if (res != null) {

@@ -20,8 +20,8 @@ public class NotificationService {
 
     @Transactional
     public void createNotification(NotificationDto.CreateCommand command) {
-        NotificationAttribute attribute = attributeMapper.resolve(command.type(), command.status(), command.relatedUrl());
-        notificationRepository.save(Notification.create(command.userId(), attribute.type(), attribute.title(), command.content(), command.relatedUrl()));
+        NotificationAttribute attribute = attributeMapper.resolve(command.type(), command.relatedUrl());
+        notificationRepository.save(Notification.create(command.userId(), command.type(), attribute.title(), command.content(), attribute.relatedUrl()));
     }
 
     @Transactional(readOnly = true)
