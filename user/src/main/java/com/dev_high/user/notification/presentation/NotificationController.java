@@ -17,9 +17,17 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @Operation(summary = "알림 내역 조회", description = "로그인한 사용자 ID별 알림을 조회")
-    @GetMapping
+    @GetMapping("/me")
     public ApiResponseDto<Page<NotificationResponse.Detail>> getAllNotifications(Pageable pageable) {
         Page<NotificationDto.Info> infos = notificationService.getAllNotifications(pageable);
+        Page<NotificationResponse.Detail> response = infos.map(NotificationResponse.Detail::from);
+        return ApiResponseDto.success(response);
+    }
+
+    @Operation(summary = "만료일자 이내 알림 내역 조회", description = "로그인한 사용자 ID별 만료일자가 지나지 않은 알림을 조회")
+    @GetMapping
+    public ApiResponseDto<Page<NotificationResponse.Detail>> getActiveNotifications(Pageable pageable) {
+        Page<NotificationDto.Info> infos = notificationService.getActiveNotifications(pageable);
         Page<NotificationResponse.Detail> response = infos.map(NotificationResponse.Detail::from);
         return ApiResponseDto.success(response);
     }
@@ -30,6 +38,12 @@ public class NotificationController {
         NotificationDto.Count count = notificationService.getUnreadNotificationCount();
         NotificationResponse.Count response = NotificationResponse.Count.from(count);
         return ApiResponseDto.success(response);
+    }
+
+    @Operation(summary = "만료일자 이내 미확인 알림 일괄 읽음 처리", description = "로그인한 사용자 ID별 만료일자가 지나지 않은 미확인 알림을 일괄 읽음 처리")
+    @PutMapping("/read-all")
+    public ApiResponseDto<Void> readAllNotifications() {
+        return notificationService.markAllAsRead();
     }
 
     @Operation(summary = "알림 상세 조회", description = "알림 ID에 해당하는 알림 정보를 조회")

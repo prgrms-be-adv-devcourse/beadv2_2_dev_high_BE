@@ -1,17 +1,22 @@
 package com.dev_high.user.notification.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.notification.application.dto.NotificationDto;
 import com.dev_high.user.notification.domain.entity.Notification;
 import com.dev_high.user.notification.domain.mapper.NotificationAttributeMapper;
 import com.dev_high.user.notification.domain.model.NotificationAttribute;
 import com.dev_high.user.notification.domain.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -32,9 +37,31 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
+    public Page<NotificationDto.Info> getActiveNotifications(Pageable pageable) {
+        String userId = UserContext.get().userId();
+        return notificationRepository.findAllByUserIdAndExpiredAt(userId, OffsetDateTime.now(), pageable)
+                .map(NotificationDto.Info::from);
+    }
+
+    @Transactional(readOnly = true)
     public NotificationDto.Count getUnreadNotificationCount() {
         String userId = UserContext.get().userId();
         return NotificationDto.Count.from(notificationRepository.countUnreadByUserId(userId));
+    }
+
+    @Transactional
+    public ApiResponseDto<Void> markAllAsRead() {
+        String userId = UserContext.get().userId();
+        OffsetDateTime now = OffsetDateTime.now();
+
+        int updatedCount = notificationRepository.markAllUnreadActiveAsRead(userId, now);
+
+        log.info("사용자 ID {}의 알림 {}건을 일괄 읽음 처리했습니다.", userId, updatedCount);
+
+        return ApiResponseDto.success(
+                "알림 일괄 읽음 처리가 되었습니다.",
+                null
+        );
     }
 
     @Transactional
