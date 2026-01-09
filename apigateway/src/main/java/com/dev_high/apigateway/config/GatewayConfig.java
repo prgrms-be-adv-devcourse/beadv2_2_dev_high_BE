@@ -18,11 +18,14 @@ public class GatewayConfig {
     return builder.routes()
             // Auction Service
             .route("auction-service", r -> r
-                    .path("/api/v1/auctions/**") // 해당 경로로 요청하면 > 해당서비스로 요청전달
+                    .path("/api/v1/auctions/**")
                     .uri("lb://AUCTION-SERVICE")) // 유레카에 등록된 서비스이름
             .route("auction-service-ws", r -> r
                     .path("/ws-auction/**")      // 클라이언트 WebSocket 접속 경로
                     .uri("lb://AUCTION-SERVICE")) // WebSocket 업그레이드 요청도 프록시
+            .route("auction-admin-service", r -> r
+                    .path("/api/v1/admin/auctions/**")
+                    .uri("lb://AUCTION-SERVICE"))
 
             // Deposit Service
             .route("deposit-service", r -> r
