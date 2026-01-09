@@ -1,4 +1,4 @@
-package com.dev_high.product.ai.application.dto;
+package com.dev_high.product.application.dto;
 
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package com.dev_high.product.ai.domain;
 
+// value는 질문, context는 데이터값
 public record ChatMessage(String value, String context) {
 
 	public ChatMessage {
@@ -12,9 +13,5 @@ public record ChatMessage(String value, String context) {
 		} else {
 			context = context.trim();
 		}
-	}
-
-	public ChatMessage(String value) {
-		this(value, "");
 	}
 }

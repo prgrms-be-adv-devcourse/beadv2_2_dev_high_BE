@@ -1,7 +1,7 @@
-package com.dev_high.product.ai.application;
+package com.dev_high.product.application;
 
-import com.dev_high.product.ai.application.dto.ProductAnswer;
-import com.dev_high.product.ai.application.dto.ProductSearchInfo;
+import com.dev_high.product.application.dto.ProductAnswer;
+import com.dev_high.product.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductRecommendService {
 
-    private final EmbeddingModel embeddingModel;
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
     private final ChatModel chatModel;
@@ -87,7 +86,6 @@ public class ProductRecommendService {
 
         String context = toContext(productSearchInfo);
         ChatResult result = chatModel.chat(new ChatMessage(query, context));
-
 
         ProductAnswer answer=new ProductAnswer(result.content(), productSearchInfo);
 
