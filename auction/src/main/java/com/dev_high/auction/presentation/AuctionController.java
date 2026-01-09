@@ -3,6 +3,7 @@ package com.dev_high.auction.presentation;
 import com.dev_high.auction.application.AuctionService;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.auction.presentation.dto.UserAuctionListRequest;
 import com.dev_high.common.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,10 +32,10 @@ public class AuctionController {
   @Operation(summary = "경매 목록 조회", description = "페이지네이션과 필터를 통해 경매 목록을 조회합니다.")
   @GetMapping
   public ApiResponseDto<Page<AuctionResponse>> getAuctionList(
-      @ModelAttribute AuctionRequest request,
+      @ModelAttribute UserAuctionListRequest request,
       Pageable pageable) {
 
-    Page<AuctionResponse> res = auctionService.getAuctionList(request, pageable);
+    Page<AuctionResponse> res = auctionService.getUserAuctionList(request, pageable);
     return ApiResponseDto.success(res);
   }
 

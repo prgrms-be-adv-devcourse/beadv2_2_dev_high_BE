@@ -1,4 +1,4 @@
-package com.dev_high.auction.batch;
+package com.dev_high.batch;
 
 import com.dev_high.auction.application.dto.AuctionProductProjection;
 import com.dev_high.auction.domain.*;

@@ -10,6 +10,7 @@ import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin")
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Admin", description = "주문/정산 관리 API")
+
 public class AdminController {
 
     private final AdminService adminService;

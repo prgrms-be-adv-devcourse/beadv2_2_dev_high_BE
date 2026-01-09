@@ -1,4 +1,4 @@
-package com.dev_high.auction.batch;
+package com.dev_high.batch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

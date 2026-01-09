@@ -6,6 +6,7 @@ import com.dev_high.order.application.OrderService;
 import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Tag(name = "WinningOrder", description = "낙찰주문 관리 API")
 public class OrderController {
 
     private final OrderService orderService;

@@ -1,4 +1,4 @@
-package com.dev_high.auction.batch;
+package com.dev_high.batch;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;

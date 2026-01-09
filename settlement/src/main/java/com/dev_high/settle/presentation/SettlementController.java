@@ -4,6 +4,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.settle.application.SettlementDailySummary;
 import com.dev_high.settle.application.SettlementService;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/settle")
+@Tag(name = "Settlement", description = "정산 관리 API")
+
 public class SettlementController {
 
     private final SettlementService settlementService;

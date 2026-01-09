@@ -1,4 +1,4 @@
-package com.dev_high.auction.config;
+package com.dev_high.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
