@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,9 @@ public class EndpointPolicyRepository {
     }
 
     private Set<String> toRoleSet(Object rolesObj) {
-        if (rolesObj == null) return Collections.emptySet();
+        if (rolesObj == null) {
+            return Collections.emptySet();
+        }
 
         if (rolesObj instanceof String[] arr) {
             return Arrays.stream(arr)
@@ -60,11 +63,24 @@ public class EndpointPolicyRepository {
         }
 
         String s = rolesObj.toString().trim();
-        if (s.equals("{}") || s.isEmpty()) return Collections.emptySet();
+        if (s.equals("{}") || s.isEmpty()) {
+            return Collections.emptySet();
+        }
         s = s.replace("{", "").replace("}", "");
         return Arrays.stream(s.split(","))
                 .map(String::trim)
                 .filter(v -> !v.isEmpty())
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    public Mono<Long> getRuleVersion() {
+        return client.sql("""
+            SELECT version
+            FROM public.endpoint_rule_version
+            WHERE id = 1
+        """)
+                .map((row, meta) -> row.get("version", Long.class))
+                .one()
+                .defaultIfEmpty(0L);
     }
 }
