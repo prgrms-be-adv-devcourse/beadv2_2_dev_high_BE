@@ -1,10 +1,13 @@
 package com.dev_high.product.application;
 
-import com.dev_high.product.application.dto.ProductAnswer;
+import com.dev_high.product.application.ai.dto.ProductAnswer;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
+import com.dev_high.product.domain.ai.ChatMessage;
+import com.dev_high.product.domain.ai.ChatModel;
+import com.dev_high.product.domain.ai.ChatResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -23,6 +26,7 @@ public class ProductRecommendService {
     private final EmbeddingModel embeddingModel;
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
+    private final ChatModel chatModel;
 
 
     //단건색인
@@ -76,11 +80,41 @@ public class ProductRecommendService {
     }
 
 
-//    // 상품RAG 추천
-//    public ProductAnswer answer(String query, int topK) {
-//
-//        return null;
-//    }
+    // 상품RAG 추천
+    public ProductAnswer answer(String query, int topK) {
+
+        List<ProductSearchInfo> productSearchInfo= search(query, topK);
+
+        String context = toContext(productSearchInfo);
+        ChatResult result = chatModel.chat(new ChatMessage(query, context));
+
+
+        ProductAnswer answer=new ProductAnswer(result.content(), productSearchInfo);
+
+        return answer;
+    }
+
+
+    private String toContext(List<ProductSearchInfo> productSearchInfo) {
+        if (productSearchInfo == null || productSearchInfo.isEmpty()) {
+            return "";
+        }
+
+        return productSearchInfo.stream()
+                .map(info -> String.format(
+                        "productId=%s | name=%s | description=%s | categories=%s | sellerId=%s",
+                        nullToEmpty(info.productId()),
+                        nullToEmpty(info.name()),
+                        nullToEmpty(info.description()),
+                        nullToEmpty(info.categories()),
+                        nullToEmpty(info.sellerId())
+                ))
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
 
 
     private Document toDocument(Product product) {

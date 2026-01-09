@@ -2,7 +2,7 @@ package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.product.application.ProductRecommendService;
-import com.dev_high.product.application.dto.ProductAnswer;
+import com.dev_high.product.application.ai.dto.ProductAnswer;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,17 +53,19 @@ public class ProductRecommendController {
     }
 
 
-//    @GetMapping("/ask")
-//    @Operation(
-//            summary = "상품 RAG 답변",
-//            description = "임베딩/검색된 상품 정보를 컨텍스트로 GPT 답변을 생성합니다.")
-//    public ApiResponseDto<ProductAnswer> ask(
-//            @RequestParam("q")
-//            @Parameter(description = "사용자 질문(예: 여름 캠핑용 의자 추천)") String query,
-//            @RequestParam(value = "topK", defaultValue = "5")
-//            @Parameter(description = "검색에 사용할 상위 결과 개수 (기본 5)") int topK) {
-//
-//        ProductAnswer answer= productRecommendService.answer(query, topK);
-//        return ApiResponseDto.success(answer);
-//    }
+    @GetMapping("/ask")
+    @Operation(
+            summary = "상품 RAG 답변",
+            description = "임베딩/검색된 상품 정보를 컨텍스트로 GPT 답변을 생성합니다.")
+    public ApiResponseDto<ProductAnswer> ask(
+            @RequestParam("q")
+            @Parameter(description = "사용자 질문(예: 여름 캠핑용 의자 추천)") String query,
+            @RequestParam(value = "topK", defaultValue = "5")
+            @Parameter(description = "검색에 사용할 상위 결과 개수 (기본 5)") int topK) {
+
+        ProductAnswer answer= productRecommendService.answer(query, topK);
+
+
+        return ApiResponseDto.success(answer);
+    }
 }

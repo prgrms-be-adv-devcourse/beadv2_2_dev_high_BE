@@ -8,7 +8,6 @@ import com.dev_high.product.presentation.ai.dto.ChatRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,10 +28,11 @@ public class ChatController {
 
     @PostMapping
     @Operation(summary = "단건 챗봇 응답")
-    public ChatInfo chat(@Valid @RequestBody ChatRequest request) {
+    public ChatInfo testChat(@Valid @RequestBody ChatRequest request) {
         // 동기 방식으로 단일 질문에 대한 답변을 생성
 
-        ChatResult result = chatService.chat(request.toCommand());
+        ChatResult result = chatService.testChat(request.toCommand());
         return new ChatInfo(result.content(), result.metadata());
     }
+
 }
