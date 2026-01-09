@@ -1,9 +1,9 @@
-package com.dev_high.product.presentation;
+package com.dev_high.product.ai.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.product.application.ProductRecommendService;
-import com.dev_high.product.application.ai.dto.ProductAnswer;
-import com.dev_high.product.application.dto.ProductSearchInfo;
+import com.dev_high.product.ai.application.ProductRecommendService;
+import com.dev_high.product.ai.application.dto.ProductAnswer;
+import com.dev_high.product.ai.application.dto.ProductSearchInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

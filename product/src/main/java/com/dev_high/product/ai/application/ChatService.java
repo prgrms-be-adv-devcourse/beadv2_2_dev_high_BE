@@ -1,10 +1,10 @@
-package com.dev_high.product.application.ai;
+package com.dev_high.product.ai.application;
 
 
-import com.dev_high.product.application.ai.dto.ChatCommand;
-import com.dev_high.product.domain.ai.ChatMessage;
-import com.dev_high.product.domain.ai.ChatModel;
-import com.dev_high.product.domain.ai.ChatResult;
+import com.dev_high.product.ai.application.dto.ChatCommand;
+import com.dev_high.product.ai.domain.ChatMessage;
+import com.dev_high.product.ai.domain.ChatModel;
+import com.dev_high.product.ai.domain.ChatResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;

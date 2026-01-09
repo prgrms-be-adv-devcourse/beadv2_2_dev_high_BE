@@ -1,8 +1,8 @@
-package com.dev_high.product.infraStructure.ai;
+package com.dev_high.product.ai.infrastructure;
 
-import com.dev_high.product.domain.ai.ChatMessage;
-import com.dev_high.product.domain.ai.ChatModel;
-import com.dev_high.product.domain.ai.ChatResult;
+import com.dev_high.product.ai.domain.ChatMessage;
+import com.dev_high.product.ai.domain.ChatModel;
+import com.dev_high.product.ai.domain.ChatResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -50,8 +50,11 @@ public class SpringAiChatModel implements ChatModel {
 				"question", message.value(),
 				"context", message.context()
 		));
+		log.info("chat prompt: {}", prompt);
+
 		ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
 		Generation generation = response.getResult();
+		log.info("chat response raw: {}", response);
 
 		Map<String, Object> metadata = new HashMap<>();
 		response.getMetadata().entrySet()
@@ -76,9 +79,11 @@ public class SpringAiChatModel implements ChatModel {
 		Prompt prompt = testTemplate.create(Map.of(
 				"question", message.value()
 		));
+		log.info("testChat prompt: {}", prompt);
 
 		ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
 		Generation generation = response.getResult();
+		log.info("testChat response raw: {}", response);
 
 		Map<String, Object> metadata = new HashMap<>();
 		response.getMetadata().entrySet()

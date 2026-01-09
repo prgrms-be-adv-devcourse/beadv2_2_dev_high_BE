@@ -1,10 +1,10 @@
-package com.dev_high.product.presentation.ai;
+package com.dev_high.product.ai.presentation;
 
 
-import com.dev_high.product.application.ai.ChatService;
-import com.dev_high.product.application.ai.dto.ChatInfo;
-import com.dev_high.product.domain.ai.ChatResult;
-import com.dev_high.product.presentation.ai.dto.ChatRequest;
+import com.dev_high.product.ai.application.ChatService;
+import com.dev_high.product.ai.application.dto.ChatInfo;
+import com.dev_high.product.ai.domain.ChatResult;
+import com.dev_high.product.ai.presentation.dto.ChatRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("${api.v1:/api/v1}/chat")

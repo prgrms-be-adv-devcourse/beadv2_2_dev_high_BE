@@ -27,9 +27,9 @@ spring:
       base-url: https://api.openai.com/
       chat:
         options:
-          model: gpt-5-nano
-          temperature: 0.6
-          max-tokens: 256
+          model: gpt-4o-mini
+          temperature: 1
+          max_completion_tokens: 256
 
 ---
 spring:

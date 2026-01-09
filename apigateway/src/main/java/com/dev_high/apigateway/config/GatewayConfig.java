@@ -31,7 +31,7 @@ public class GatewayConfig {
 
             // Product Service
             .route("product-service", r -> r
-                    .path("/api/v1/products/**", "/api/v1/categories/**")
+                    .path("/api/v1/products/**", "/api/v1/categories/**", "/api/v1/chat/**")
                     .uri("lb://PRODUCT-SERVICE"))
 
             // Search Service

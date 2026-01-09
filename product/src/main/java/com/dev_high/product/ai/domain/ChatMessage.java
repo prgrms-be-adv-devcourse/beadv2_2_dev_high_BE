@@ -1,4 +1,4 @@
-package com.dev_high.product.domain.ai;
+package com.dev_high.product.ai.domain;
 
 public record ChatMessage(String value, String context) {
 

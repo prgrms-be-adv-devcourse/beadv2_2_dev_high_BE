@@ -1,13 +1,13 @@
-package com.dev_high.product.application;
+package com.dev_high.product.ai.application;
 
-import com.dev_high.product.application.ai.dto.ProductAnswer;
-import com.dev_high.product.application.dto.ProductSearchInfo;
+import com.dev_high.product.ai.application.dto.ProductAnswer;
+import com.dev_high.product.ai.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
-import com.dev_high.product.domain.ai.ChatMessage;
-import com.dev_high.product.domain.ai.ChatModel;
-import com.dev_high.product.domain.ai.ChatResult;
+import com.dev_high.product.ai.domain.ChatMessage;
+import com.dev_high.product.ai.domain.ChatModel;
+import com.dev_high.product.ai.domain.ChatResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;

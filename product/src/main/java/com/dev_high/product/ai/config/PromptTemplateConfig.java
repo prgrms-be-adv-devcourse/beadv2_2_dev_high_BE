@@ -1,4 +1,4 @@
-package com.dev_high.product.config;
+package com.dev_high.product.ai.config;
 
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.context.annotation.Bean;

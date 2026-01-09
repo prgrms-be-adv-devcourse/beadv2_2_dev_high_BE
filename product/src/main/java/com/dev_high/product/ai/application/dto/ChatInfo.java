@@ -1,6 +1,6 @@
-package com.dev_high.product.application.ai.dto;
+package com.dev_high.product.ai.application.dto;
 
-import com.dev_high.product.domain.ai.ChatResult;
+import com.dev_high.product.ai.domain.ChatResult;
 
 import java.util.Map;
 

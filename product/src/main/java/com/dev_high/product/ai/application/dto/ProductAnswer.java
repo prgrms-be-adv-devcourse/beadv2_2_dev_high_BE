@@ -1,6 +1,4 @@
-package com.dev_high.product.application.ai.dto;
-
-import com.dev_high.product.application.dto.ProductSearchInfo;
+package com.dev_high.product.ai.application.dto;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.dev_high.product.application.dto;
+package com.dev_high.product.ai.application.dto;
 
 import org.springframework.ai.document.Document;
 

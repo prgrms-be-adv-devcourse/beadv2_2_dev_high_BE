@@ -3,6 +3,7 @@ package com.dev_high.product.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
+import com.dev_high.product.ai.application.ProductRecommendService;
 import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.application.dto.ProductUpdateCommand;

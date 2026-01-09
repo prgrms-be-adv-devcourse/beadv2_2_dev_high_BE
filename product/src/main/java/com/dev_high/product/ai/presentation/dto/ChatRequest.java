@@ -1,9 +1,7 @@
-package com.dev_high.product.presentation.ai.dto;
+package com.dev_high.product.ai.presentation.dto;
 
 
-import com.dev_high.product.application.ai.dto.ChatCommand;
-import com.dev_high.product.application.dto.ProductCommand;
-import jakarta.validation.constraints.NotBlank;
+import com.dev_high.product.ai.application.dto.ChatCommand;
 
 public record ChatRequest( String message) {
      public ChatCommand toCommand() {
