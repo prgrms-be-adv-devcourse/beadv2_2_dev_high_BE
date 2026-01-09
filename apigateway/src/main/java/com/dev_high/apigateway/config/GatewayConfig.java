@@ -44,6 +44,11 @@ public class GatewayConfig {
                     .path("/api/v1/settle/**","/api/v1/orders/**")
                     .uri("lb://SETTLEMENT-SERVICE"))
 
+            // Settlement Service
+            .route("settlement-admin-service", r -> r
+                    .path("/api/v1/admin/settles/**","/api/v1/admin/orders/**")
+                    .uri("lb://SETTLEMENT-SERVICE"))
+
             // User Service
             .route("user-service", r -> r
                     .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**")

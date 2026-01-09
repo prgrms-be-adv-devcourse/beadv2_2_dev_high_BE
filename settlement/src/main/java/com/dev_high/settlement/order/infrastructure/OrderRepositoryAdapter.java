@@ -20,9 +20,11 @@ public class OrderRepositoryAdapter implements OrderRepository {
     private final OrderJpaRepository orderRepository;
 
     @Override
-    public List<WinningOrder> findAllOrders() {
-        return orderRepository.findAll();
+    public Page<WinningOrder> findAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
+
+
 
     @Override
     public WinningOrder save(WinningOrder order) {
@@ -30,13 +32,13 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public List<WinningOrder> findAllOrdersBySellerIdOrderByUpdatedAtDesc(String sellerId) {
-        return orderRepository.findAllOrdersBySellerIdOrderByUpdatedAtDesc(sellerId);
+    public Page<WinningOrder> findAllOrdersBySellerId(String sellerId ,Pageable pageable) {
+        return orderRepository.findAllOrdersBySellerId(sellerId ,pageable);
     }
 
     @Override
-    public List<WinningOrder> findAllOrdersByBuyerIdOrderByUpdatedAtDesc(String buyerId) {
-        return orderRepository.findAllOrdersByBuyerIdOrderByUpdatedAtDesc(buyerId);
+    public Page<WinningOrder> findAllOrdersByBuyerId(String buyerId ,Pageable pageable) {
+        return orderRepository.findAllOrdersByBuyerId(buyerId ,pageable);
     }
 
     @Override
@@ -65,13 +67,13 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
-    public List<WinningOrder> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status) {
-        return orderRepository.findByBuyerIdAndStatusOrderByUpdatedAtDesc(buyerId, status);
+    public Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable) {
+        return orderRepository.findByBuyerIdAndStatus(buyerId, status ,pageable);
     }
 
     @Override
-    public List<WinningOrder> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status) {
-        return orderRepository.findBySellerIdAndStatusOrderByUpdatedAtDesc(sellerId, status);
+    public Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable) {
+        return orderRepository.findBySellerIdAndStatus(sellerId, status ,pageable);
     }
 
 

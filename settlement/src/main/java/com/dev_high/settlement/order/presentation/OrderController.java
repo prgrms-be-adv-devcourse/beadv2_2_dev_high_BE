@@ -8,6 +8,8 @@ import com.dev_high.settlement.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.settlement.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.settlement.order.presentation.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,28 +25,29 @@ public class OrderController {
 
     @GetMapping("{orderId}")
     public ApiResponseDto<OrderResponse> getOrderDetail(@PathVariable String orderId) {
-        return orderService.findOne(orderId);
+        return ApiResponseDto.success(orderService.findOne(orderId));
     }
 
     @GetMapping
-    public ApiResponseDto<List<OrderResponse>> getOrders(
+    public ApiResponseDto<Page<OrderResponse>> getOrders(
             @RequestParam(required = false) Optional<OrderStatus> status,
-            @RequestParam(required = false) String type // "bought" or "sold"
+            @RequestParam(required = false) String type, // "bought" or "sold"
+            Pageable pageable
     ) {
-        return orderService.getOrders(status.orElse(null), type);
+        return ApiResponseDto.success(orderService.getOrders(status.orElse(null), type,pageable));
     }
 
     @GetMapping("/count")
     public ApiResponseDto<Long> getOrderCount(
             @RequestParam(required = false) OrderStatus status
     ) {
-        return orderService.getStatusCount(status);
+        return ApiResponseDto.success(orderService.getStatusCount(status));
     }
 
 
     @PutMapping
     public ApiResponseDto<OrderResponse> update(@RequestBody OrderModifyRequest request) {
-        return orderService.update(request);
+        return ApiResponseDto.success(orderService.update(request));
     }
 
 

@@ -19,23 +19,18 @@ public class SettlementController {
 
     @GetMapping
     public ApiResponseDto<Page<SettlementResponse>> findAllHistory(Pageable pageable) {
-        return settlementService.findBySellerId(pageable);
+        return ApiResponseDto.success(settlementService.findBySellerId(pageable));
     }
 
     @GetMapping("/summary")
     public ApiResponseDto<Page<SettlementDailySummary>> getSettlementSummary(Pageable pageable) {
 
-        return settlementService.findSettlementSummary(pageable);
+        return ApiResponseDto.success(settlementService.findSettlementSummary(pageable));
     }
 
     @GetMapping("{settleId}")
     public ApiResponseDto<SettlementResponse> findById(@PathVariable String settleId) {
-        return settlementService.findById(settleId);
-    }
-
-    @PutMapping("{settleId}")
-    public ApiResponseDto<SettlementResponse> update(@RequestBody SettlementModifyRequest request) {
-        return settlementService.update(request);
+        return ApiResponseDto.success(settlementService.findById(settleId));
     }
 
 }

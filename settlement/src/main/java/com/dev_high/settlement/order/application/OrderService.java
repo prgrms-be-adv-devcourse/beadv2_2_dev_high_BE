@@ -15,12 +15,16 @@ import com.dev_high.settlement.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.settlement.order.presentation.dto.OrderResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,78 +40,38 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final ObjectMapper objectMapper;
-    private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
-    private final RestTemplate restTemplate;
     private final ObjectProvider<OrderSettlementRegistrar> settlementRegistrarProvider;
 
-    public AuctionDto getAuction(String auctionId) {
-        try {
-
-            HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
-
-            ResponseEntity<ApiResponseDto<AuctionDto>> response;
-            response = restTemplate.exchange(
-                    GATEWAY_URL + "/auctions/" + auctionId,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<>() {
-                    }
-            );
-            if (response.getBody() != null) {
-
-                Object filesObj = response.getBody().getData();
-
-                return objectMapper.convertValue(
-                        filesObj,
-                        new TypeReference<AuctionDto>() {
-                        }
-                );
 
 
-            }
-        } catch (Exception e) {
-            log.error("실패: {}", e);
-
-        }
-        return null;
-
-    }
-
-
-    public ApiResponseDto<OrderResponse> findOne(String id) {
+    public OrderResponse findOne(String id) {
         WinningOrder found = orderRepository.findById(id).orElse(null);
         if (found == null) {
-            return ApiResponseDto.fail("id에 해당하는 주문 없음");
+            throw  new CustomException(HttpStatus.NOT_FOUND,"주문이 존재하지 않습니다.");
         }
-        AuctionDto dto = getAuction(found.getAuctionId());
+        if(!isOwner(found.getBuyerId(),found.getSellerId())){
 
-        return ApiResponseDto.success(OrderResponse.fromEntity(found, dto));
+            throw new CustomException(HttpStatus.FORBIDDEN,"조회 권한이 없습니다.");
+        }
+
+        return OrderResponse.fromEntity(found);
     }
 
-    public ApiResponseDto<OrderResponse> create(OrderRegisterRequest request) {
-
-        String validate = validateRegisterParam(request);
-
-        if (validate != null) {
-            throw new CustomException(validate);
-        }
-        WinningOrder order = WinningOrder.fromRequest(request);
-        WinningOrder result = orderRepository.save(order);
-
-        return ApiResponseDto.success(OrderResponse.fromEntity(result));
-
+    public boolean isOwner(String buyerId, String sellerId){
+        String userId = UserContext.get().userId();
+        return userId.equals(sellerId) || userId.equals(buyerId);
     }
 
-    public ApiResponseDto<OrderResponse> update(OrderModifyRequest request) {
+
+    /* 구매 확정 수동 처리 */
+    public OrderResponse update(OrderModifyRequest request) {
         WinningOrder order = orderRepository.findById(request.id()).orElse(null);
-        String validate = validateModifyParam(request);
-        if (validate != null) {
-            throw new CustomException(validate);
-        }
+
         if (order == null) {
-            return ApiResponseDto.fail("id에 해당하는 주문 없음");
+            throw new CustomException(HttpStatus.NOT_FOUND,"주문이 존재하지 않습니다.");
         }
+
+
         order.setStatus(request.status());
         if (request.status() == OrderStatus.PAID) {
             order.setPayYn("Y");
@@ -119,7 +83,7 @@ public class OrderService {
             settlementRegistrarProvider.ifAvailable(registrar -> registrar.register(registerRequest));
         }
 
-        return ApiResponseDto.success(OrderResponse.fromEntity(order));
+        return OrderResponse.fromEntity(order);
     }
 
     @Transactional
@@ -147,6 +111,21 @@ public class OrderService {
 
         return updated;
     }
+
+    public OrderResponse create(OrderRegisterRequest request) {
+
+        String validate = validateRegisterParam(request);
+
+        if (validate != null) {
+            throw new CustomException(validate);
+        }
+        WinningOrder order = WinningOrder.fromRequest(request);
+        WinningOrder result = orderRepository.save(order);
+
+        return OrderResponse.fromEntity(result);
+
+    }
+
 
     private String validateRegisterParam(OrderRegisterRequest request) {
         if (request.sellerId() == null || request.sellerId().isEmpty()) {
@@ -178,36 +157,32 @@ public class OrderService {
         return null;
     }
 
-    public ApiResponseDto<Long> getStatusCount(OrderStatus status) {
+    public Long getStatusCount(OrderStatus status) {
 
 
-        return ApiResponseDto.success(orderRepository.getStatusCount(UserContext.get().userId(), status));
+        return orderRepository.getStatusCount(UserContext.get().userId(), status);
     }
 
 
-    public ApiResponseDto<List<OrderResponse>> getOrders(OrderStatus status, String type) {
+    public Page<OrderResponse> getOrders(OrderStatus status, String type , Pageable pageable) {
 
         String userId = UserContext.get().userId();
 
-        List<WinningOrder> found;
+        Page<WinningOrder> found;
 
         if ("bought".equals(type)) {
             found = (status == null)
-                    ? orderRepository.findAllOrdersByBuyerIdOrderByUpdatedAtDesc(userId)
-                    : orderRepository.findByBuyerIdAndStatusOrderByUpdatedAtDesc(userId, status);
+                    ? orderRepository.findAllOrdersByBuyerId(userId ,pageable)
+                    : orderRepository.findByBuyerIdAndStatus(userId, status ,pageable);
         } else {
             found = (status == null)
-                    ? orderRepository.findAllOrdersBySellerIdOrderByUpdatedAtDesc(userId)
-                    : orderRepository.findBySellerIdAndStatusOrderByUpdatedAtDesc(userId, status);
+                    ? orderRepository.findAllOrdersBySellerId(userId ,pageable)
+                    : orderRepository.findBySellerIdAndStatus(userId, status ,pageable);
         }
 
 
-        List<OrderResponse> result = found.stream().map(item -> {
-                    AuctionDto dto = getAuction(item.getAuctionId());
-                    return OrderResponse.fromEntity(item, dto);
-                }
-        ).toList();
-        return ApiResponseDto.success(result);
+       return found.map(OrderResponse::fromEntity);
+
 
     }
 }

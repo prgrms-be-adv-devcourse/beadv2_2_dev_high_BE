@@ -52,13 +52,13 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
 
     Long countBySellerIdAndStatus(String sellerId, OrderStatus orderStatus);
 
-    List<WinningOrder> findAllOrdersBySellerIdOrderByUpdatedAtDesc(String sellerId);
+    Page<WinningOrder> findAllOrdersBySellerId(String sellerId ,Pageable pageable);
 
-    List<WinningOrder> findAllOrdersByBuyerIdOrderByUpdatedAtDesc(String buyerId);
+    Page<WinningOrder> findAllOrdersByBuyerId(String buyerId ,Pageable pageable);
 
 
-    List<WinningOrder> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status);
+    Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable);
 
-    List<WinningOrder> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status);
+    Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
 
 }

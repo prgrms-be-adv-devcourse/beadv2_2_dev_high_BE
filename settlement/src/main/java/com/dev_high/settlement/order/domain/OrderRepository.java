@@ -9,13 +9,14 @@ import org.springframework.data.domain.Pageable;
 
 public interface OrderRepository {
 
-    List<WinningOrder> findAllOrders();
+    // 관리자용 조건 추가하기  queryDsl 예정,
+    Page<WinningOrder> findAllOrders(Pageable pageable);
 
     WinningOrder save(WinningOrder order);
 
-    List<WinningOrder> findAllOrdersBySellerIdOrderByUpdatedAtDesc(String sellerId);
+    Page<WinningOrder> findAllOrdersBySellerId(String sellerId ,Pageable pageable);
 
-    List<WinningOrder> findAllOrdersByBuyerIdOrderByUpdatedAtDesc(String buyerId);
+    Page<WinningOrder> findAllOrdersByBuyerId(String buyerId ,Pageable pageable);
 
     Optional<WinningOrder> findById(String id);
 
@@ -32,9 +33,9 @@ public interface OrderRepository {
 
     Long getStatusCount(String buyerId, OrderStatus status);
 
-    List<WinningOrder> findByBuyerIdAndStatusOrderByUpdatedAtDesc(String buyerId, OrderStatus status);
+    Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable);
 
-    List<WinningOrder> findBySellerIdAndStatusOrderByUpdatedAtDesc(String sellerId, OrderStatus status);
+    Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
 
 
 }
