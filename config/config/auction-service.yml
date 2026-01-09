@@ -1,0 +1,16 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: ${REDIS_AUCTION_DB:1}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+auction:
+  batch:
+    lifecycle-cron: 0 */10 * * * *

@@ -22,12 +22,9 @@ public class SettlementScheduler {
   private final Job orderStatusJob;
 
   /**
-   * 매달 n일 n시 n분 에 정산시도
-   * <p>
-   * 10분마다 시도
+   * 정산 배치 실행 (기본값은 테스트용, 운영은 config 값 사용)
    */
-//  @Scheduled(cron = "0 5 6 15 * *" ,scheduler = "settleScheduler")
-  @Scheduled(cron = "10 */5 * * * *" ,scheduler = "settleScheduler")
+  @Scheduled(cron = "${settlement.batch.settlement-cron:10 */5 * * * *}" ,scheduler = "settleScheduler")
 
     public void runSettlementJob() {
     try {
@@ -43,10 +40,9 @@ public class SettlementScheduler {
   }
 
   /**
-   * 실제는 한시간마다  실패 정산 재시도
+   * 실패 정산 재시도 (기본값은 테스트용, 운영은 config 값 사용)
    */
-//    @Scheduled(cron = "30 0 * * * *" ,scheduler = "settleScheduler")
-  @Scheduled(cron = "15 */6 * * * *" ,scheduler = "settleScheduler")
+  @Scheduled(cron = "${settlement.batch.retry-cron:15 */6 * * * *}" ,scheduler = "settleScheduler")
   public void runFailSattlementJob() {
     try {
       // FAILED 재시도용 정산 처리(등록 스텝은 reader에서 no-op)
@@ -63,10 +59,9 @@ public class SettlementScheduler {
 
 
     /**
-     * 매일 새벽 n시 n분에 실행
+     * 주문 상태 전환 (기본값은 테스트용, 운영은 config 값 사용)
      */
-//  @Scheduled(cron = "0 11 1 * * *")
-    @Scheduled(cron = "5 */3 * * * *")
+    @Scheduled(cron = "${settlement.batch.order-status-cron:5 */3 * * * *}")
     public void runOrderStatusJob() {
         try {
             // 주문 상태 자동 전환 배치 실행

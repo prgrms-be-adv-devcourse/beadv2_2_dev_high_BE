@@ -18,11 +18,8 @@ public class BatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job auctionLifecycleJob;
 
-
-    // 매시간 정각마다 시작 배치 실행
-//  @Scheduled(cron = "0 0 * * * *") // 초 분 시 일 월 요일
-    // 매 5분마다 실행 테스트용
-    @Scheduled(cron = "0 */10 * * * *") // 초 분 시 일 월 요일
+    // 기본은 10분 간격, 운영은 config 값으로 조정
+    @Scheduled(cron = "${auction.batch.lifecycle-cron:0 */10 * * * *}") // 초 분 시 일 월 요일
 
     public void runAuctionLifecycleJob() {
         try {
