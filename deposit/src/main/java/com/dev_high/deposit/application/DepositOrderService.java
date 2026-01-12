@@ -2,10 +2,10 @@ package com.dev_high.deposit.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.DepositOrderDto;
-import com.dev_high.deposit.domain.DepositOrder;
-import com.dev_high.deposit.domain.DepositOrderRepository;
-import com.dev_high.deposit.domain.DepositPayment;
-import com.dev_high.deposit.domain.DepositPaymentRepository;
+import com.dev_high.deposit.domain.entity.DepositOrder;
+import com.dev_high.deposit.domain.entity.DepositPayment;
+import com.dev_high.deposit.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,8 +34,7 @@ public class DepositOrderService {
         DepositPayment payment = DepositPayment.create(
                 savedOrder.getId(),
                 userId,
-                command.amount(),
-                ""
+                command.amount()
         );
 
         paymentRepository.save(payment);
@@ -53,8 +52,8 @@ public class DepositOrderService {
 
     @Transactional
     public DepositOrderDto.Info updateOrderStatus(DepositOrderDto.UpdateCommand command) {
-        DepositOrder order = orderRepository.findById(command.orderId())
-                .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.orderId()));
+        DepositOrder order = orderRepository.findById(command.id())
+                .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
 
         order.updateStatus(command.status());
         return DepositOrderDto.Info.from(order);

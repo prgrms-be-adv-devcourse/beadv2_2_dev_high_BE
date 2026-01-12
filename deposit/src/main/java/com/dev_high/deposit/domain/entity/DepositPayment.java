@@ -1,6 +1,7 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.deposit.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.deposit.domain.DepositPaymentStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -90,11 +91,11 @@ public class DepositPayment {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public static DepositPayment create(String orderId, String userId, BigDecimal amount, String paymentKey) {
+    public static DepositPayment create(String orderId, String userId, BigDecimal amount) {
         return DepositPayment.builder()
                 .orderId(orderId)
                 .userId(userId)
-                .paymentKey(paymentKey)
+                .paymentKey("")
                 .method("")
                 .amount(amount)
                 .status(DepositPaymentStatus.READY) // default : READY

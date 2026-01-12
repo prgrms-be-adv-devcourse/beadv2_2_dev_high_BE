@@ -1,7 +1,13 @@
 package com.dev_high.deposit.application;
 
 import com.dev_high.deposit.application.dto.DepositPaymentFailureDto;
-import com.dev_high.deposit.domain.*;
+import com.dev_high.deposit.domain.DepositOrderStatus;
+import com.dev_high.deposit.domain.entity.DepositOrder;
+import com.dev_high.deposit.domain.entity.DepositPayment;
+import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
+import com.dev_high.deposit.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentFailureHistoryRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

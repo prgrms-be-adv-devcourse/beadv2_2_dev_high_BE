@@ -24,14 +24,14 @@ public class DepositOrderRequest {
     public record Update(
             @Schema(description = "변경할 주문 ID")
             @NotBlank(message = "주문 ID는 필수 입니다.")
-            String orderId,
+            String id,
 
             @Schema(description = "변경할 주문 상태")
             @NotNull(message = "주문 상태는 필수 입니다.")
             DepositOrderStatus status
     ) {
-        public DepositOrderDto.UpdateCommand toCommand(String orderId, DepositOrderStatus status) {
-            return DepositOrderDto.UpdateCommand.of(orderId, status);
+        public DepositOrderDto.UpdateCommand toCommand(String id, DepositOrderStatus status) {
+            return DepositOrderDto.UpdateCommand.of(id, status);
         }
     }
 }

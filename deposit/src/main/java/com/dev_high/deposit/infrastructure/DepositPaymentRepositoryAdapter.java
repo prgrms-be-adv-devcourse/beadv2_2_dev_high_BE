@@ -1,7 +1,7 @@
 package com.dev_high.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.DepositPayment;
-import com.dev_high.deposit.domain.DepositPaymentRepository;
+import com.dev_high.deposit.domain.entity.DepositPayment;
+import com.dev_high.deposit.domain.repository.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

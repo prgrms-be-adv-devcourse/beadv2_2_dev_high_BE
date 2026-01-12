@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 public class DepositOrderResponse {
     public record Detail(
             @Schema(description = "예치금 주문 ID")
-            String orderId,
+            String id,
 
             @Schema(description = "사용자 ID")
             String userId,
@@ -26,7 +26,7 @@ public class DepositOrderResponse {
     ) {
         public static Detail from(DepositOrderDto.Info info) {
             return new Detail(
-                    info.orderId(),
+                    info.id(),
                     info.userId(),
                     info.amount(),
                     info.status(),

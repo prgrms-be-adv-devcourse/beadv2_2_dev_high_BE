@@ -1,5 +1,6 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.deposit.domain.repository;
 
+import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

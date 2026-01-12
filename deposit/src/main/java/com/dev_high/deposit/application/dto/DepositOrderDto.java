@@ -1,6 +1,6 @@
 package com.dev_high.deposit.application.dto;
 
-import com.dev_high.deposit.domain.DepositOrder;
+import com.dev_high.deposit.domain.entity.DepositOrder;
 import com.dev_high.deposit.domain.DepositOrderStatus;
 
 import java.math.BigDecimal;
@@ -16,16 +16,16 @@ public class DepositOrderDto {
     }
 
     public record UpdateCommand(
-            String orderId,
+            String id,
             DepositOrderStatus status
     ) {
-        public static UpdateCommand of(String orderId, DepositOrderStatus status) {
-            return new UpdateCommand(orderId, status);
+        public static UpdateCommand of(String id, DepositOrderStatus status) {
+            return new UpdateCommand(id, status);
         }
     }
 
     public record Info(
-            String orderId,
+            String id,
             String userId,
             BigDecimal amount,
             DepositOrderStatus status,

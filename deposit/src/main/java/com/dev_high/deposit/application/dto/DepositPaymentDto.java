@@ -1,7 +1,6 @@
 package com.dev_high.deposit.application.dto;
 
-import com.dev_high.deposit.domain.DepositPayment;
-import com.dev_high.deposit.domain.DepositPaymentMethod;
+import com.dev_high.deposit.domain.entity.DepositPayment;
 import com.dev_high.deposit.domain.DepositPaymentStatus;
 
 import java.math.BigDecimal;
@@ -10,11 +9,11 @@ import java.time.OffsetDateTime;
 public class DepositPaymentDto {
     public record CreateCommand(
             String orderId,
-            DepositPaymentMethod method,
+            String userId,
             BigDecimal amount
     ) {
-        public static CreateCommand of(String orderId, DepositPaymentMethod method, BigDecimal amount) {
-            return new CreateCommand(orderId, method, amount);
+        public static CreateCommand of(String orderId, String userId, BigDecimal amount) {
+            return new CreateCommand(orderId, userId, amount);
         }
     }
 
