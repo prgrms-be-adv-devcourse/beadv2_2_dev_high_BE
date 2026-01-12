@@ -25,9 +25,9 @@ public class GatewayConfig {
                     .uri("lb://AUCTION-SERVICE")) // WebSocket 업그레이드 요청도 프록시
 
             // Deposit Service
-            .route("deposit-service", r -> r
-                    .path("/api/v1/deposit/**")
-                    .uri("lb://DEPOSIT-SERVICE"))
+            .route("payment-service", r -> r
+                    .path("/api/v1/payments/**")
+                    .uri("lb://PAYMENT-SERVICE"))
 
             // Product Service
             .route("product-service", r -> r
@@ -46,7 +46,7 @@ public class GatewayConfig {
 
             // User Service
             .route("user-service", r -> r
-                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**")
+                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**", "/api/v1/deposit/**")
                     .uri("lb://USER-SERVICE"))
 
             // File Service
@@ -65,7 +65,7 @@ public class GatewayConfig {
     // 서비스 이름과 lb URI를 맵으로 관리
     Map<String, String> services = Map.of(
             "auction-service", "lb://AUCTION-SERVICE",
-            "deposit-service", "lb://DEPOSIT-SERVICE",
+            "payment-service", "lb://PAYMENT-SERVICE",
             "product-service", "lb://PRODUCT-SERVICE",
             "search-service", "lb://SEARCH-SERVICE",
             "settlement-service", "lb://SETTLEMENT-SERVICE",
