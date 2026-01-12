@@ -1,7 +1,7 @@
-package com.dev_high.deposit.presentation.dto;
+package com.dev_high.user.deposit.presentation.dto;
 
-import com.dev_high.deposit.application.dto.DepositHistoryDto;
-import com.dev_high.deposit.domain.DepositType;
+import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
+import com.dev_high.common.type.DepositType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;

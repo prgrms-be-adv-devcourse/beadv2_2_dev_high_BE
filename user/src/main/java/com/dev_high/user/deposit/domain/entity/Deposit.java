@@ -1,4 +1,4 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.user.deposit.domain.entity;
 
 import com.dev_high.common.exception.CustomException;
 import jakarta.persistence.*;

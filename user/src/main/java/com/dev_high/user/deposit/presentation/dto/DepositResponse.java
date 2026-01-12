@@ -1,6 +1,6 @@
-package com.dev_high.deposit.presentation.dto;
+package com.dev_high.user.deposit.presentation.dto;
 
-import com.dev_high.deposit.application.dto.DepositDto;
+import com.dev_high.user.deposit.application.dto.DepositDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;

@@ -1,15 +1,14 @@
-package com.dev_high.deposit.presentation;
+package com.dev_high.user.deposit.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.deposit.application.DepositService;
-import com.dev_high.deposit.application.dto.DepositDto;
-import com.dev_high.deposit.presentation.dto.DepositRequest;
-import com.dev_high.deposit.presentation.dto.DepositResponse;
+import com.dev_high.user.deposit.application.DepositService;
+import com.dev_high.user.deposit.application.dto.DepositDto;
+import com.dev_high.user.deposit.presentation.dto.DepositRequest;
+import com.dev_high.user.deposit.presentation.dto.DepositResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

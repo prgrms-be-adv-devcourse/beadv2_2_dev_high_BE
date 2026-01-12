@@ -1,5 +1,7 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.user.deposit.domain.repository;
 
+import com.dev_high.common.type.DepositType;
+import com.dev_high.user.deposit.domain.entity.DepositHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,7 +1,7 @@
-package com.dev_high.deposit.infrastructure;
+package com.dev_high.user.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.Deposit;
-import com.dev_high.deposit.domain.DepositRepository;
+import com.dev_high.user.deposit.domain.entity.Deposit;
+import com.dev_high.user.deposit.domain.repository.DepositRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

@@ -1,6 +1,6 @@
-package com.dev_high.deposit.infrastructure;
+package com.dev_high.user.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.Deposit;
+import com.dev_high.user.deposit.domain.entity.Deposit;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

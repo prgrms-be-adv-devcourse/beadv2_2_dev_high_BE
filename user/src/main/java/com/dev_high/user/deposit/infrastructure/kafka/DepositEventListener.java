@@ -1,9 +1,10 @@
-package com.dev_high.deposit.application.dto;
+package com.dev_high.user.deposit.infrastructure.kafka;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.deposit.application.DepositService;
-import com.dev_high.deposit.domain.DepositType;
+import com.dev_high.user.deposit.application.DepositService;
+import com.dev_high.user.deposit.application.dto.DepositDto;
+import com.dev_high.common.type.DepositType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

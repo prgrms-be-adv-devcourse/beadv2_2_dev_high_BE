@@ -1,21 +1,20 @@
-package com.dev_high.deposit.application;
+package com.dev_high.user.deposit.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.deposit.application.dto.DepositDto;
-import com.dev_high.deposit.application.dto.DepositHistoryDto;
-import com.dev_high.deposit.domain.Deposit;
-import com.dev_high.deposit.domain.DepositRepository;
-import com.dev_high.deposit.domain.DepositType;
+import com.dev_high.user.deposit.application.dto.DepositDto;
+import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
+import com.dev_high.user.deposit.domain.entity.Deposit;
+import com.dev_high.user.deposit.domain.repository.DepositRepository;
+import com.dev_high.common.type.DepositType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 

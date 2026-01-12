@@ -1,4 +1,6 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.user.deposit.domain.repository;
+
+import com.dev_high.user.deposit.domain.entity.Deposit;
 
 import java.util.Optional;
 

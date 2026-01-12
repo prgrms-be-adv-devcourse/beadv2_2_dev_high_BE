@@ -1,7 +1,7 @@
-package com.dev_high.deposit.application.dto;
+package com.dev_high.user.deposit.application.dto;
 
-import com.dev_high.deposit.domain.DepositHistory;
-import com.dev_high.deposit.domain.DepositType;
+import com.dev_high.user.deposit.domain.entity.DepositHistory;
+import com.dev_high.common.type.DepositType;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

@@ -1,18 +1,15 @@
-package com.dev_high.deposit.presentation;
+package com.dev_high.user.deposit.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.deposit.application.DepositHistoryService;
-import com.dev_high.deposit.application.dto.DepositHistoryDto;
-import com.dev_high.deposit.domain.DepositType;
-import com.dev_high.deposit.presentation.dto.DepositHistoryRequest;
-import com.dev_high.deposit.presentation.dto.DepositHistoryResponse;
+import com.dev_high.user.deposit.application.DepositHistoryService;
+import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
+import com.dev_high.common.type.DepositType;
+import com.dev_high.user.deposit.presentation.dto.DepositHistoryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;

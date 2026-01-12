@@ -1,5 +1,6 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.user.deposit.domain.entity;
 
+import com.dev_high.common.type.DepositType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

@@ -1,10 +1,10 @@
-package com.dev_high.deposit.application;
+package com.dev_high.user.deposit.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.deposit.application.dto.DepositHistoryDto;
-import com.dev_high.deposit.domain.DepositHistory;
-import com.dev_high.deposit.domain.DepositHistoryRepository;
-import com.dev_high.deposit.domain.DepositType;
+import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
+import com.dev_high.user.deposit.domain.entity.DepositHistory;
+import com.dev_high.user.deposit.domain.repository.DepositHistoryRepository;
+import com.dev_high.common.type.DepositType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
