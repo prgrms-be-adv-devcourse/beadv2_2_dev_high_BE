@@ -13,45 +13,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/deposit")
+@RequestMapping("/api/v1/admin/payments")
 @RequiredArgsConstructor
 public class AdminController {
-
-    /**
-     * 예치금 관련 임시 어드민 컨트롤러
-     */
-
-    private final DepositService depositService;
-    private final DepositHistoryService historyService;
     private final DepositOrderService depositOrderService;
     private final DepositPaymentService paymentService;
     private final DepositPaymentFailureHistoryService failureHistoryService;
 
-
-    @Operation(summary = "예치금 계좌 생성", description = "예치금 계좌를 생성하고 저장")
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositResponse.Detail> createDepositAccount(@RequestBody @Valid DepositRequest.Create request) {
-        DepositDto.CreateCommand command = request.toCommand(request.userId());
-        DepositDto.Info info = depositService.createDepositAccount(command);
-        DepositResponse.Detail response = DepositResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
-
-    @Operation(summary = "예치금 이력 생성", description = "예치금 이력을 생성하고 저장")
-    @PostMapping("/histories")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositHistoryRequest.Create request) {
-        DepositHistoryDto.CreateCommand command = request.toCommand(request.userId(), request.orderId(), request.type(), request.amount(), request.nowBalance());
-        DepositHistoryDto.Info info = historyService.createHistory(command);
-        DepositHistoryResponse.Detail response = DepositHistoryResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
-
     @Operation(summary = "예치금 주문 상태 변경", description = "특정 주문의 상태를 변경")
     @PatchMapping("/orders/status")
     public ApiResponseDto<DepositOrderResponse.Detail> updateOrderStatus(@RequestBody @Valid DepositOrderRequest.Update request) {
-        DepositOrderDto.UpdateCommand command = request.toCommand(request.orderId(), request.status());
+        DepositOrderDto.UpdateCommand command = request.toCommand(request.id(), request.status());
         DepositOrderDto.Info info = depositOrderService.updateOrderStatus(command);
         DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
         return ApiResponseDto.success(response);
@@ -61,7 +33,7 @@ public class AdminController {
     @PostMapping("/payments")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositPaymentResponse.Detail> createPayment(@RequestBody @Valid DepositPaymentRequest.Create request) {
-        DepositPaymentDto.CreateCommand command = request.toCommand(request.orderId(), request.method(), request.amount());
+        DepositPaymentDto.CreateCommand command = request.toCommand(request.orderId(), request.userId(), request.amount());
         DepositPaymentDto.Info info =  paymentService.createPayment(command);
         DepositPaymentResponse.Detail response = DepositPaymentResponse.Detail.from(info);
         return ApiResponseDto.success(response);
