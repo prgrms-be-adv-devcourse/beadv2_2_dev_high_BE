@@ -96,13 +96,17 @@ public class WishlistService {
     public ApiResponseDto<WishlistResponse> getWishlistItem(String productId) {
         String userId = UserContext.get().userId();
 
-        Wishlist wishlist = wishlistRepository
+        WishlistResponse response = wishlistRepository
                 .findByUserIdAndProductIdAndDeletedYn(userId, productId, "N")
-                .orElseThrow(WishlistNotFoundException::new);
+                .map(WishlistResponse::from)
+                .orElse(null);
 
         return ApiResponseDto.success(
-                "위시리스트 상품이 정상적으로 조회되었습니다.",
-                WishlistResponse.from(wishlist)
+                response != null
+                        ? "위시리스트 상품이 정상적으로 조회되었습니다."
+                        : "위시리스트에 등록되지 않은 상품입니다.",
+                response
         );
     }
+
 }
