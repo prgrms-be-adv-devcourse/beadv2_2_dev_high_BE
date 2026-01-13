@@ -6,6 +6,7 @@ import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
+import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.exception.AuctionModifyForbiddenException;
 import com.dev_high.exception.AuctionNotFoundException;
 import com.dev_high.exception.AuctionStatusInvalidException;
@@ -110,8 +111,8 @@ public class AuctionService {
 
     private void publishSpringEvent(Auction auction) {
 
-        /*TODO: es index 수정 필요*/
-        //        publisher.publishEvent(event);
+        AuctionUpdateSearchRequestEvent event = new AuctionUpdateSearchRequestEvent(auction.getProductId(),auction.getId(),auction.getStartBid() , auction.getDepositAmount() ,auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt());
+                publisher.publishEvent(event);
 
     }
 
