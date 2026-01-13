@@ -6,6 +6,7 @@ public record ProductUpdateSearchRequestEvent(String productId,
                                               String productName,
                                               List<String> categories,
                                               String description,
+                                              String imageUrl,
                                               String sellerId) {
 
 

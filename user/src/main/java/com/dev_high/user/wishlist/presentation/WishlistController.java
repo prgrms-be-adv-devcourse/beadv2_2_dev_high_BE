@@ -26,6 +26,11 @@ public class WishlistController {
         return wishlistService.getWishlist(pageable);
     }
 
+    @GetMapping("/{productId}")
+    public ApiResponseDto<WishlistResponse> getWishlistItem(@PathVariable String productId) {
+        return wishlistService.getWishlistItem(productId);
+    }
+
     @DeleteMapping
     public ApiResponseDto<Void> delete(@RequestBody WishlistRequest request) {
         return wishlistService.delete(request.toCommand());

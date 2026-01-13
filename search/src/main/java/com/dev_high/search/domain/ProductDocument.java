@@ -30,6 +30,9 @@ public class ProductDocument {
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
     private String description;
 
+    @Field(type = FieldType.Keyword)
+    private String imageUrl;
+
     @Field(type = FieldType.Scaled_Float, scalingFactor = 1)
     private BigDecimal  startPrice;
 
@@ -57,6 +60,7 @@ public class ProductDocument {
         this.productName = request.productName();
         this.categories = request.categories();
         this.description = request.description();
+        this.imageUrl = request.imageUrl();
         this.status = request.status();
         this.sellerId = request.sellerId();
     }
@@ -66,6 +70,7 @@ public class ProductDocument {
         this.productName = request.productName();
         this.categories = request.categories();
         this.description = request.description();
+        this.imageUrl = request.imageUrl();
         this.sellerId = request.sellerId();
     }
 

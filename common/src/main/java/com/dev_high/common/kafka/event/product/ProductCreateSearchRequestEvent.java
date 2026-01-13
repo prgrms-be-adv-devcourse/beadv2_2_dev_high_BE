@@ -6,6 +6,7 @@ public record ProductCreateSearchRequestEvent(String productId,
                                               String productName,
                                               List<String> categories,
                                               String description,
+                                              String imageUrl,
                                               String status,
                                               String sellerId
                                               ) {

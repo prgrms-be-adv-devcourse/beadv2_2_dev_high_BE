@@ -13,10 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Lazy(false)
 public class SearchEventListener {
 
     private final SearchService searchService;

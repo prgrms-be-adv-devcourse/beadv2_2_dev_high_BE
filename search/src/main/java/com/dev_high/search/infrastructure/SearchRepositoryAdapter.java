@@ -1,11 +1,12 @@
 package com.dev_high.search.infrastructure;
 
 import com.dev_high.search.domain.ProductDocument;
+import com.dev_high.search.domain.SearchRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public class SearchRepositoryAdapter implements com.dev_high.search.domain.SearchRepository {
+public class SearchRepositoryAdapter implements SearchRepository {
     private final SearchElasticsearchRepository searchElasticsearchRepository;
 
     public SearchRepositoryAdapter(SearchElasticsearchRepository searchElasticsearchRepository) {

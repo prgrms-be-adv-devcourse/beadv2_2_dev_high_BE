@@ -66,6 +66,7 @@ public class ElasticsearchIndexInitializer {
 
                         Map.entry("categories", Map.of("type", "keyword")),
                         Map.entry("status", Map.of("type", "keyword")),
+                        Map.entry("imageUrl", Map.of("type", "keyword")),
 
                         Map.entry("startPrice", Map.of(
                                 "type", "scaled_float",
