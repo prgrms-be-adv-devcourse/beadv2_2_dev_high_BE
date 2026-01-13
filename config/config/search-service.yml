@@ -3,3 +3,12 @@ spring:
     uris: ${ELASTIC_SEARCH_URL}
     connection-timeout: 5s
     socket-timeout: 10s
+  ai:
+    openai:
+      api-key: ${GPT_API_KEY}
+      base-url: https://api.openai.com/
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          max_completion_tokens: 768

@@ -15,8 +15,7 @@ public class KafkaTopics {
   public static final String NOTIFICATION_REQUEST = "notification-requested";
 
   // auction 발행 토픽
-  public static final String AUCTION_ORDER_CREATED_REQUESTED = "auction-order-create-requested"; // 경매 종료 후 주문 생성 이벤트 + 낙찰자에게 결제 안내 알림 ,sub-order , sub-alarm
-  public static final String AUCTION_SEARCH_CREATED_REQUESTED = "auction-search-create-requested";
+  public static final String AUCTION_ORDER_CREATED_REQUESTED = "auction-order-create-requested"; // 경매 종료 후 주문 생성 이벤트 + 낙찰자에게 결제 안내 알림 ,sub-order , sub-alarm;
   public static final String AUCTION_SEARCH_UPDATED_REQUESTED = "auction-search-update-requested";
   public static final String AUCTION_SEARCH_DELETED_REQUESTED = "auction-search-delete-requested";
   public static final String AUCTION_START_EVENT = "auction-start-event";
@@ -30,6 +29,8 @@ public class KafkaTopics {
   // product 발행 토픽
 
   public static final String PRODUCT_SEARCH_DELETED_REQUESTED = "product-search-delete-requested";
+  public static final String PRODUCT_SEARCH_CREATED_REQUESTED = "product-search-create-requested";
+  public static final String PRODUCT_SEARCH_UPDATED_REQUESTED = "product-search-update-requested";
 
   // user 발행 토픽
   public static final String USER_DEPOSIT_CREATED_REQUESTED = "user-deposit-create-requested";

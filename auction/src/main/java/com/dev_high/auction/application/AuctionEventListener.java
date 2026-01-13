@@ -4,7 +4,7 @@ import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
+import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
@@ -112,8 +112,8 @@ public class AuctionEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(AuctionCreateSearchRequestEvent event) {
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_CREATED_REQUESTED, event);
+    public void handle(ProductCreateSearchRequestEvent event) {
+        eventPublisher.publish(KafkaTopics.PRODUCT_SEARCH_CREATED_REQUESTED, event);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
