@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.ai.embedding.EmbeddingModel;
 
-
 @AllArgsConstructor
 @Service
 @Slf4j
