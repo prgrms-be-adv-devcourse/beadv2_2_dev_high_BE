@@ -3,6 +3,7 @@ rootProject.name = 'more'
 
 // infrastructure & common module
 include 'common'
+include 'ai-core'
 include 'config'
 include 'apigateway'
 include 'discovery'
