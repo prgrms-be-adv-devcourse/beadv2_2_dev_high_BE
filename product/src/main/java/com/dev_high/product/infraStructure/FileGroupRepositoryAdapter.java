@@ -1,10 +1,10 @@
-package com.dev_high.file.infrastructure;
-
-import com.dev_high.file.domain.FileGroup;
-import com.dev_high.file.domain.FileGroupRepository;
+package com.dev_high.product.infraStructure;
 
 import java.util.List;
 import java.util.Optional;
+
+import com.dev_high.product.domain.FileGroup;
+import com.dev_high.product.domain.FileGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

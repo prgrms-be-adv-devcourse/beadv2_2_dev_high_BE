@@ -1,8 +1,9 @@
-package com.dev_high.file.infrastructure;
+package com.dev_high.product.infraStructure;
 
-import com.dev_high.file.domain.StoredFile;
-import com.dev_high.file.domain.StoredFileRepository;
 import java.util.List;
+
+import com.dev_high.product.domain.StoredFile;
+import com.dev_high.product.domain.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
