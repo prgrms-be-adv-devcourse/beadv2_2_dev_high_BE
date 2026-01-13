@@ -28,8 +28,8 @@ spring:
       chat:
         options:
           model: gpt-4o-mini
-          temperature: 1
-          max_completion_tokens: 256
+          temperature: 0.2
+          max_completion_tokens: 768
 
 ---
 spring:

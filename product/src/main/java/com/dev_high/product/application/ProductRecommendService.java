@@ -1,16 +1,15 @@
 package com.dev_high.product.application;
 
+import com.dev_high.product.ai.domain.ChatMessage;
+import com.dev_high.product.ai.domain.ChatModel;
+import com.dev_high.product.ai.domain.ChatResult;
 import com.dev_high.product.application.dto.ProductAnswer;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
-import com.dev_high.product.ai.domain.ChatMessage;
-import com.dev_high.product.ai.domain.ChatModel;
-import com.dev_high.product.ai.domain.ChatResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ public class ProductRecommendService {
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
     private final ChatModel chatModel;
+
 
 
     //단건색인
@@ -83,7 +83,6 @@ public class ProductRecommendService {
     public ProductAnswer answer(String query, int topK) {
 
         List<ProductSearchInfo> productSearchInfo= search(query, topK);
-
         String context = toContext(productSearchInfo);
         ChatResult result = chatModel.chat(new ChatMessage(query, context));
 

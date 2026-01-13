@@ -89,7 +89,7 @@ public class ProductService {
 
         product.updateDetails(command.name(), command.description(), command.fileId(), userInfo.userId());
         replaceCategories(product, command.categoryIds(), userInfo.userId());
-        productRecommendService.reindex(product); // 재인덱싱
+//        productRecommendService.reindex(product); // 재인덱싱
         return ProductInfo.from(product);
     }
 

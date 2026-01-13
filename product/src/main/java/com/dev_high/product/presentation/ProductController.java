@@ -2,6 +2,10 @@ package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
+
+import com.dev_high.product.ai.dto.ProductDetailDto;
+import com.dev_high.product.ai.infrastructure.SpringAiChatModel;
+import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.presentation.dto.ProductLatestAuctionUpdateRequest;
@@ -14,7 +18,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,7 +31,8 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-
+    private  final CategoryService categoryService;
+    private final SpringAiChatModel chatModel;
     @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다.")
     @PostMapping
     public ApiResponseDto<ProductInfo> createProduct(@Valid @RequestBody ProductRequest request) {
@@ -85,5 +92,14 @@ public class ProductController {
     @GetMapping("/internal")
     public List<WishlistProductResponse> getProductInfos(@RequestBody List<String> productIds) {
         return productService.getProductInfos(productIds);
+    }
+
+    @PostMapping(value = "/generate-detail-draft-from-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponseDto<ProductDetailDto> productDetail(
+            @RequestPart("file") MultipartFile[] files,
+            @RequestParam(value = "retryCount", defaultValue = "0") int retryCount
+    ) {
+        String categoryOptions = categoryService.categoryOptionsText();
+        return ApiResponseDto.success(chatModel.chatProductDetail(files,categoryOptions, retryCount));
     }
 }
