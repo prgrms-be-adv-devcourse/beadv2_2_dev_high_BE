@@ -1,23 +1,23 @@
-package com.dev_high.file.application;
+package com.dev_high.product.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
-import com.dev_high.file.application.dto.FileGroupResponse;
-import com.dev_high.file.application.dto.FileInfo;
-import com.dev_high.file.config.AwsS3Properties;
-import com.dev_high.file.domain.StoredFile;
-import com.dev_high.file.domain.FileGroup;
-import com.dev_high.file.domain.FileGroupRepository;
-import com.dev_high.file.domain.StoredFileRepository;
 import java.util.Collections;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
+
+import com.dev_high.product.application.dto.FileGroupResponse;
+import com.dev_high.product.application.dto.FileInfo;
+import com.dev_high.product.config.AwsS3Properties;
+import com.dev_high.product.domain.FileGroup;
+import com.dev_high.product.domain.FileGroupRepository;
+import com.dev_high.product.domain.StoredFile;
+import com.dev_high.product.domain.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

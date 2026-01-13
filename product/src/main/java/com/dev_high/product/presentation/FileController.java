@@ -1,8 +1,8 @@
-package com.dev_high.file.presentation;
+package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.file.application.FileService;
-import com.dev_high.file.application.dto.FileGroupResponse;
+import com.dev_high.product.application.FileService;
+import com.dev_high.product.application.dto.FileGroupResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

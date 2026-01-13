@@ -1,4 +1,4 @@
-package com.dev_high.file.config;
+package com.dev_high.product.config;
 
 import lombok.Getter;
 import lombok.Setter;

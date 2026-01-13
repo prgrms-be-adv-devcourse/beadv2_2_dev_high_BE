@@ -1,4 +1,4 @@
-package com.dev_high.file.domain;
+package com.dev_high.product.domain;
 
 import java.util.List;
 

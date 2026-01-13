@@ -155,13 +155,6 @@ spec:
                   name: file-service-secret
                   key: AWS_SECRET_ACCESS_KEY
 
-            - name: JAVA_TOOL_OPTIONS
-              value: >
-                -Duser.timezone=Asia/Seoul
-                -Xmx96m
-                -XX:MaxMetaspaceSize=128m
-                -XX:MaxDirectMemorySize=32m
-                -XX:ReservedCodeCacheSize=24m
 
           startupProbe:
             httpGet:

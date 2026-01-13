@@ -1,7 +1,5 @@
-package com.dev_high.file.domain;
+package com.dev_high.product.domain;
 
-import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.file.application.dto.FileGroupResponse;
 
 import java.util.List;
 import java.util.Optional;

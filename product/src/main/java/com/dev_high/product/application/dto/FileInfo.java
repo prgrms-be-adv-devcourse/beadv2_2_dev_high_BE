@@ -1,6 +1,8 @@
-package com.dev_high.file.application.dto;
+package com.dev_high.product.application.dto;
 
-import com.dev_high.file.domain.StoredFile;
+
+import com.dev_high.product.domain.StoredFile;
+
 import java.time.OffsetDateTime;
 
 public record FileInfo(
