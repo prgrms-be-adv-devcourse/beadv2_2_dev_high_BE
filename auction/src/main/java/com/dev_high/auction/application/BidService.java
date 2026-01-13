@@ -36,6 +36,7 @@ public class BidService {
   private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
   private final BidRecordService bidRecordService;
   private final AuctionWebSocketService auctionWebSocketService;
+  private final AuctionRankingService auctionRankingService;
 
   private static final int MAX_ATTEMPTS = 2;
 
@@ -81,10 +82,12 @@ public class BidService {
     // 웹소켓 전파
     try {
       if (history != null) {
+        auctionRankingService.registerBidder(auctionId, userId);
+        auctionRankingService.incrementBidCount(auctionId);
         broadcastBid(history);
       }
     } catch (Exception e) {
-      log.warn("WebSocket broadcast failed: {}", e.getMessage());
+      log.warn("Post-bid handling failed: {}", e.getMessage());
     }
 
     return AuctionParticipationResponse.isParticipated(participation);
@@ -147,4 +150,3 @@ public class BidService {
     auctionWebSocketService.broadcastBidSuccess(AuctionBidMessage.fromEntity(history));
   }
 }
-

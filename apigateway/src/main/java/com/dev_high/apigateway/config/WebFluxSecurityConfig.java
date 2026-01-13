@@ -40,8 +40,8 @@ public class WebFluxSecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOriginPatterns(List.of(
-                            "http://localhost:[*]",
-                            "http://127.0.0.1:[*]",
+                            "http://localhost:*",
+                            "http://127.0.0.1:*",
                             "https://more-auction.kro.kr",
                             "https://more-admin.kro.kr"
                     ));
