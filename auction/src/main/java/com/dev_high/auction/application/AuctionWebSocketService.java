@@ -19,6 +19,7 @@ public class AuctionWebSocketService {
 
 
   private final SimpMessagingTemplate messagingTemplate;
+  private final AuctionRankingService auctionRankingService;
 
   // auctionId → 접속자 세트
   private final Map<String, Set<String>> auctionRooms = new ConcurrentHashMap<>();
@@ -39,6 +40,7 @@ public class AuctionWebSocketService {
     Set<String> users = auctionRooms.computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet());
 
     users.add(sessionId);
+    auctionRankingService.incrementViewCount(auctionId, sessionId);
     if (users != null && !users.isEmpty()) {
       log.info("current user count: {}", users.size());
       Map<String, Object> payload = Map.of(
