@@ -16,6 +16,7 @@ import com.dev_high.order.presentation.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Lazy(false)
 public class OrderEventListener {
 
     private final KafkaEventPublisher eventPublisher;
@@ -37,7 +39,7 @@ public class OrderEventListener {
                     AuctionCreateOrderRequestEvent.class);
 
             OrderResponse res = orderService.create(
-                    new OrderRegisterRequest(payload.sellerId(), payload.buyerId(), payload.auctionId(),
+                    new OrderRegisterRequest(payload.sellerId(), payload.buyerId(), payload.productId(), payload.auctionId(),
                             payload.amount().longValue(), payload.orderDateTime(), OrderStatus.UNPAID));
 
             NotificationRequestEvent notificationRequestEvent = new NotificationRequestEvent(

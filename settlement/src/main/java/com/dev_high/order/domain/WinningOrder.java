@@ -25,6 +25,9 @@ public class WinningOrder {
     @Column(name = "buyer_id", nullable = false, length = 50)
     private String buyerId;
 
+    @Column(name = "product_id", nullable = false, length = 50)
+    private String productId;
+
     @Column(name = "auction_id", nullable = false, length = 50)
     private String auctionId;
 
@@ -61,11 +64,12 @@ public class WinningOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public WinningOrder(String sellerId, String buyerId, String auctionId,
+    public WinningOrder(String sellerId, String buyerId, String productId, String auctionId,
                         Long winningAmount, OffsetDateTime winningDate,
                         OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
+        this.productId =productId;
         this.auctionId = auctionId;
         this.winningAmount = winningAmount;
         this.winningDate = winningDate;
@@ -86,6 +90,7 @@ public class WinningOrder {
         return new WinningOrder(
                 request.sellerId(),
                 request.buyerId(),
+                request.productId(),
                 request.auctionId(),
                 request.winningAmount(),
                 request.winningDate(),

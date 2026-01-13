@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 public record OrderRegisterRequest(
     String sellerId,
     String buyerId,
+    String productId,
     String auctionId,
     Long winningAmount,
     OffsetDateTime winningDate,
