@@ -11,9 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/deposit")
+@RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-public class AdminController {
+public class DepositAdminController {
 
     /**
      * 예치금 관련 임시 어드민 컨트롤러
@@ -24,7 +24,7 @@ public class AdminController {
 
 
     @Operation(summary = "예치금 계좌 생성", description = "예치금 계좌를 생성하고 저장")
-    @PostMapping
+    @PostMapping("/deposit")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositResponse.Detail> createDepositAccount(@RequestBody @Valid DepositRequest.Create request) {
         DepositDto.CreateCommand command = request.toCommand(request.userId());
@@ -34,7 +34,7 @@ public class AdminController {
     }
 
     @Operation(summary = "예치금 이력 생성", description = "예치금 이력을 생성하고 저장")
-    @PostMapping("/histories")
+    @PostMapping("/deposit/histories")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositHistoryRequest.Create request) {
         DepositHistoryDto.CreateCommand command = request.toCommand(request.userId(), request.orderId(), request.type(), request.amount(), request.nowBalance());

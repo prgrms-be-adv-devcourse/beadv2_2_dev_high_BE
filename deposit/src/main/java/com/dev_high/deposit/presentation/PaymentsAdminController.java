@@ -13,15 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/payments")
+@RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-public class AdminController {
+public class PaymentsAdminController {
     private final DepositOrderService depositOrderService;
     private final DepositPaymentService paymentService;
     private final DepositPaymentFailureHistoryService failureHistoryService;
 
     @Operation(summary = "예치금 주문 상태 변경", description = "특정 주문의 상태를 변경")
-    @PatchMapping("/orders/status")
+    @PatchMapping("/payments/orders/status")
     public ApiResponseDto<DepositOrderResponse.Detail> updateOrderStatus(@RequestBody @Valid DepositOrderRequest.Update request) {
         DepositOrderDto.UpdateCommand command = request.toCommand(request.id(), request.status());
         DepositOrderDto.Info info = depositOrderService.updateOrderStatus(command);
