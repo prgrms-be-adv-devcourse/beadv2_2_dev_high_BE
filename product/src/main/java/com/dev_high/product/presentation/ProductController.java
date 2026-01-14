@@ -3,12 +3,10 @@ package com.dev_high.product.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 
-import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.presentation.dto.ProductLatestAuctionUpdateRequest;
 import com.dev_high.product.presentation.dto.ProductRequest;
-import com.dev_high.product.presentation.dto.ProductUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -63,7 +61,7 @@ public class ProductController {
     @Operation(summary = "상품 수정", description = "판매자 본인이고 READY 상태일 때 상품 정보를 수정합니다.")
     @PutMapping("/{productId}")
     public ApiResponseDto<ProductInfo> updateProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
-                                                             @Valid @RequestBody ProductUpdateRequest request) {
+                                                             @Valid @RequestBody ProductRequest request) {
         return ApiResponseDto.success(productService.updateProduct(productId, request.toCommand()));
     }
 
