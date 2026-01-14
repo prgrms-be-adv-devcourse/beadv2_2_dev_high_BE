@@ -20,8 +20,8 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, S
     Long countByUserIdAndReadYnAndExpiredAtAfter(String userId, Boolean readYn, OffsetDateTime now);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "UPDATE \"user\".notification" +
-            "SET read_yn = 'Y', updated_at = :now, updated_by = :userId" +
+    @Query(value = "UPDATE \"user\".notification " +
+            "SET read_yn = 'Y', updated_at = :now, updated_by = :userId " +
             "WHERE user_id = :userId AND read_yn = 'N' AND expired_at > :now", nativeQuery = true)
     int markAllUnreadActiveAsRead(
             @Param("userId") String userId,
