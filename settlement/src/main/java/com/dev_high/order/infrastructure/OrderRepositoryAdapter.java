@@ -76,5 +76,18 @@ public class OrderRepositoryAdapter implements OrderRepository {
         return orderRepository.findBySellerIdAndStatus(sellerId, status ,pageable);
     }
 
+    @Override
+    public List<WinningOrder> findWinningOrdersForRecommendation(
+        List<String> productIds,
+        OffsetDateTime winningDate,
+        Pageable pageable
+    ) {
+        return orderRepository.findByProductIdInAndWinningDateAfter(
+            productIds,
+            winningDate,
+            pageable
+        );
+    }
+
 
 }

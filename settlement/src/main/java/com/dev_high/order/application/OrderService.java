@@ -15,12 +15,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import com.dev_high.common.dto.WinningOrderRecommendationResponse;
 
 @Service
 @Transactional
@@ -173,5 +176,30 @@ public class OrderService {
        return found.map(OrderResponse::fromEntity);
 
 
+    }
+
+    @Transactional(readOnly = true)
+    public List<WinningOrderRecommendationResponse> getWinningOrdersForRecommendation(
+        List<String> productIds,
+        int limit,
+        int lookbackDays
+    ) {
+        if (productIds == null || productIds.isEmpty() || limit <= 0) {
+            return List.of();
+        }
+
+        OffsetDateTime from = OffsetDateTime.now().minusDays(lookbackDays);
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "winningDate"));
+
+        return orderRepository.findWinningOrdersForRecommendation(
+                productIds,
+                from,
+                pageable
+        ).stream().map(order -> new WinningOrderRecommendationResponse(
+                order.getProductId(),
+                order.getWinningAmount(),
+                order.getWinningDate(),
+                order.getStatus().name()
+        )).toList();
     }
 }

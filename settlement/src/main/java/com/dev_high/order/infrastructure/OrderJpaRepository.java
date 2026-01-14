@@ -61,4 +61,10 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
 
     Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
 
+    List<WinningOrder> findByProductIdInAndWinningDateAfter(
+        List<String> productIds,
+        OffsetDateTime winningDate,
+        Pageable pageable
+    );
+
 }
