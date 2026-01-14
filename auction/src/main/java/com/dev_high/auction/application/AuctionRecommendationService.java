@@ -71,6 +71,14 @@ public class AuctionRecommendationService {
                     null,
                     null,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     0,
                     0,
                     auctionCount,
@@ -79,19 +87,44 @@ public class AuctionRecommendationService {
             return finalizeAndCache(productId, response, productInfo);
         }
 
+        List<BigDecimal> auctionStartBids = fetchAuctionStartBids(similarProductIds);
+        PriceSummary auctionStartBidSummary = summarizePrices(auctionStartBids);
+        PriceRange auctionStartBidRange = summarizeRange(auctionStartBids);
+
         List<WinningOrderRecommendationResponse> orders = fetchWinningOrders(similarProductIds);
 
         if (orders.isEmpty()) {
+            BigDecimal startBidBaseline = roundToHundreds(calculateStartBidFloor(auctionStartBids));
+
+            BigDecimal recommendedStartBid = roundToHundreds(buildStartBid(null, startBidBaseline));
+            BigDecimal rangeMin = auctionStartBidRange == null ? null : auctionStartBidRange.min();
+            BigDecimal rangeMax = auctionStartBidRange == null ? null : auctionStartBidRange.max();
+            if (rangeMin == null || rangeMax == null) {
+                if (recommendedStartBid != null) {
+                    double percent = Math.max(0.0, properties.getRangePercent());
+                    rangeMin = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 - percent)));
+                    rangeMax = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 + percent)));
+                }
+            }
+
             AuctionRecommendationResponse response = assembler.baseResponse(
                     productId,
-                    false,
-                    "낙찰 데이터가 없습니다.",
+                    true,
+                    "낙찰 데이터가 없어 유사 경매 시작가를 기준으로 추천했습니다.",
+                    null,
+                    recommendedStartBid,
+                    rangeMin,
+                    rangeMax,
                     null,
                     null,
                     null,
                     null,
                     null,
                     null,
+                    auctionStartBidSummary == null ? null : auctionStartBidSummary.min(),
+                    auctionStartBidSummary == null ? null : auctionStartBidSummary.max(),
+                    auctionStartBidSummary == null ? null : auctionStartBidSummary.avg(),
+                    auctionStartBidSummary == null ? null : auctionStartBidSummary.median(),
                     similars.size(),
                     0,
                     auctionCount,
@@ -103,16 +136,27 @@ public class AuctionRecommendationService {
         Map<String, Double> similarityMap = similars.stream()
                 .collect(Collectors.toMap(SimilarProductResponse::productId, SimilarProductResponse::score));
 
+        PriceSummary winningSummary = summarizePrices(
+                orders.stream()
+                        .map(WinningOrderRecommendationResponse::winningAmount)
+                        .filter(amount -> amount != null && amount.compareTo(BigDecimal.ZERO) > 0)
+                        .toList()
+        );
         BigDecimal referencePrice = roundToHundreds(calculateReferencePrice(orders, similarityMap));
-        BigDecimal startBidBaseline = roundToHundreds(calculateStartBidFloor(similarProductIds));
+        BigDecimal startBidBaseline = roundToHundreds(calculateStartBidFloor(auctionStartBids));
         int paidLikeCount = countPaidLikeOrders(orders);
         BigDecimal recommendedStartBid = roundToHundreds(buildStartBid(referencePrice, startBidBaseline));
-        BigDecimal rangeMin = null;
-        BigDecimal rangeMax = null;
-        if (recommendedStartBid != null) {
-            double percent = Math.max(0.0, properties.getRangePercent());
-            rangeMin = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 - percent)));
-            rangeMax = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 + percent)));
+        BigDecimal rangeMin = auctionStartBidRange == null ? null : auctionStartBidRange.min();
+        BigDecimal rangeMax = auctionStartBidRange == null ? null : auctionStartBidRange.max();
+        if (rangeMin == null || rangeMax == null) {
+            if (recommendedStartBid != null) {
+                double percent = Math.max(0.0, properties.getRangePercent());
+                rangeMin = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 - percent)));
+                rangeMax = roundToHundreds(recommendedStartBid.multiply(BigDecimal.valueOf(1.0 + percent)));
+            }
+        }
+        if (referencePrice != null && rangeMax != null && rangeMax.compareTo(referencePrice) < 0) {
+            rangeMax = roundToHundreds(referencePrice);
         }
 
         OffsetDateTime recommendedStartAt = null;
@@ -128,6 +172,14 @@ public class AuctionRecommendationService {
                 rangeMax,
                 recommendedStartAt,
                 recommendedEndAt,
+                winningSummary == null ? null : winningSummary.min(),
+                winningSummary == null ? null : winningSummary.max(),
+                winningSummary == null ? null : winningSummary.avg(),
+                winningSummary == null ? null : winningSummary.median(),
+                auctionStartBidSummary == null ? null : auctionStartBidSummary.min(),
+                auctionStartBidSummary == null ? null : auctionStartBidSummary.max(),
+                auctionStartBidSummary == null ? null : auctionStartBidSummary.avg(),
+                auctionStartBidSummary == null ? null : auctionStartBidSummary.median(),
                 similars.size(),
                 orders.size(),
                 auctionCount,
@@ -273,19 +325,17 @@ public class AuctionRecommendationService {
     return median;
   }
 
-    private BigDecimal calculateStartBidFloor(List<String> productIds) {
-        List<Auction> auctions = auctionRepository.findByProductIdIn(productIds);
-        List<BigDecimal> bids = auctions.stream()
-                .map(Auction::getStartBid)
+    private BigDecimal calculateStartBidFloor(List<BigDecimal> bids) {
+        List<BigDecimal> filteredBids = bids == null ? List.of() : bids.stream()
                 .filter(bid -> bid != null && bid.compareTo(BigDecimal.ZERO) > 0)
                 .sorted()
                 .toList();
 
-        if (bids.isEmpty()) {
+        if (filteredBids.isEmpty()) {
             return null;
         }
 
-        List<Double> values = bids.stream().map(BigDecimal::doubleValue).sorted().toList();
+        List<Double> values = filteredBids.stream().map(BigDecimal::doubleValue).sorted().toList();
         double q1 = percentile(values, 0.25);
         double q3 = percentile(values, 0.75);
         double iqr = q3 - q1;
@@ -299,6 +349,76 @@ public class AuctionRecommendationService {
         List<Double> target = filtered.isEmpty() ? values : filtered;
         double median = percentile(target, 0.5);
         return BigDecimal.valueOf(median).setScale(0, RoundingMode.HALF_UP);
+    }
+
+    private List<BigDecimal> fetchAuctionStartBids(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+        List<Auction> auctions = auctionRepository.findByProductIdIn(productIds);
+        return auctions.stream()
+                .map(Auction::getStartBid)
+                .filter(bid -> bid != null && bid.compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+    }
+
+    private PriceSummary summarizePrices(List<BigDecimal> amounts) {
+        List<BigDecimal> values = amounts == null ? List.of() : amounts.stream()
+                .filter(amount -> amount != null && amount.compareTo(BigDecimal.ZERO) > 0)
+                .sorted()
+                .toList();
+        if (values.isEmpty()) {
+            return null;
+        }
+        BigDecimal min = values.get(0);
+        BigDecimal max = values.get(values.size() - 1);
+        BigDecimal sum = BigDecimal.ZERO;
+        for (BigDecimal value : values) {
+            sum = sum.add(value);
+        }
+        BigDecimal avg = sum.divide(BigDecimal.valueOf(values.size()), 0, RoundingMode.HALF_UP);
+        int mid = values.size() / 2;
+        BigDecimal median = values.size() % 2 == 0
+                ? values.get(mid - 1).add(values.get(mid))
+                .divide(BigDecimal.valueOf(2), 0, RoundingMode.HALF_UP)
+                : values.get(mid);
+        return new PriceSummary(
+                roundToHundreds(min),
+                roundToHundreds(max),
+                roundToHundreds(avg),
+                roundToHundreds(median)
+        );
+    }
+
+    private PriceRange summarizeRange(List<BigDecimal> amounts) {
+        List<BigDecimal> values = amounts == null ? List.of() : amounts.stream()
+                .filter(amount -> amount != null && amount.compareTo(BigDecimal.ZERO) > 0)
+                .sorted()
+                .toList();
+        if (values.isEmpty()) {
+            return null;
+        }
+        List<Double> raw = values.stream().map(BigDecimal::doubleValue).sorted().toList();
+        double q1 = percentile(raw, 0.25);
+        double q3 = percentile(raw, 0.75);
+        double iqr = q3 - q1;
+        double lower = q1 - (1.5 * iqr);
+        double upper = q3 + (1.5 * iqr);
+        List<Double> filtered = raw.stream()
+                .filter(v -> v >= lower && v <= upper)
+                .toList();
+        List<Double> target = filtered.isEmpty() ? raw : filtered;
+        double min = target.get(0);
+        double max = target.get(target.size() - 1);
+        double percent = Math.max(0.0, properties.getRangePercent());
+        if (percent > 0.0) {
+            min = min * (1.0 - percent);
+            max = max * (1.0 + percent);
+        }
+        return new PriceRange(
+                roundToHundreds(BigDecimal.valueOf(min)),
+                roundToHundreds(BigDecimal.valueOf(max))
+        );
     }
 
     private BigDecimal roundToHundreds(BigDecimal value) {
@@ -396,5 +516,19 @@ public class AuctionRecommendationService {
                 ? aiResult
                 : new AuctionAiRecommendationResult(roundToHundreds(aiResult.price()), aiResult.reason());
         return assembler.withAi(base, normalized);
+    }
+
+    private record PriceSummary(
+            BigDecimal min,
+            BigDecimal max,
+            BigDecimal avg,
+            BigDecimal median
+    ) {
+    }
+
+    private record PriceRange(
+            BigDecimal min,
+            BigDecimal max
+    ) {
     }
 }
