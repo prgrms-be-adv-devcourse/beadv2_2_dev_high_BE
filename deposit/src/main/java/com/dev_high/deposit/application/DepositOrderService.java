@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
@@ -45,7 +46,7 @@ public class DepositOrderService {
         return DepositOrderDto.Info.from(order);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void confirmOrder(DepositOrderDto.ConfirmCommand command) {
         DepositOrder order = orderRepository.findById(command.id())
                 .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
