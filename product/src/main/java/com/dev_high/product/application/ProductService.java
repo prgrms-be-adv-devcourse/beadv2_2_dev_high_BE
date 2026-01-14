@@ -126,8 +126,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProductsBySeller(String sellerId) {
-        return productRepository.findBySellerId(sellerId).stream()
+    public List<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
+        return productRepository.findBySellerId(sellerId, pageable).stream()
                 .map(ProductInfo::from)
                 .toList();
     }

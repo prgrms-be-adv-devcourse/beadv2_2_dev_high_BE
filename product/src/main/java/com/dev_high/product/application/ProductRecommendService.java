@@ -1,23 +1,26 @@
 package com.dev_high.product.application;
 
-import com.dev_high.product.ai.domain.ChatMessage;
 import com.dev_high.common.dto.ChatResult;
+import com.dev_high.product.application.dto.DraftTonePreset;
 import com.dev_high.product.application.dto.ProductAnswer;
+import com.dev_high.product.application.dto.ProductDetailDto;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +36,7 @@ public class ProductRecommendService {
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
     private final PromptTemplate recommendTemplate;
-
+    private final PromptTemplate imageToDetailWithCategoryTemplate;
 
 
     //단건색인
@@ -57,6 +60,14 @@ public class ProductRecommendService {
         return docList.size();
     }
 
+    //재색인
+    public void reindex(Product product) {
+        vectorStore.delete(List.of(product.getId()));
+        vectorStore.add(List.of(toDocument(product)));
+
+    }
+
+
     // 상품 추천용 검색
     public List<ProductSearchInfo> search(String query, int topK) {
 
@@ -69,23 +80,12 @@ public class ProductRecommendService {
                         )
                         .build()
         );
-
         if(documents==null || documents.isEmpty()){
             return List.of();
         }
-
         return documents.stream()
                 .map(ProductSearchInfo::from).toList();
     }
-
-
-    //재색인
-    public void reindex(Product product) {
-        vectorStore.delete(List.of(product.getId()));
-        vectorStore.add(List.of(toDocument(product)));
-
-    }
-
 
     // 상품RAG 추천
     public ProductAnswer answer(String query, int topK) {
@@ -167,5 +167,57 @@ public class ProductRecommendService {
                 )
         );
     }
+
+
+    //상품상세설명 추천
+    public ProductDetailDto chatProductDetail(
+            MultipartFile[] files,
+            String categoryOptions,   // ✅ 호출자가 만들어서 넘김
+            Integer retryCount
+    ) {
+
+
+        String systemText = imageToDetailWithCategoryTemplate.render(Map.of(
+                "categoryOptions", categoryOptions
+        ));
+
+        String addContext = DraftTonePreset.buildExtraContext(retryCount);
+        String userText = "첨부된 여러 장의 이미지를 종합해서, 위 필드 목록을 만족하는 JSON 한 개 객체만 출력해줘.\n추가 컨텍스트: " + addContext;
+
+
+        try {
+            return callEntity(systemText, userText, files);
+        } catch (Exception e) {
+            // 1회 재시도
+            String retryText = userText + "\n\n반드시 유효한 JSON 한 개 객체만 다시 출력해줘. 문자열 따옴표/괄호를 빠뜨리지 마.";
+            return callEntity(systemText, retryText, files);
+        }
+    }
+
+    private ProductDetailDto callEntity(String systemText, String userText, MultipartFile[] files) {
+        return chatClient.prompt()
+                .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                .system(systemText)
+                .user(u -> {
+                    u.text(userText);
+                    for (MultipartFile f : files) {
+                        validateImage(f);
+                        String mime = (f.getContentType() == null || f.getContentType().isBlank()) ? "image/jpeg" : f.getContentType();
+                        u.media(MimeTypeUtils.parseMimeType(mime), f.getResource());
+                    }
+                })
+                .call()
+                .entity(ProductDetailDto.class);
+    }
+
+
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
+        String ct = file.getContentType();
+        if (ct == null || !ct.startsWith("image/")) {
+            throw new IllegalArgumentException("only image/* allowed. contentType=" + ct);
+        }
+    }
+
 
 }

@@ -1,4 +1,4 @@
-package com.dev_high.product.ai.dto;
+package com.dev_high.product.application.dto;
 
 public enum DraftTonePreset {
     BALANCED("친절하고 담백한 판매글 톤", "요약 1~2문장 + 핵심 불릿", "장점 1~2개 + 상태/구성품을 균형 있게"),

@@ -1,14 +1,18 @@
 package com.dev_high.product.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductRecommendService;
 import com.dev_high.product.application.dto.ProductAnswer;
+import com.dev_high.product.application.dto.ProductDetailDto;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +26,8 @@ public class ProductRecommendController {
 
 
    private final ProductRecommendService productRecommendService;
+   private final CategoryService categoryService;
+
 //    @PostMapping("/index")
 //    @Operation(summary = "상품단건 임베딩", description = "단일 상품을 임베딩합니다.")
 //    public Map<String, Object> indexOne(String productId) {
@@ -65,7 +71,16 @@ public class ProductRecommendController {
 
         ProductAnswer answer= productRecommendService.answer(query, topK);
 
-
         return ApiResponseDto.success(answer);
+    }
+
+
+    @PostMapping(value = "/generate-detail-draft-from-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponseDto<ProductDetailDto> productDetail(
+            @RequestPart("file") MultipartFile[] files,
+            @RequestParam(value = "retryCount", defaultValue = "0") int retryCount
+    ) {
+        String categoryOptions = categoryService.categoryOptionsText();
+        return ApiResponseDto.success(productRecommendService.chatProductDetail(files,categoryOptions, retryCount));
     }
 }

@@ -42,7 +42,6 @@ dependencies {
 
     runtimeOnly 'org.postgresql:postgresql'
 
-    implementation project(':ai-core')
     implementation project(':common')
 }
 
