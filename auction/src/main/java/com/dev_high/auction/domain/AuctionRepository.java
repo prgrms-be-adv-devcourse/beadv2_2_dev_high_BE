@@ -18,6 +18,9 @@ public interface AuctionRepository {
   // 상품아이디로 경매를 조회
   List<Auction> findByProductId(String productId);
 
+  // 상품아이디 목록으로 경매 조회
+  List<Auction> findByProductIdIn(List<String> productIds);
+
   Auction save(Auction auction);
 
 

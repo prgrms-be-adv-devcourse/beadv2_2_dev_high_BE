@@ -69,6 +69,17 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     }
 
     @Override
+    public List<Auction> findByProductIdIn(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory
+                .selectFrom(qAuction)
+                .where(qAuction.productId.in(productIds).and(qAuction.deletedYn.eq("N")))
+                .fetch();
+    }
+
+    @Override
     public List<AuctionProductProjection> bulkUpdateStartStatus() {
 
         return auctionJpaRepository.bulkUpdateStart();
