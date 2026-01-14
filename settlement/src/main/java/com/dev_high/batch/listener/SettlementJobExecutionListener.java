@@ -115,7 +115,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
       map.put("amount", totalAmount);
 
       HttpEntity<Map<String, Object>> entity = HttpUtil.createDirectEntity(map);
-      String url = "http://DEPOSIT-SERVICE/api/v1/deposit/usages";
+      String url = "http://USER-SERVICE/api/v1/deposit/usages";
 
       ResponseEntity<ApiResponseDto<?>> response = restTemplate.exchange(
           url,
