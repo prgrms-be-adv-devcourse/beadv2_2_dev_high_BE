@@ -6,12 +6,14 @@ import com.dev_high.order.application.OrderService;
 import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
+import com.dev_high.common.dto.WinningOrderRecommendationResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -50,5 +52,13 @@ public class OrderController {
         return ApiResponseDto.success(orderService.update(request));
     }
 
+    @GetMapping("/winning/recommendation")
+    public ApiResponseDto<List<WinningOrderRecommendationResponse>> getWinningOrdersForRecommendation(
+        @RequestParam List<String> productIds,
+        @RequestParam(defaultValue = "200") int limit,
+        @RequestParam(defaultValue = "180") int days
+    ) {
+        return ApiResponseDto.success(orderService.getWinningOrdersForRecommendation(productIds, limit, days));
+    }
 
 }

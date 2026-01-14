@@ -37,5 +37,11 @@ public interface OrderRepository {
 
     Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
 
+    List<WinningOrder> findWinningOrdersForRecommendation(
+        List<String> productIds,
+        OffsetDateTime winningDate,
+        Pageable pageable
+    );
+
 
 }
