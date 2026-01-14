@@ -1,4 +1,4 @@
-package com.dev_high.product.ai.domain;
+package com.dev_high.common.dto;
 
 import java.util.Map;
 

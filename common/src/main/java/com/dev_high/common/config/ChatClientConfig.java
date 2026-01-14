@@ -1,4 +1,4 @@
-package com.dev_high.product.ai.config;
+package com.dev_high.common.config;
 
 
 import org.springframework.ai.chat.client.ChatClient;

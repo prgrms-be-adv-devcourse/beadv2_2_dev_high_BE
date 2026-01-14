@@ -1,7 +1,6 @@
-package com.dev_high.product.ai.config;
+package com.dev_high.common.config;
 
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
