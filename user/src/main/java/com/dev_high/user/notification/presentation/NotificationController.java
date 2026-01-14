@@ -34,6 +34,14 @@ public class NotificationController {
         return ApiResponseDto.success(response);
     }
 
+    @Operation(summary = "만료일자 이내 읽지 않은 알림 내역 조회", description = "로그인한 사용자 ID별 만료일자가 지나지 않은 읽지 않은 알림을 조회")
+    @GetMapping("/unread/all")
+    public ApiResponseDto<Page<NotificationResponse.Detail>> getUnreadNotifications(Pageable pageable) {
+        Page<NotificationDto.Info> infos = notificationService.getUnreadNotifications(pageable);
+        Page<NotificationResponse.Detail> response = infos.map(NotificationResponse.Detail::from);
+        return ApiResponseDto.success(response);
+    }
+
     @Operation(summary = "읽지 않은 알림 갯수 카운트", description = "로그인한 사용자 ID별 만료일자가 지나지 않은 읽지 않은 알림 갯수 카운트를 조회")
     @GetMapping("/unread/count")
     public ApiResponseDto<NotificationResponse.Count> getUnreadNotificationCount() {

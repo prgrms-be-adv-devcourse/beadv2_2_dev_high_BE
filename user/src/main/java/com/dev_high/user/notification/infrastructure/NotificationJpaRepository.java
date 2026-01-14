@@ -15,6 +15,8 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, S
 
     Page<Notification> findAllByUserIdAndExpiredAtAfterOrderByCreatedAtDesc(String userId, OffsetDateTime now, Pageable pageable);
 
+    Page<Notification> findAllByUserIdAndReadYnAndExpiredAtAfterOrderByCreatedAtDesc(String userId, Boolean readYn, OffsetDateTime now, Pageable pageable);
+
     Long countByUserIdAndReadYnAndExpiredAtAfter(String userId, Boolean readYn, OffsetDateTime now);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
