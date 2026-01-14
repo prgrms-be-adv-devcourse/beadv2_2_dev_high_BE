@@ -213,6 +213,7 @@ public class AuctionRankingService {
     return new AuctionResponse(
         summary.id(),
         summary.productId(),
+        summary.productName(),
         summary.status(),
         summary.startBid(),
         summary.currentBid(),
