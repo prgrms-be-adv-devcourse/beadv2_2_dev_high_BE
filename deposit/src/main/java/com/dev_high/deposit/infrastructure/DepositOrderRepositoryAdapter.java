@@ -1,7 +1,7 @@
 package com.dev_high.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.DepositOrder;
-import com.dev_high.deposit.domain.DepositOrderRepository;
+import com.dev_high.deposit.domain.entity.DepositOrder;
+import com.dev_high.deposit.domain.repository.DepositOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

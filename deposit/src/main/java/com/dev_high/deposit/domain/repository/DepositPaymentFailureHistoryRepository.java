@@ -1,11 +1,18 @@
-package com.dev_high.deposit.infrastructure;
+package com.dev_high.deposit.domain.repository;
 
 import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DepositPaymentFailureHistoryJpaRepository extends JpaRepository<DepositPaymentFailureHistory, Long> {
+import java.util.Optional;
+
+public interface DepositPaymentFailureHistoryRepository {
+    DepositPaymentFailureHistory save(DepositPaymentFailureHistory history);
+
+    Page<DepositPaymentFailureHistory> findAll(Pageable pageable);
+
+    Optional<DepositPaymentFailureHistory> findById(Long id);
+
     Page<DepositPaymentFailureHistory> findByOrderId(String orderId, Pageable pageable);
 
     Page<DepositPaymentFailureHistory> findByUserId(String userId, Pageable pageable);

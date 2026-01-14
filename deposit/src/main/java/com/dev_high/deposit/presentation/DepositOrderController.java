@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/deposit")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Tag(name = "DepositOrder", description = "예치금 주문 API")
 public class DepositOrderController {

@@ -1,7 +1,7 @@
 package com.dev_high.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.DepositPaymentFailureHistory;
-import com.dev_high.deposit.domain.DepositPaymentFailureHistoryRepository;
+import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
+import com.dev_high.deposit.domain.repository.DepositPaymentFailureHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

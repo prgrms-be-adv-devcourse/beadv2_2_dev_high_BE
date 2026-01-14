@@ -1,7 +1,6 @@
 package com.dev_high.deposit.presentation.dto;
 
 import com.dev_high.deposit.application.dto.DepositPaymentDto;
-import com.dev_high.deposit.domain.DepositPaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,17 +14,17 @@ public class DepositPaymentRequest {
             @NotBlank(message = "주문 ID는 필수입니다.")
             String orderId,
 
-            @Schema(description = "결제 수단")
-            @NotNull(message = "결제 수단은 필수입니다.")
-            DepositPaymentMethod method,
+            @Schema(description = "사용자 ID")
+            @NotBlank(message = "사용자 ID는 필수입니다.")
+            String userId,
 
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Positive(message = "주문 금액은 0보다 커야 합니다.")
             BigDecimal amount
     ) {
-        public DepositPaymentDto.CreateCommand toCommand(String orderId, DepositPaymentMethod method, BigDecimal amount) {
-            return DepositPaymentDto.CreateCommand.of(orderId, method, amount);
+        public DepositPaymentDto.CreateCommand toCommand(String orderId, String userId, BigDecimal amount) {
+            return DepositPaymentDto.CreateCommand.of(orderId, userId, amount);
         }
     }
 

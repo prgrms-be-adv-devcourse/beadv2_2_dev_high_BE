@@ -1,7 +1,7 @@
 package com.dev_high.deposit.presentation.dto;
 
 import com.dev_high.deposit.application.dto.DepositOrderDto;
-import com.dev_high.deposit.domain.DepositOrderStatus;
+import com.dev_high.common.type.DepositOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 public class DepositOrderResponse {
     public record Detail(
             @Schema(description = "예치금 주문 ID")
-            String orderId,
+            String id,
 
             @Schema(description = "사용자 ID")
             String userId,
@@ -26,7 +26,7 @@ public class DepositOrderResponse {
     ) {
         public static Detail from(DepositOrderDto.Info info) {
             return new Detail(
-                    info.orderId(),
+                    info.id(),
                     info.userId(),
                     info.amount(),
                     info.status(),

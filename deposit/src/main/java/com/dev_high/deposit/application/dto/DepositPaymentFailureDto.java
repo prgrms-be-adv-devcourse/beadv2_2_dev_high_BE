@@ -1,6 +1,6 @@
 package com.dev_high.deposit.application.dto;
 
-import com.dev_high.deposit.domain.DepositPaymentFailureHistory;
+import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
 
 public class DepositPaymentFailureDto {
     public record CreateCommand(
