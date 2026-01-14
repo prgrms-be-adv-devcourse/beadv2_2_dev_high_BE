@@ -14,6 +14,8 @@ public interface NotificationRepository {
 
     Page<Notification> findAllByUserIdAndExpiredAt(String userId, OffsetDateTime now, Pageable pageable);
 
+    Page<Notification> findAllUnreadByUserIdAndExpiredAt(String userId, OffsetDateTime now, Pageable pageable);
+
     Long countUnreadByUserId(String userId, OffsetDateTime now);
 
     int markAllUnreadActiveAsRead(String userId, OffsetDateTime now);
