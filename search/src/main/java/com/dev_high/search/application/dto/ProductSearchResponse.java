@@ -3,7 +3,6 @@ package com.dev_high.search.application.dto;
 import com.dev_high.search.domain.ProductDocument;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 public record ProductSearchResponse(
@@ -30,12 +29,8 @@ public record ProductSearchResponse(
                 doc.getDepositAmount(),
                 doc.getStatus(),
                 doc.getSellerId(),
-                doc.getAuctionStartAt() != null
-                        ? doc.getAuctionStartAt().atOffset(ZoneOffset.ofHours(9))
-                        : null,
-                doc.getAuctionEndAt() != null
-                        ? doc.getAuctionEndAt().atOffset(ZoneOffset.ofHours(9))
-                        : null
+                doc.getAuctionStartAt(),
+                doc.getAuctionEndAt()
         );
     }
 }
