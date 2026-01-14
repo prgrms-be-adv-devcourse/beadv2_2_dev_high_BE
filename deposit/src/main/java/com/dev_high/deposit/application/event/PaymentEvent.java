@@ -48,4 +48,12 @@ public class PaymentEvent {
             return new OrderFailed(orderId);
         }
     }
+
+    public record PaymentError(
+            String orderId
+    ) {
+        public static PaymentError of(String orderId) {
+            return new PaymentError(orderId);
+        }
+    }
 }

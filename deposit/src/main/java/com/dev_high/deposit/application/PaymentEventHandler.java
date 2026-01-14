@@ -46,4 +46,10 @@ public class PaymentEventHandler {
     public void handleOrderFailed(PaymentEvent.OrderFailed event) {
         depositPaymentService.failPayment(DepositPaymentDto.failCommand.of(event.orderId()));
     }
+
+    @TransactionalEventListener
+    public void handlePaymentError(PaymentEvent.PaymentError event) {
+        depositOrderService.ErrorOrder(DepositOrderDto.ErrorCommand.of(event.orderId()));
+    }
+
 }

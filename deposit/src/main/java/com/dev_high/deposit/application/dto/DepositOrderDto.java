@@ -50,6 +50,14 @@ public class DepositOrderDto {
         }
     }
 
+    public record ErrorCommand(
+            String id
+    ) {
+        public static ErrorCommand of(String id) {
+            return new ErrorCommand(id);
+        }
+    }
+
     public record Info(
             String id,
             String userId,

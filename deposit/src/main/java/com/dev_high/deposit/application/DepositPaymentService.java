@@ -44,13 +44,13 @@ public class DepositPaymentService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createInitialPayment(DepositPaymentDto.CreateCommand command) {
-        if (!depositOrderRepository.existsById(command.orderId())) {
-            throw new NoSuchElementException("결제하려는 주문 ID를 찾을 수 없습니다: " + command.orderId());
+        try {
+            createAndSavePayment(command.orderId(), command.userId(), command.amount());
+        } catch (Exception e) {
+            applicationEventPublisher.publishEvent(PaymentEvent.PaymentError.of(command.orderId()));
+            log.error("결제 생성 실패 : ", e);
+            throw e;
         }
-        if (depositPaymentRepository.existsByOrderId(command.orderId())) {
-            throw new IllegalStateException("해당 주문 ID에 대한 결제 기록이 이미 존재합니다: " + command.orderId());
-        }
-        depositPaymentRepository.save(DepositPayment.create(command.orderId(), command.userId(), command.amount()));
     }
 
     @Transactional(readOnly = true)

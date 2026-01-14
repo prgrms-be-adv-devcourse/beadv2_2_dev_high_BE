@@ -75,4 +75,12 @@ public class DepositOrderService {
         applicationEventPublisher.publishEvent(PaymentEvent.OrderFailed.of(command.id()));
         orderRepository.save(order);
     }
+
+    @Transactional
+    public void ErrorOrder(DepositOrderDto.ErrorCommand command) {
+        DepositOrder order = orderRepository.findById(command.id())
+                .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
+        order.ErrorOrder();
+        orderRepository.save(order);
+    }
 }
