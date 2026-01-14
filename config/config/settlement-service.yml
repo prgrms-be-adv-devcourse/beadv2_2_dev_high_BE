@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+settlement:
+  batch:
+    settlement-cron: 0 0 3 * * *
+    retry-cron: 0 0 * * * *
+    order-status-cron: 0 0 */6 * * *

@@ -1,6 +1,6 @@
 package com.dev_high.deposit.infrastructure;
 
-import com.dev_high.deposit.domain.DepositPayment;
+import com.dev_high.deposit.domain.entity.DepositPayment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

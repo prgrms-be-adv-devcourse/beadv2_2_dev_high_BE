@@ -143,6 +143,12 @@ spec:
                   name: auction-secret
                   key: TOSS_SECRET_KEY
 
+            - name: GPT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secret
+                  key: GPT_API_KEY
+
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul

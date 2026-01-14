@@ -2,20 +2,27 @@ package com.dev_high.deposit.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.deposit.application.dto.*;
+import com.dev_high.deposit.application.event.PaymentEvent;
 import com.dev_high.deposit.client.TossPaymentClient;
 import com.dev_high.deposit.client.dto.TossErrorResponse;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
-import com.dev_high.deposit.domain.*;
+import com.dev_high.deposit.domain.entity.DepositOrder;
+import com.dev_high.deposit.domain.entity.DepositPayment;
+import com.dev_high.deposit.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentRepository;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
 
@@ -25,32 +32,25 @@ import java.util.NoSuchElementException;
 public class DepositPaymentService {
     private final DepositPaymentRepository depositPaymentRepository;
     private final DepositOrderRepository depositOrderRepository;
-    private final DepositService depositService;
     private final DepositPaymentFailureHistoryService failureHistoryService;
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public DepositPaymentDto.Info createPayment(DepositPaymentDto.CreateCommand command) {
+        return DepositPaymentDto.Info.from(createAndSavePayment(command.orderId(), command.userId(), command.amount()));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createInitialPayment(DepositPaymentDto.CreateCommand command) {
         if (!depositOrderRepository.existsById(command.orderId())) {
             throw new NoSuchElementException("결제하려는 주문 ID를 찾을 수 없습니다: " + command.orderId());
         }
-
         if (depositPaymentRepository.existsByOrderId(command.orderId())) {
             throw new IllegalStateException("해당 주문 ID에 대한 결제 기록이 이미 존재합니다: " + command.orderId());
         }
-
-        String userId = UserContext.get().userId();
-
-        DepositPayment payment = DepositPayment.create(
-                command.orderId(),
-                userId,
-                command.amount(),
-                ""
-                //command.method() 엔티티 내부에 CARD로 초기화 중
-        );
-
-        return DepositPaymentDto.Info.from(depositPaymentRepository.save(payment));
+        depositPaymentRepository.save(DepositPayment.create(command.orderId(), command.userId(), command.amount()));
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +98,9 @@ public class DepositPaymentService {
                 throw new IllegalStateException("토스 결제 승인에 실패했습니다: [" + code + "] " + message, ex);
 
             } catch (Exception jsonEx) {
+                String code = "UNKNOWN";
+                String message = "토스 결제 승인 실패 및 오류 응답 파싱 불가";
+                handlePaymentFailure(order.getId(), order.getUserId(), code, message);
                 log.error("Failed to parse Toss error response: {}", responseBody, jsonEx);
                 throw new IllegalStateException("토스 결제 승인 실패 및 오류 응답 파싱 불가: " + responseBody, ex);
             }
@@ -106,30 +109,53 @@ public class DepositPaymentService {
         OffsetDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt() : null;
         OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt() : null;
 
-        DepositDto.UsageCommand Command = new DepositDto.UsageCommand(
-                userId,
-                command.orderId(),
-                DepositType.CHARGE,
-                command.amount()
-        );
-
-        depositService.updateBalance(Command);
-
         payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
 
-        order.updateStatus(DepositOrderStatus.COMPLETED);
+        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(payment.getOrderId(), payment.getUserId(), payment.getAmount()));
 
+        // TODO : 현재 충전이라는 방향으로 되어있는데, 추후 직접 결제가 있다면 변경이 필요하다.
         return DepositPaymentDto.Info.from(depositPaymentRepository.save(payment));
     }
 
     public void handlePaymentFailure(String orderId, String userId, String code, String message) {
-        DepositPaymentFailureDto.CreateCommand command = new DepositPaymentFailureDto.CreateCommand(
-                orderId,
-                userId,
-                code,
-                message
-        );
-        failureHistoryService.createHistory(command);
+        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(orderId)
+                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + orderId));
+        payment.failPayment();
+        try {
+            failureHistoryService.createHistory(DepositPaymentFailureDto.CreateCommand.of(orderId, userId, code, message));
+        } catch (NoSuchElementException e) {
+            log.error("정보를 찾을 수 없습니다.", e);
+        } catch (Exception e) {
+            log.error("결제 실패 이력 저장 실패", e);
+        }
+        depositPaymentRepository.save(payment);
+    }
+
+    private DepositPayment createAndSavePayment(String orderId, String userId, BigDecimal amount) {
+        if (!depositOrderRepository.existsById(orderId)) {
+            throw new NoSuchElementException("결제하려는 주문 ID를 찾을 수 없습니다: " + orderId);
+        }
+        if (depositPaymentRepository.existsByOrderId(orderId)) {
+            throw new IllegalStateException("해당 주문 ID에 대한 결제 기록이 이미 존재합니다: " + orderId);
+        }
+
+        return depositPaymentRepository.save(DepositPayment.create(orderId, userId, amount));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void donePayment(DepositPaymentDto.CompleteCommand command) {
+        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
+                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
+        payment.donePayment();
+        depositPaymentRepository.save(payment);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failPayment(DepositPaymentDto.failCommand command) {
+        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
+                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
+        payment.failPayment();
+        depositPaymentRepository.save(payment);
     }
 
 }

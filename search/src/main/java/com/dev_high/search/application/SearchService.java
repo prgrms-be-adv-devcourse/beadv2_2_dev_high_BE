@@ -9,16 +9,21 @@ import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.search.application.dto.ProductSearchResponse;
+import com.dev_high.common.dto.SimilarProductResponse;
 import com.dev_high.search.domain.ProductDocument;
 import com.dev_high.search.domain.SearchRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.*;
 import org.springframework.data.elasticsearch.core.*;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -34,6 +39,7 @@ public class SearchService {
     private final ElasticsearchOperations elasticsearchOperations;
     private final SearchRepository searchRepository;
     private final EmbeddingModel embeddingModel;
+    private final ElasticsearchClient elasticsearchClient;
 
     public void indexProduct(ProductCreateSearchRequestEvent request) {
         ProductDocument document = new ProductDocument(request);
@@ -160,6 +166,59 @@ public class SearchService {
         SearchPage<ProductDocument> searchPage = SearchHitSupport.searchPageFor(hits, pageable);
 
         return ApiResponseDto.success(searchPage.map(hit -> ProductSearchResponse.from(hit.getContent())));
+    }
+
+    public List<SimilarProductResponse> findSimilarProducts(String productId, int limit) {
+        if (productId == null || productId.isBlank() || limit <= 0) {
+            return List.of();
+        }
+
+        ProductDocument base = searchRepository.findByProductId(productId)
+            .orElse(null);
+        if (base == null) {
+            return List.of();
+        }
+
+        float[] embedding = base.getEmbedding();
+        if (embedding == null || embedding.length == 0) {
+            String text = buildEmbeddingText(base);
+            embedding = embeddingModel.embed(text);
+        }
+
+        List<Float> queryVector = new ArrayList<>(embedding.length);
+        for (float v : embedding) {
+            queryVector.add(v);
+        }
+
+        int k = limit + 1;
+        int numCandidates = Math.max(100, k * 5);
+
+        SearchResponse<ProductDocument> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("product")
+                    .knn(kq -> kq
+                            .field("embedding")
+                            .queryVector(queryVector)
+                            .k(k)
+                            .numCandidates(numCandidates)
+                    )
+                    .source(src -> src.filter(f -> f.includes("productId")))
+            , ProductDocument.class);
+        } catch (Exception e) {
+            log.warn("similar search failed: {}", e.getMessage());
+            return List.of();
+        }
+
+        return response.hits().hits().stream()
+            .filter(hit -> hit.source() != null)
+            .filter(hit -> !productId.equals(hit.source().getProductId()))
+            .limit(limit)
+            .map(hit -> new SimilarProductResponse(
+                hit.source().getProductId(),
+                hit.score() == null ? 0.0 : hit.score()
+            ))
+            .toList();
     }
 
     private Instant parseKstToUtc(String dateTimeStr) {

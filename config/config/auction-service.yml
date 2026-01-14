@@ -1,0 +1,53 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: ${REDIS_AUCTION_DB:1}
+  ai:
+    openai:
+      api-key: ${GPT_API_KEY:}
+      base-url: https://api.openai.com/
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          max_completion_tokens: 256
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+auction:
+  batch:
+    lifecycle-cron: 0 */10 * * * *
+    ranking-clear-cron: 0 0 0 * * *
+  ranking:
+    view-window-minutes: 5
+    bid-weight: 1.0
+    view-weight: 1.0
+    bidder-weight: 3.0
+  recommendation:
+    similar-limit: 50
+    winning-limit: 200
+    lookback-days: 180
+    start-bid-ratio: 0.8
+    winning-blend-weight: 0.8
+    auction-blend-weight: 0.2
+    time-decay-days: 90
+    min-similarity: 0.2
+    range-percent: 0.15
+    ai-enabled: true
+    cache-ttl-minutes: 30
+    duration-hours: 24
+    start-delay-minutes: 60
+    status-weight:
+      confirm-buy: 1.2
+      paid: 1.0
+      ship-completed: 1.0
+      ship-started: 1.0
+      unpaid: 0.6
+      unpaid-cancel: 0.3
+      paid-cancel: 0.4

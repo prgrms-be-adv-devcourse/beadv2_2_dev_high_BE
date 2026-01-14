@@ -49,6 +49,8 @@ public class PromptTemplateConfig {
 - category.code는 후보 목록에 존재하는 code(id) 중 하나여야 해.
 - category.name은 선택한 code에 매칭되는 이름을 후보 목록과 완전히 동일하게 써.
 - alternatives는 선택된 카테고리(category.code)를 제외한 서로 다른 후보 2개로 구성해.
+- alternatives는 CategoryDto.AltDto 형태( code, name, confidence )로만 채워.
+- alternatives.code는 후보 목록의 code(id), alternatives.name은 해당 code의 이름과 동일해야 해.
 - evidence는 카테고리 판단의 시각적 근거를 2~5개로 작성해.
   (예: 키보드/트랙패드/포트/재질/형태/로고/구성품 등)
 
@@ -69,10 +71,64 @@ public class PromptTemplateConfig {
 - recommendedFor(1~3개)
 - searchKeywords(3~5개, 브랜드/모델명은 로고/각인/라벨이 보일 때만)
 
+[필수 출력 JSON 스키마 예시]
+{{
+  "category": {{
+    "code": "",
+    "name": "",
+    "confidence": 0.0,
+    "alternatives": [
+      {{"code": "", "name": "", "confidence": 0.0}},
+      {{"code": "", "name": "", "confidence": 0.0}}
+    ],
+    "evidence": ["", ""]
+  }},
+  "title": "",
+  "summary": "",
+  "condition": {{
+    "overall": "",
+    "details": ["", ""]
+  }},
+  "features": ["", ""],
+  "specs": ["", ""],
+  "includedItems": ["", ""],
+  "defects": [],
+  "recommendedFor": ["", ""],
+  "searchKeywords": ["", ""]
+}}
+
 [작성 힌트]
 - condition.details는 관찰 가능한 상태 중심(스크래치/오염/파손/찍힘/마모/화면 멍 등)으로 작성해.
 - specs는 가능한 경우 포트/키보드 배열/색상/재질/대략적 크기/형태 등 시각적 정보를 우선 포함해.
 - includedItems는 사진에 보이는 구성품만 적고, 보이지 않으면 "확인 필요"로 둬.
+""";
+        return new PromptTemplate(template);
+    }
+
+    @Bean
+    public PromptTemplate auctionRecommendationTemplate() {
+        String template = """
+너는 경매 시작가 추천을 돕는 도우미야. 아래 값을 참고해서 JSON 한 개 객체만 출력해.
+출력 형식은 반드시 {{"price": number, "reason": "string"}} 형태여야 한다.
+reason은 한국어로 간결하게 2~3문장으로 작성해.
+dataNotes가 비어있지 않으면 반드시 이용해서 reason을 작성해.
+recommendedStartBid가 비어있다면 product 정보와 category 정보를 바탕으로 price를 추정해.
+price는 정수로 출력하고, priceRange가 있다면 범위 안으로 맞춰.
+
+- productId: {productId}
+- productName: {productName}
+- productDescription: {productDescription}
+- categoryIds: {categoryIds}
+- categoryNames: {categoryNames}
+- referencePrice: {referencePrice}
+- recommendedStartBid: {recommendedStartBid}
+- priceRange: {priceRangeMin} ~ {priceRangeMax}
+- similarCount: {similarCount}
+- winningCount: {winningCount}
+- auctionCount: {auctionCount}
+- minSimilarity: {minSimilarity}
+- blendWeight: winning={winningWeight}, auction={auctionWeight}
+- dataNotes: {dataNotes}
 """;
         return new PromptTemplate(template);
     }

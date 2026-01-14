@@ -1,11 +1,17 @@
 package com.dev_high.auction.presentation;
 
+import com.dev_high.auction.application.AuctionRankingService;
+import com.dev_high.auction.application.AuctionRecommendationService;
 import com.dev_high.auction.application.AuctionService;
+import com.dev_high.auction.application.dto.AuctionRecommendationResponse;
+import com.dev_high.auction.application.dto.AuctionRankingResponse;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.auction.presentation.dto.UserAuctionListRequest;
 import com.dev_high.common.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,14 +33,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuctionController {
 
   private final AuctionService auctionService;
+  private final AuctionRankingService auctionRankingService;
+  private final AuctionRecommendationService auctionRecommendationService;
 
   @Operation(summary = "경매 목록 조회", description = "페이지네이션과 필터를 통해 경매 목록을 조회합니다.")
   @GetMapping
   public ApiResponseDto<Page<AuctionResponse>> getAuctionList(
-      @ModelAttribute AuctionRequest request,
+      @ModelAttribute UserAuctionListRequest request,
       Pageable pageable) {
 
-    Page<AuctionResponse> res = auctionService.getAuctionList(request, pageable);
+    Page<AuctionResponse> res = auctionService.getUserAuctionList(request, pageable);
     return ApiResponseDto.success(res);
   }
 
@@ -73,6 +81,20 @@ public class AuctionController {
   public ApiResponseDto<Void> removeAuction(@PathVariable String auctionId) {
     auctionService.removeAuction(auctionId);
     return ApiResponseDto.success(null);
+  }
+
+  @Operation(summary = "오늘의 인기 경매 TOP 조회", description = "입찰 횟수와 입장 조회수를 기반으로 TOP 경매를 조회합니다.")
+  @GetMapping("top/today")
+  public ApiResponseDto<List<AuctionRankingResponse>> getTodayTopAuctions(
+      @RequestParam(defaultValue = "10") int limit) {
+    return ApiResponseDto.success(auctionRankingService.getTodayTop(limit));
+  }
+
+  @Operation(summary = "경매 시작가 추천", description = "유사 상품 낙찰 데이터를 기반으로 추천값을 제공합니다.")
+  @GetMapping("recommendation")
+  public ApiResponseDto<AuctionRecommendationResponse> getAuctionRecommendation(
+      @RequestParam String productId) {
+    return ApiResponseDto.success(auctionRecommendationService.recommend(productId));
   }
 
 }

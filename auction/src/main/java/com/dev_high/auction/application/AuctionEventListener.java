@@ -75,7 +75,7 @@ public class AuctionEventListener {
             }
         } catch (TransientDataAccessException | NetworkException e) {
             // 일시적 오류: 재시도
-            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            log.warn("일시적 오류 발생: {}, 메시지: {}", e, envelope.payload());
             throw e;
         } catch (Exception e) {
             //재시도 없이 DLQ
@@ -100,7 +100,7 @@ public class AuctionEventListener {
                     (AuctionStatus.valueOf(val.status())));
         } catch (TransientDataAccessException | NetworkException e) {
             // 일시적 오류: 재시도
-            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            log.warn("일시적 오류 발생: {}, 메시지: {}", e, envelope.payload());
             throw e;
         } catch (Exception e) {
             //재시도 없이 DLQ
@@ -112,18 +112,8 @@ public class AuctionEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(ProductCreateSearchRequestEvent event) {
-        eventPublisher.publish(KafkaTopics.PRODUCT_SEARCH_CREATED_REQUESTED, event);
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(AuctionUpdateSearchRequestEvent event) {
         eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED, event);
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(String event) {
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_DELETED_REQUESTED, event);
     }
 
 

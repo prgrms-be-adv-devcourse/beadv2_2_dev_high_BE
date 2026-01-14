@@ -1,7 +1,12 @@
 package com.dev_high.deposit.application;
 
 import com.dev_high.deposit.application.dto.DepositPaymentFailureDto;
-import com.dev_high.deposit.domain.*;
+import com.dev_high.deposit.domain.entity.DepositOrder;
+import com.dev_high.deposit.domain.entity.DepositPayment;
+import com.dev_high.deposit.domain.entity.DepositPaymentFailureHistory;
+import com.dev_high.deposit.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentFailureHistoryRepository;
+import com.dev_high.deposit.domain.repository.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +28,8 @@ public class DepositPaymentFailureHistoryService {
         DepositOrder order = depositOrderRepository.findById(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + command.orderId()));
 
-        order.updateStatus(DepositOrderStatus.FAILED);
-
         DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
-
-        payment.failPayment();
 
         DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
                 command.orderId(),

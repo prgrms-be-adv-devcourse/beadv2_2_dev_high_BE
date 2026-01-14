@@ -69,6 +69,17 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     }
 
     @Override
+    public List<Auction> findByProductIdIn(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory
+                .selectFrom(qAuction)
+                .where(qAuction.productId.in(productIds).and(qAuction.deletedYn.eq("N")))
+                .fetch();
+    }
+
+    @Override
     public List<AuctionProductProjection> bulkUpdateStartStatus() {
 
         return auctionJpaRepository.bulkUpdateStart();
@@ -92,21 +103,42 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
         BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qAuction.deletedYn.ne("Y"));
+        if (condition.deletedYn() != null) {
+            builder.and(qAuction.deletedYn.eq(condition.deletedYn()));
+        }
         if (condition.status() != null && !condition.status().isEmpty()) {
             builder.and(qAuction.status.in(condition.status()));
         }
 
-        if (condition.startBid() != null) {
-            builder.and(qAuction.startBid.goe(condition.startBid()));
+        if (condition.minBid() != null) {
+            builder.and(qAuction.startBid.goe(condition.minBid()));
+        }
+        if (condition.maxBid() != null) {
+            builder.and(qAuction.startBid.loe(condition.maxBid()));
         }
 
-        if (condition.startAt() != null) {
-            builder.and(qAuction.auctionStartAt.goe(condition.startAt()));
+        if (condition.productId() != null) {
+            builder.and(qAuction.productId.eq(condition.productId()));
         }
 
-        if (condition.endAt() != null) {
-            builder.and(qAuction.auctionEndAt.loe(condition.endAt()));
+        if (condition.sellerId() != null) {
+            builder.and(qAuction.createdBy.eq(condition.sellerId()));
+        }
+
+        if (condition.startFrom() != null) {
+            builder.and(qAuction.auctionStartAt.goe(condition.startFrom()));
+        }
+
+        if (condition.startTo() != null) {
+            builder.and(qAuction.auctionStartAt.loe(condition.startTo()));
+        }
+
+        if (condition.endFrom() != null) {
+            builder.and(qAuction.auctionEndAt.goe(condition.endFrom()));
+        }
+
+        if (condition.endTo() != null) {
+            builder.and(qAuction.auctionEndAt.loe(condition.endTo()));
         }
 
         long total = Optional.ofNullable(
