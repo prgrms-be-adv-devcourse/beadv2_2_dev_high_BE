@@ -40,6 +40,30 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
             @Param("targetDate") OffsetDateTime targetDate
     );
 
+    @Modifying
+    @Query(
+            value = """
+                    UPDATE "settlement"."winning_order"
+                    SET
+                      status = :newStatus,
+                      updated_at = now()
+                    WHERE status = :oldStatus
+                      AND payment_limit_date <= :targetDate
+                    RETURNING
+                      id         AS id,
+                      buyer_id   AS buyerId,
+                      seller_id  AS sellerId,
+                      auction_id AS auctionId,
+                      winning_amount AS winningAmount
+                    """,
+            nativeQuery = true
+    )
+    List<UpdateOrderProjection> updateStatusByPaymentLimitDateAndReturnBuyer(
+            @Param("oldStatus") String oldStatus,
+            @Param("newStatus") String newStatus,
+            @Param("targetDate") OffsetDateTime targetDate
+    );
+
     Page<WinningOrder> findAllByStatusAndUpdatedAtBetween(
             OrderStatus status,
             OffsetDateTime start,

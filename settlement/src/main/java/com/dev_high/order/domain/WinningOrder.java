@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -16,7 +17,7 @@ import java.time.OffsetDateTime;
 public class WinningOrder {
 
     @Id
-    @CustomGeneratedId(method = "order")
+    @CustomGeneratedId(method = "winning_order")
     private String id;
 
     @Column(name = "seller_id", nullable = false, length = 50)
@@ -28,17 +29,26 @@ public class WinningOrder {
     @Column(name = "product_id", nullable = false, length = 50)
     private String productId;
 
+    @Column(name = "product_name")
+    private String productName;
+
     @Column(name = "auction_id", nullable = false, length = 50)
     private String auctionId;
 
     @Column(name = "winning_amount", nullable = false)
-    private Long winningAmount; // DB에 맞춰 통일
+    private BigDecimal winningAmount; // DB에 맞춰 통일
+
+    @Column(name = "deposit_amount")
+    private BigDecimal depositAmount; // DB에 맞춰 통일
 
     @Column(name = "winning_date", nullable = false)
     private OffsetDateTime winningDate;
 
     @Column(name = "pay_complete_date")
     private OffsetDateTime payCompleteDate; // NULL 허용
+
+    @Column(name ="payment_limit_date")
+    private OffsetDateTime paymentLimitDate;
 
     @Column(nullable = false, length = 1)
     private String payYn = "N";
@@ -64,15 +74,18 @@ public class WinningOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public WinningOrder(String sellerId, String buyerId, String productId, String auctionId,
-                        Long winningAmount, OffsetDateTime winningDate,
+    public WinningOrder(String sellerId, String buyerId, String productId, String productName,String auctionId,
+                        BigDecimal winningAmount, BigDecimal depositAmount, OffsetDateTime winningDate,
                         OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;
         this.productId =productId;
+        this.productName = productName;
         this.auctionId = auctionId;
         this.winningAmount = winningAmount;
+        this.depositAmount = depositAmount;
         this.winningDate = winningDate;
+        this.paymentLimitDate = winningDate.plusDays(3);
         this.status = status;
     }
 
@@ -91,8 +104,10 @@ public class WinningOrder {
                 request.sellerId(),
                 request.buyerId(),
                 request.productId(),
+                request.productName(),
                 request.auctionId(),
                 request.winningAmount(),
+                request.depositAmount(),
                 request.winningDate(),
                 request.status()
         );

@@ -82,12 +82,20 @@ public class OrderService {
     public List<UpdateOrderProjection> updateStatusBulk(OrderStatus oldStatus,
                                                         OrderStatus newStatus, OffsetDateTime targetDate
     ) {
-
-        List<UpdateOrderProjection> updated = orderRepository.updateStatusByUpdatedAtAndReturnBuyer(
-            oldStatus,
-            newStatus,
-            targetDate
-        );
+        List<UpdateOrderProjection> updated;
+        if (oldStatus == OrderStatus.UNPAID && newStatus == OrderStatus.UNPAID_CANCEL) {
+            updated = orderRepository.updateStatusByPaymentLimitDateAndReturnBuyer(
+                oldStatus,
+                newStatus,
+                targetDate
+            );
+        } else {
+            updated = orderRepository.updateStatusByUpdatedAtAndReturnBuyer(
+                oldStatus,
+                newStatus,
+                targetDate
+            );
+        }
 
         if (newStatus == OrderStatus.CONFIRM_BUY) {
             settlementRegistrarProvider.ifAvailable(registrar -> updated.forEach(item -> registrar.register(

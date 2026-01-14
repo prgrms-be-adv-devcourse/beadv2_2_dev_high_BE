@@ -11,6 +11,8 @@ import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementStatus;
 import com.dev_high.settle.domain.history.SettlementHistory;
 import com.dev_high.settle.infrastructure.SettlementHistoryJpaRepository;
+
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -49,12 +51,16 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
   @Override
   public void afterJob(JobExecution jobExecution) {
     // 정산 결과 알림 및 이력 저장 처리
-    Map<String, Long> sellerAmountMap = successSettlements.stream()
-        .filter(s -> s.getStatus() == SettlementStatus.COMPLETED)
-        .collect(Collectors.groupingBy(
-            Settlement::getSellerId,
-            Collectors.summingLong(Settlement::getFinalAmount)
-        ));
+      Map<String, BigDecimal> sellerAmountMap = successSettlements.stream()
+              .filter(s -> s.getStatus() == SettlementStatus.COMPLETED)
+              .collect(Collectors.groupingBy(
+                      Settlement::getSellerId,
+                      Collectors.reducing(
+                              BigDecimal.ZERO,
+                              Settlement::getFinalAmount,
+                              BigDecimal::add
+                      )
+              ));
 
     sellerAmountMap.forEach((sellerId, totalAmount) -> {
       boolean depositSuccess = requestDeposit(sellerId, totalAmount);
@@ -106,7 +112,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
     successSettlements.clear();
   }
 
-  private boolean requestDeposit(String sellerId, Long totalAmount) {
+  private boolean requestDeposit(String sellerId, BigDecimal totalAmount) {
     try {
       Map<String, Object> map = new HashMap<>();
       map.put("userId", sellerId);
@@ -137,7 +143,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
     }
   }
 
-  private void persistSettlementSummary(String sellerId, Long totalAmount, boolean success) {
+  private void persistSettlementSummary(String sellerId, BigDecimal totalAmount, boolean success) {
     // TODO: summary 테이블에 합산 정산 결과 저장 (성공/실패 포함)
   }
 }

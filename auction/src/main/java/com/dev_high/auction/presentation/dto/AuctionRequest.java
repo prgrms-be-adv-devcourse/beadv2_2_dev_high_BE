@@ -12,7 +12,7 @@ public record AuctionRequest(String productId, BigDecimal startBid,
                              String auctionStartAt,
                              @Schema(description = "경매 종료 시간, 시간 단위 입력 가능 (예: 2025-12-12 15:00:00)",
                                  example = "2025-12-12 15:00:00")
-                             String auctionEndAt, String sellerId) {
+                             String auctionEndAt, String sellerId , String productName) {
 
 
 }

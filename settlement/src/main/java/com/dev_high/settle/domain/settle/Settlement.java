@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -55,19 +56,19 @@ public class Settlement {
      * 낙찰 금액
      */
     @Column(name = "winning_amount", nullable = false)
-    private Long winningAmount;
+    private BigDecimal winningAmount;
 
     /**
      * 수수료
      */
     @Column(name = "charge")
-    private Long charge;
+    private BigDecimal charge;
 
     /**
      * 최종 정산 금액
      */
     @Column(name = "final_amount")
-    private Long finalAmount;
+    private BigDecimal finalAmount;
 
 
     /**
@@ -110,7 +111,7 @@ public class Settlement {
     private String historyMessage;
 
     public Settlement(String orderId, String sellerId, String buyerId, String auctionId,
-                      Long winningAmount, SettlementStatus status, Long tryCnt) {
+                      BigDecimal winningAmount, SettlementStatus status, Long tryCnt) {
 
         this.orderId = orderId;
         this.sellerId = sellerId;
@@ -151,8 +152,8 @@ public class Settlement {
     public void ready() {
 
         if (this.tryCnt == 0) {
-            this.charge = (long) (winningAmount * chargeRatio);
-            this.finalAmount = winningAmount - charge;
+            this.charge = winningAmount.multiply(BigDecimal.valueOf(chargeRatio));
+            this.finalAmount = winningAmount.subtract(charge);
         }
         this.tryCnt++;
     }
