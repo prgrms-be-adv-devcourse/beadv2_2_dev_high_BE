@@ -58,14 +58,14 @@ public class AuctionRankingService {
     }
   }
 
-  public void incrementViewCount(String auctionId, String sessionId) {
-    if (auctionId == null || sessionId == null) {
+  public void incrementViewCount(String auctionId, String dedupKey) {
+    if (auctionId == null || dedupKey == null) {
       return;
     }
 
-    String dedupKey = viewDedupKey(auctionId, sessionId);
+    String viewDedupKey = viewDedupKey(auctionId, dedupKey);
     Boolean firstView = stringRedisTemplate.opsForValue().setIfAbsent(
-        dedupKey,
+        viewDedupKey,
         "1",
         Duration.ofMinutes(viewWindowMinutes)
     );

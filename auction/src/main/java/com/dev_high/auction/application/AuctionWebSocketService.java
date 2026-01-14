@@ -36,11 +36,11 @@ public class AuctionWebSocketService {
   /**
    * 경매 화면 입장
    */
-  public void joinAuction(String auctionId, String sessionId) {
+  public void joinAuction(String auctionId, String sessionId, String viewDedupKey) {
     Set<String> users = auctionRooms.computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet());
 
     users.add(sessionId);
-    auctionRankingService.incrementViewCount(auctionId, sessionId);
+    auctionRankingService.incrementViewCount(auctionId, viewDedupKey);
     if (users != null && !users.isEmpty()) {
       log.info("current user count: {}", users.size());
       Map<String, Object> payload = Map.of(
