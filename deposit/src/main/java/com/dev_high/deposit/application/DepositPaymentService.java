@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
@@ -41,7 +42,7 @@ public class DepositPaymentService {
         return DepositPaymentDto.Info.from(createAndSavePayment(command.orderId(), command.userId(), command.amount()));
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createInitialPayment(DepositPaymentDto.CreateCommand command) {
         if (!depositOrderRepository.existsById(command.orderId())) {
             throw new NoSuchElementException("결제하려는 주문 ID를 찾을 수 없습니다: " + command.orderId());
@@ -141,7 +142,7 @@ public class DepositPaymentService {
         return depositPaymentRepository.save(DepositPayment.create(orderId, userId, amount));
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void donePayment(DepositPaymentDto.CompleteCommand command) {
         DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
@@ -149,7 +150,7 @@ public class DepositPaymentService {
         depositPaymentRepository.save(payment);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failPayment(DepositPaymentDto.failCommand command) {
         DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
