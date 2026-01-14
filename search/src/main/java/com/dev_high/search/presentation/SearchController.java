@@ -3,6 +3,7 @@ package com.dev_high.search.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.search.application.SearchService;
 import com.dev_high.search.application.dto.ProductSearchResponse;
+import com.dev_high.common.dto.SimilarProductResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,5 +30,13 @@ public class SearchController {
             Pageable pageable
     ) {
         return searchService.searchProducts(keyword, categories, status, minStartPrice, maxStartPrice, startFrom, startTo, pageable);
+    }
+
+    @GetMapping("/similar")
+    public ApiResponseDto<List<SimilarProductResponse>> getSimilarProducts(
+        @RequestParam String productId,
+        @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ApiResponseDto.success(searchService.findSimilarProducts(productId, limit));
     }
 }
