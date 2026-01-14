@@ -22,7 +22,6 @@ public class BatchScheduler {
 
     // 기본은 10분 간격, 운영은 config 값으로 조정
     @Scheduled(cron = "${auction.batch.lifecycle-cron:0 */10 * * * *}") // 초 분 시 일 월 요일
-
     public void runAuctionLifecycleJob() {
         try {
             jobLauncher.run(

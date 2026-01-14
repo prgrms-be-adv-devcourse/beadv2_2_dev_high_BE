@@ -38,6 +38,7 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
+    private final AuctionSummaryCacheService auctionSummaryCacheService;
 
     private final ApplicationEventPublisher publisher;
 
@@ -103,7 +104,8 @@ public class AuctionService {
                 new Auction(request.startBid(), start,
                         end, userId, request.productId()));
         // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
-        auctionLiveStateRepository.save(new AuctionLiveState(auction));
+        AuctionLiveState liveState = new AuctionLiveState(auction);
+        auctionLiveStateRepository.save(liveState);
         publishSpringEvent(auction);
         return AuctionResponse.fromEntity(auction);
 
@@ -143,6 +145,7 @@ public class AuctionService {
 
         auction.modify(request.startBid(), start, end, userId);
         publishSpringEvent(auction);
+        AuctionLiveState liveState = auctionLiveStateRepository.findById(auctionId).orElse(null);
 
         //dirty check
         return AuctionResponse.fromEntity(auction);
@@ -170,6 +173,7 @@ public class AuctionService {
 
         auction.remove(userId);
         publisher.publishEvent(auctionId);
+        auctionSummaryCacheService.delete(auctionId);
 
         // dirty check 자동저장
     }
