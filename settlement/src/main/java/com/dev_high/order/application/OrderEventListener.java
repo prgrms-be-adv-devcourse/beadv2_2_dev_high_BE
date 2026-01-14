@@ -39,8 +39,8 @@ public class OrderEventListener {
                     AuctionCreateOrderRequestEvent.class);
 
             OrderResponse res = orderService.create(
-                    new OrderRegisterRequest(payload.sellerId(), payload.buyerId(), payload.productId(), payload.auctionId(),
-                            payload.amount().longValue(), payload.orderDateTime(), OrderStatus.UNPAID));
+                    new OrderRegisterRequest(payload.sellerId(), payload.buyerId(), payload.productId(), payload.productName(),payload.auctionId(),
+                            payload.amount(),payload.depositAmount(), payload.orderDateTime(), OrderStatus.UNPAID));
 
             NotificationRequestEvent notificationRequestEvent = new NotificationRequestEvent(
                     List.of(res.buyerId()),

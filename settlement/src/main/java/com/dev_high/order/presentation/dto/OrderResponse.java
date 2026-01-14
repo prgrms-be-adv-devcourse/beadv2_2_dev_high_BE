@@ -13,12 +13,13 @@ public record OrderResponse(
         String sellerId,
         String buyerId,
         String auctionId,
-        Long winningAmount,
+        BigDecimal winningAmount,
         BigDecimal depositAmount,
         String productName,
         OffsetDateTime confirmDate,
         OrderStatus status,
         OffsetDateTime payCompleteDate,
+        OffsetDateTime payLimitDate,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         String payYn
@@ -31,29 +32,12 @@ public record OrderResponse(
                 order.getBuyerId(),
                 order.getAuctionId(),
                 order.getWinningAmount(),
-                null,
-                null,
+                order.getDepositAmount(),
+                order.getProductName(),
                 order.getWinningDate(),
                 order.getStatus(),
                 order.getPayCompleteDate(),
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                order.getPayYn()
-        );
-    }
-
-    public static OrderResponse fromEntity(WinningOrder order, AuctionDto auctionDto) {
-        return new OrderResponse(
-                order.getId(),
-                order.getSellerId(),
-                order.getBuyerId(),
-                order.getAuctionId(),
-                order.getWinningAmount(),
-                auctionDto.depositAmount(),
-                auctionDto.productName(),
-                order.getWinningDate(),
-                order.getStatus(),
-                order.getPayCompleteDate(),
+                order.getPaymentLimitDate(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 order.getPayYn()

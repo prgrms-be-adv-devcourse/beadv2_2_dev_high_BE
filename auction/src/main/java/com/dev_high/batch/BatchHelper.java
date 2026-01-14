@@ -32,8 +32,6 @@ public class BatchHelper {
     private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
     private final KafkaEventPublisher eventPublisher;
 
-    private final RestTemplate restTemplate;
-
 
     public RepeatStatus startAuctionsUpdate(StepContribution stepContribution,
                                             ChunkContext chunkContext) {
@@ -236,8 +234,8 @@ public class BatchHelper {
                 // 주문생성 요청 kafka  ,
                 eventPublisher.publish(
                         KafkaTopics.AUCTION_ORDER_CREATED_REQUESTED,
-                        new AuctionCreateOrderRequestEvent(targetId, auction.getProductId(), highestUserId, sellerId,
-                                bid, OffsetDateTime.now()));
+                        new AuctionCreateOrderRequestEvent(targetId, auction.getProductId(),auction.getProductName(), highestUserId, sellerId,
+                                bid, auction.getDepositAmount(), OffsetDateTime.now()));
             } catch (Exception e) {
                 log.error("주문 이벤트 발행 실패: auctionId={}", targetId, e);
             }

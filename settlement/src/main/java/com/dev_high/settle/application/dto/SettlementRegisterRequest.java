@@ -2,12 +2,14 @@ package com.dev_high.settle.application.dto;
 
 import com.dev_high.order.domain.WinningOrder;
 
+import java.math.BigDecimal;
+
 public record SettlementRegisterRequest(
     String id,
     String sellerId,
     String buyerId,
     String auctionId,
-    Long winningAmount
+    BigDecimal winningAmount
 ) {
 
   public static SettlementRegisterRequest fromOrder(WinningOrder order) {

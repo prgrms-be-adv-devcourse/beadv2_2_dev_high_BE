@@ -3,6 +3,7 @@ package com.dev_high.settle.presentation.dto;
 
 import com.dev_high.settle.domain.settle.SettlementStatus;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public record SettlementResponse(
@@ -11,9 +12,9 @@ public record SettlementResponse(
         String sellerId,
         String buyerId,
         String auctionId,
-        Long winningAmount,
-        Long charge,
-        Long finalAmount,
+        BigDecimal winningAmount,
+        BigDecimal charge,
+        BigDecimal finalAmount,
         SettlementStatus status,
         String payYn,
         OffsetDateTime inputDate,

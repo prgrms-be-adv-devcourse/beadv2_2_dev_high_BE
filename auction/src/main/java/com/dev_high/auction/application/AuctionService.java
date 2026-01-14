@@ -102,7 +102,7 @@ public class AuctionService {
 
         Auction auction = auctionRepository.save(
                 new Auction(request.startBid(), start,
-                        end, userId, request.productId()));
+                        end, userId, request.productId(),request.productName()));
         // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
         AuctionLiveState liveState = new AuctionLiveState(auction);
         auctionLiveStateRepository.save(liveState);
@@ -143,7 +143,7 @@ public class AuctionService {
                 .withNano(0);
         validateAuctionTime(start, end);
 
-        auction.modify(request.startBid(), start, end, userId);
+        auction.modify(request.startBid(), start, end, userId, request.productName());
         publishSpringEvent(auction);
         AuctionLiveState liveState = auctionLiveStateRepository.findById(auctionId).orElse(null);
 

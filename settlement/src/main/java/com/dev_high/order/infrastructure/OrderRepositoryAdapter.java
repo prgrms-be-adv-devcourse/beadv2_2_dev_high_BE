@@ -61,6 +61,19 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
+    public List<UpdateOrderProjection> updateStatusByPaymentLimitDateAndReturnBuyer(
+            OrderStatus oldStatus,
+            OrderStatus newStatus,
+            OffsetDateTime targetDate
+    ) {
+        return orderRepository.updateStatusByPaymentLimitDateAndReturnBuyer(
+                oldStatus.name(),
+                newStatus.name(),
+                targetDate
+        );
+    }
+
+    @Override
     public Long getStatusCount(String buyerId, OrderStatus status) {
 
         return orderRepository.countByBuyerIdAndStatus(buyerId, status);
