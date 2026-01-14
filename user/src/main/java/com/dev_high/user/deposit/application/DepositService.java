@@ -4,6 +4,7 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
+import com.dev_high.common.kafka.event.deposit.DepositPaymentCompletedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.deposit.application.dto.DepositDto;
 import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
@@ -108,6 +109,15 @@ public class DepositService {
                         new DepositOrderCompletedEvent(command.depositOrderId(), "PAID"));
             } catch (Exception e) {
                 log.error("예치금 주문 실패 : orderId={}, userId={}", command.depositOrderId(), command.userId());
+            }
+        }
+
+        if (command.depositOrderId() != null && command.depositOrderId().startsWith("DOR") && command.type() == DepositType.USAGE) {
+            try {
+                eventPublisher.publish(KafkaTopics.DEPOSIT_PAYMENT_COMPLETE_RESPONSE,
+                        DepositPaymentCompletedEvent.of(command.depositOrderId()));
+            } catch (Exception e) {
+                log.error("예치금 충전 알림 실패 : orderId={}, userId={}", command.depositOrderId(), command.userId(), e);
             }
         }
 

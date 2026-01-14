@@ -1,4 +1,4 @@
-package com.dev_high.deposit.domain;
+package com.dev_high.common.type;
 
 /*
  * 예치금 주문 상태 정의

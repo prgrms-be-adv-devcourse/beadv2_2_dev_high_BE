@@ -27,6 +27,22 @@ public class DepositPaymentDto {
         }
     }
 
+    public record CompleteCommand(
+            String orderId
+    ) {
+        public static CompleteCommand of(String orderId) {
+            return new CompleteCommand(orderId);
+        }
+    }
+
+    public record failCommand(
+            String orderId
+    ) {
+        public static failCommand of(String orderId) {
+            return new failCommand(orderId);
+        }
+    }
+
     public record Info(
             String id,
             String orderId,

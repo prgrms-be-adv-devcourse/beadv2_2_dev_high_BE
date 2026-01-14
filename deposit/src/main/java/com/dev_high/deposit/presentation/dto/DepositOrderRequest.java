@@ -1,7 +1,7 @@
 package com.dev_high.deposit.presentation.dto;
 
 import com.dev_high.deposit.application.dto.DepositOrderDto;
-import com.dev_high.deposit.domain.DepositOrderStatus;
+import com.dev_high.common.type.DepositOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

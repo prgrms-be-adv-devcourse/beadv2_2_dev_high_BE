@@ -1,7 +1,7 @@
 package com.dev_high.deposit.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.deposit.domain.DepositOrderStatus;
+import com.dev_high.common.type.DepositOrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -81,5 +81,17 @@ public class DepositOrder {
 
     public void updateStatus(DepositOrderStatus status) {
         this.status = status;
+    }
+
+    public void confirmOrder() {
+        this.status = DepositOrderStatus.PAYMENT_CONFIRMED;
+    }
+
+    public void completeOrder() {
+        this.status = DepositOrderStatus.COMPLETED;
+    }
+
+    public void failOrder() {
+        this.status = DepositOrderStatus.FAILED;
     }
 }
