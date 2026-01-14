@@ -7,6 +7,7 @@ public record ProductCommand(
         String name,
         String description,
         List<String> categoryIds,
-        String fileId
+        String fileId,
+        String fileURL
 ) {
 }
