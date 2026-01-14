@@ -138,7 +138,8 @@ jobs:
           --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
           --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}" \
           --from-literal=AWS_ACCESS_KEY_ID="${{secrets.AWS_ACCESS_KEY_ID}}" \
-          --from-literal=AWS_SECRET_ACCESS_KEY="${{secrets.AWS_SECRET_ACCESS_KEY}}" \      
+          --from-literal=AWS_SECRET_ACCESS_KEY="${{secrets.AWS_SECRET_ACCESS_KEY}}" \
+          --from-literal=GPT_API_KEY="${{secrets.GPT_API_KEY}}" \
           --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy
