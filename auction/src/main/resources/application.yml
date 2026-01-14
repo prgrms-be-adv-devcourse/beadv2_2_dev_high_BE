@@ -1,18 +1,4 @@
 spring:
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      database: ${REDIS_AUCTION_DB:1}
-  ai:
-    openai:
-      api-key: ${GPT_API_KEY:}
-      base-url: https://api.openai.com/
-      chat:
-        options:
-          model: gpt-4o-mini
-          temperature: 0.2
-          max_completion_tokens: 256
   application:
     name: auction-service
   profiles:
