@@ -247,7 +247,7 @@ public class AuctionRecommendationService {
             double timeWeight = Math.exp(-days / properties.getTimeDecayDays());
             double statusWeight = resolveStatusWeight(order.status());
             double weight = similarity * timeWeight * statusWeight;
-            weightedSum += weight * order.winningAmount();
+      weightedSum += weight * order.winningAmount().doubleValue();
             totalWeight += weight;
         }
 
@@ -255,22 +255,23 @@ public class AuctionRecommendationService {
             return BigDecimal.valueOf(weightedSum / totalWeight).setScale(0, RoundingMode.HALF_UP);
         }
 
-        List<Long> amounts = orders.stream()
-                .map(WinningOrderRecommendationResponse::winningAmount)
-                .filter(amount -> amount != null && amount > 0)
-                .sorted()
-                .toList();
+    List<BigDecimal> amounts = orders.stream()
+        .map(WinningOrderRecommendationResponse::winningAmount)
+        .filter(amount -> amount != null && amount.compareTo(BigDecimal.ZERO) > 0)
+        .sorted()
+        .toList();
 
         if (amounts.isEmpty()) {
             return null;
         }
 
-        int mid = amounts.size() / 2;
-        long median = amounts.size() % 2 == 0
-                ? (amounts.get(mid - 1) + amounts.get(mid)) / 2
-                : amounts.get(mid);
-        return BigDecimal.valueOf(median);
-    }
+    int mid = amounts.size() / 2;
+    BigDecimal median = amounts.size() % 2 == 0
+        ? amounts.get(mid - 1).add(amounts.get(mid))
+            .divide(BigDecimal.valueOf(2), 0, RoundingMode.HALF_UP)
+        : amounts.get(mid);
+    return median;
+  }
 
     private BigDecimal calculateStartBidFloor(List<String> productIds) {
         List<Auction> auctions = auctionRepository.findByProductIdIn(productIds);
