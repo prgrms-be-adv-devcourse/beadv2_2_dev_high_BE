@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponseDto<Void>> handleOtherException(Exception ex) {
 
-    log.error(ex.getMessage());
+    log.error("",ex);
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ApiResponseDto.error("서버 에러가 발생했습니다."));

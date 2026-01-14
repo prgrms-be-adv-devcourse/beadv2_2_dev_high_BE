@@ -16,7 +16,8 @@ public record AuctionRecommendationResponse(
     OffsetDateTime recommendedEndAt,
     int similarProductCount,
     int winningOrderCount,
-    int auctionCount
+    int auctionCount,
+    int winningOrderCountPaidLike
 ) {
   public record AuctionAiRecommendationResult(
       BigDecimal price,

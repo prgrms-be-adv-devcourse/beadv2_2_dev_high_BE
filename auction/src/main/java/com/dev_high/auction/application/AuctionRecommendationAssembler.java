@@ -21,7 +21,8 @@ public class AuctionRecommendationAssembler {
       OffsetDateTime recommendedEndAt,
       int similarProductCount,
       int winningOrderCount,
-      int auctionCount
+      int auctionCount,
+      int winningOrderCountPaidLike
   ) {
     return new AuctionRecommendationResponse(
         productId,
@@ -36,7 +37,8 @@ public class AuctionRecommendationAssembler {
         recommendedEndAt,
         similarProductCount,
         winningOrderCount,
-        auctionCount
+        auctionCount,
+        winningOrderCountPaidLike
     );
   }
 
@@ -53,11 +55,12 @@ public class AuctionRecommendationAssembler {
         base.priceRangeMin(),
         base.priceRangeMax(),
         aiResult,
-        base.recommendedStartAt(),
-        base.recommendedEndAt(),
-        base.similarProductCount(),
-        base.winningOrderCount(),
-        base.auctionCount()
+      base.recommendedStartAt(),
+      base.recommendedEndAt(),
+      base.similarProductCount(),
+      base.winningOrderCount(),
+      base.auctionCount(),
+      base.winningOrderCountPaidLike()
     );
   }
 }
