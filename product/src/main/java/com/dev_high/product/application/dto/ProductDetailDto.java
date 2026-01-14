@@ -1,8 +1,8 @@
-package com.dev_high.product.ai.dto;
+package com.dev_high.product.application.dto;
 
 import java.util.List;
 
-public record  ProductDetailDto(
+public record ProductDetailDto(
         CategoryDto category,
         String title,
         String summary,
