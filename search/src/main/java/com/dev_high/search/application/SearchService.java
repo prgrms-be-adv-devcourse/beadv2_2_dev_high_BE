@@ -16,18 +16,14 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.*;
 import org.springframework.data.elasticsearch.core.*;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.ai.embedding.EmbeddingModel;
 
@@ -78,8 +74,8 @@ public class SearchService {
             String status,
             BigDecimal minStartPrice,
             BigDecimal maxStartPrice,
-            String startFrom,
-            String startTo,
+            OffsetDateTime startFrom,
+            OffsetDateTime startTo,
             Pageable pageable) {
 
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
@@ -136,14 +132,11 @@ public class SearchService {
         }
 
         if (startFrom != null || startTo != null) {
-            Instant startFromInstant = parseKstToUtc(startFrom);
-            Instant startToInstant = parseKstToUtc(startTo);
-
             boolQuery.filter(f -> f.bool(b -> {
                 b.should(s -> s.range(r -> r.date(d -> {
                     d.field("auctionStartAt");
-                    if (startFrom != null) d.gte(startFromInstant.toString());
-                    if (startTo != null) d.lte(startToInstant.toString());
+                    if (startFrom != null) d.gte(startFrom.toString());
+                    if (startTo != null) d.lte(startTo.toString());
                     return d;
                 })));
                 b.should(s -> s.bool(bb -> bb.mustNot(mn -> mn.exists(e -> e.field("auctionStartAt")))));
@@ -221,15 +214,6 @@ public class SearchService {
             .toList();
     }
 
-    private Instant parseKstToUtc(String dateTimeStr) {
-        if (dateTimeStr == null || dateTimeStr.isBlank()) return null;
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-        LocalDateTime localDateTime = LocalDateTime.parse(dateTimeStr, formatter);
-
-        return localDateTime.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-    }
-
     private String buildEmbeddingText(ProductDocument document) {
 
         String categories = document.getCategories() != null
@@ -242,4 +226,51 @@ public class SearchService {
                 categories
         );
     }
+
+    public void backfillEmbeddingsForAllProducts() {
+        final int BATCH_SIZE = 200;
+        int page = 0;
+        long updated = 0L;
+
+        while (true) {
+
+            NativeQuery query = NativeQuery.builder()
+                    .withQuery(q -> q.matchAll(m -> m))
+                    .withPageable(org.springframework.data.domain.PageRequest.of(page, BATCH_SIZE))
+                    .build();
+
+            SearchHits<ProductDocument> hits =
+                    elasticsearchOperations.search(query, ProductDocument.class);
+
+            if (hits.isEmpty()) {
+                break;
+            }
+
+            List<ProductDocument> docs = hits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .toList();
+
+            for (ProductDocument doc : docs) {
+                String text = buildEmbeddingText(doc);
+
+                if (text.isBlank()) {
+                    continue;
+                }
+
+                float[] embedding = embeddingModel.embed(text);
+                doc.setEmbedding(embedding);
+            }
+
+            searchRepository.saveAll(docs);
+            updated += docs.size();
+
+            log.info(
+                    "[EMBEDDING BACKFILL] page={}, batchSize={}, totalUpdated={}",
+                    page, docs.size(), updated
+            );
+
+            page++;
+        }
+    }
+
 }

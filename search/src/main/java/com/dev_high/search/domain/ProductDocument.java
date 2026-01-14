@@ -9,6 +9,7 @@ import org.springframework.data.elasticsearch.annotations.*;
 import lombok.Getter;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Setter
@@ -34,7 +35,7 @@ public class ProductDocument {
     private String imageUrl;
 
     @Field(type = FieldType.Scaled_Float, scalingFactor = 1)
-    private BigDecimal  startPrice;
+    private BigDecimal startPrice;
 
     @Field(type = FieldType.Scaled_Float, scalingFactor = 1)
     private BigDecimal depositAmount;
@@ -44,11 +45,11 @@ public class ProductDocument {
 
     private String sellerId;
 
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    private Instant auctionStartAt;
+    @Field(type = FieldType.Date, format = DateFormat.date_time)
+    private OffsetDateTime auctionStartAt;
 
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis)
-    private Instant auctionEndAt;
+    @Field(type = FieldType.Date, format = DateFormat.date_time)
+    private OffsetDateTime auctionEndAt;
 
     @Field(type = FieldType.Dense_Vector, dims = 1536)
     private float[] embedding;
@@ -79,7 +80,7 @@ public class ProductDocument {
         this.startPrice = request.startPrice();
         this.depositAmount = request.depositAmount();
         this.status = request.status();
-        this.auctionStartAt = request.auctionStartAt().toInstant();
-        this.auctionEndAt = request.auctionEndAt().toInstant();
+        this.auctionStartAt = request.auctionStartAt();
+        this.auctionEndAt = request.auctionEndAt();
     }
 }

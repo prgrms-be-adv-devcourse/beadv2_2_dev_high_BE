@@ -132,4 +132,27 @@ price는 정수로 출력하고, priceRange가 있다면 범위 안으로 맞춰
 """;
         return new PromptTemplate(template);
     }
+
+	@Bean
+	public PromptTemplate recommendationTextTemplate() {
+		String template = """
+            너는 중고 경매 서비스의 추천 결과를 "한 줄"로 요약하는 역할이다.
+            아래 추천 목록은 이미 유사도 기반으로 선택된 결과다.
+            상품명, 카테고리, 설명(description), 유사도 점수를 근거로
+            이 추천 결과 전체를 대표하는 요약 문장을 한국어로 1문장 작성하라.
+
+            규칙:
+            - 반드시 한 문장 (줄바꿈 금지)
+            - 30~60자 내외
+            - 과장 금지(확정 표현 금지). 예: "비슷해요", "유사해요" 정도만
+            - 'AI'라는 단어 사용 금지
+            - 설명(description)에 나타난 공통 특징이 있으면 반영
+            - 추천 결과를 다시 판단하지 말고 "이유"만 설명
+            - 출력은 요약 문장만. 따옴표/코드블록/머리말/접두어 금지
+
+            추천 목록(JSON):
+            {itemsJson}
+            """;
+		return new PromptTemplate(template);
+	}
 }
