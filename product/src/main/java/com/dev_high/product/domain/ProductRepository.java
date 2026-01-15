@@ -16,11 +16,13 @@ public interface ProductRepository {
 
     void saveAll(List<Product> products);
 
+    List<Product> findAll();
+
     void flush();
 
     List<Product> findByIdIn(List<String> productIds);
 
-    List<Product> findBySellerId(String sellerId);
+    List<Product> findBySellerId(String sellerId, Pageable pageable);
 
     List<Product> findByProductIds(List<String> productIds);
 }

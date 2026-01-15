@@ -18,11 +18,14 @@ repositories {
     mavenCentral()
 }
 
+
+
 dependencies {
 
     implementation project(':common')
-
     implementation 'org.springframework.boot:spring-boot-starter'
+
+    runtimeOnly 'org.postgresql:postgresql'
 
     //elastic search
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'

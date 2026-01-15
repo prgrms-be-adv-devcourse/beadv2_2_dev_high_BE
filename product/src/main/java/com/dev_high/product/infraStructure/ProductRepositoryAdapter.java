@@ -32,8 +32,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
-    public List<Product> findBySellerId(String sellerId) {
-        return productJpaRepository.findBySellerIdAndDeletedYn(sellerId, Product.DeleteStatus.N);
+    public List<Product> findBySellerId(String sellerId, Pageable pageable) {
+        return productJpaRepository.findBySellerIdAndDeletedYn(sellerId, Product.DeleteStatus.N, pageable);
     }
 
     @Override
@@ -44,6 +44,11 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public void saveAll(List<Product> products) {
         productJpaRepository.saveAll(products);
+    }
+
+    @Override
+    public List<Product> findAll() {
+        return productJpaRepository.findAll();
     }
 
     @Override

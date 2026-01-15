@@ -5,8 +5,6 @@ import com.dev_high.product.domain.Product.DeleteStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,5 +19,5 @@ public interface ProductJpaRepository extends JpaRepository<Product, String> {
 
     List<Product> findByIdIn(List<String> ids);
 
-    List<Product> findBySellerIdAndDeletedYn(String sellerId, DeleteStatus deletedYn);
+    List<Product> findBySellerIdAndDeletedYn(String sellerId, DeleteStatus deletedYn, Pageable pageable);
 }

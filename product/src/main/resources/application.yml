@@ -16,7 +16,6 @@ spring:
       - optional:configserver:http://localhost:8888
       - optional:file:.env[.properties]
 
-
 ---
 spring:
   config:

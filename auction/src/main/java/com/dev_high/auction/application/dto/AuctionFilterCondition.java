@@ -1,7 +1,8 @@
 package com.dev_high.auction.application.dto;
 
 import com.dev_high.auction.domain.AuctionStatus;
-import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.auction.presentation.dto.AdminAuctionListRequest;
+import com.dev_high.auction.presentation.dto.UserAuctionListRequest;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
 import java.math.BigDecimal;
@@ -11,29 +12,79 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
-public record AuctionFilterCondition(List<AuctionStatus> status, BigDecimal startBid,
-                                     OffsetDateTime startAt,
-                                     OffsetDateTime endAt, int pageNumber, int pageSize, Sort sort) {
+public record AuctionFilterCondition(
+    List<AuctionStatus> status,
+    BigDecimal minBid,
+    BigDecimal maxBid,
+    OffsetDateTime startFrom,
+    OffsetDateTime startTo,
+    OffsetDateTime endFrom,
+    OffsetDateTime endTo,
+    String productId,
+    String sellerId,
+    String deletedYn,
+    int pageNumber,
+    int pageSize,
+    Sort sort) {
 
+  public static AuctionFilterCondition fromUserRequest(UserAuctionListRequest request,
+      Pageable pageable) {
+    return build(
+        request.status(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "N",
+        pageable
+    );
+  }
 
-  public static AuctionFilterCondition fromRequest(AuctionRequest request, Pageable pageable) {
+  public static AuctionFilterCondition fromAdminRequest(AdminAuctionListRequest request,
+      Pageable pageable) {
+    List<AuctionStatus> status = request.status() != null ? List.of(request.status()) : null;
+    return build(
+        status,
+        request.minBid(),
+        request.maxBid(),
+        request.startFrom(),
+        request.startTo(),
+        request.endFrom(),
+        request.endTo(),
+        request.productId(),
+        request.sellerId(),
+        request.deletedYn(),
+        pageable
+    );
+  }
 
-    OffsetDateTime start = StringUtils.hasText(request.auctionStartAt())
-        ? DateUtil.parse(request.auctionStartAt()).withMinute(0).withSecond(0).withNano(0)
-        : null;
+  private static AuctionFilterCondition build(
+      List<AuctionStatus> status,
+      BigDecimal minBid,
+      BigDecimal maxBid,
+      String startFrom,
+      String startTo,
+      String endFrom,
+      String endTo,
+      String productId,
+      String sellerId,
+      String deletedYn,
+      Pageable pageable) {
 
-    OffsetDateTime end = StringUtils.hasText(request.auctionEndAt())
-        ? DateUtil.parse(request.auctionEndAt()).withMinute(0).withSecond(0).withNano(0)
-        : null;
-    if (start != null) {
-      start = start.withHour(0).withMinute(0).withSecond(0).withNano(0);
+    OffsetDateTime parsedStartFrom = parseStartOfDay(startFrom);
+    OffsetDateTime parsedStartTo = parseEndOfDay(startTo);
+    OffsetDateTime parsedEndFrom = parseStartOfDay(endFrom);
+    OffsetDateTime parsedEndTo = parseEndOfDay(endTo);
+
+    if (parsedStartFrom != null && parsedStartTo != null && parsedStartFrom.isAfter(parsedStartTo)) {
+      throw new CustomException("시작일 From은 To 이전이어야 합니다.");
     }
-    if (end != null) {
-      end = end.withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
-    }
-
-    if (start != null && end != null && start.isAfter(end)) {
-      throw new CustomException("시작 시간은 종료 시간 이전이어야 합니다.");
+    if (parsedEndFrom != null && parsedEndTo != null && parsedEndFrom.isAfter(parsedEndTo)) {
+      throw new CustomException("종료일 From은 To 이전이어야 합니다.");
     }
 
     int pageNumber = pageable != null ? pageable.getPageNumber() : 0;
@@ -42,14 +93,35 @@ public record AuctionFilterCondition(List<AuctionStatus> status, BigDecimal star
         : Sort.by("auctionStartAt").descending();
 
     return new AuctionFilterCondition(
-        request.status(),
-        request.startBid(),
-        start,
-        end,
+        status,
+        minBid,
+        maxBid,
+        parsedStartFrom,
+        parsedStartTo,
+        parsedEndFrom,
+        parsedEndTo,
+        StringUtils.hasText(productId) ? productId : null,
+        StringUtils.hasText(sellerId) ? sellerId : null,
+        StringUtils.hasText(deletedYn) ? deletedYn : null,
         pageNumber,
         pageSize,
         sort
     );
+  }
+
+  private static OffsetDateTime parseStartOfDay(String dateTime) {
+    if (!StringUtils.hasText(dateTime)) {
+      return null;
+    }
+    return DateUtil.parse(dateTime).withHour(0).withMinute(0).withSecond(0).withNano(0);
+  }
+
+  private static OffsetDateTime parseEndOfDay(String dateTime) {
+    if (!StringUtils.hasText(dateTime)) {
+      return null;
+    }
+    return DateUtil.parse(dateTime).withHour(23).withMinute(59).withSecond(59)
+        .withNano(999_999_999);
   }
 
 }

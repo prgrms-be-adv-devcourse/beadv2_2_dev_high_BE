@@ -31,6 +31,11 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     @Override
+    public Page<Notification> findAllUnreadByUserIdAndExpiredAt(String userId, OffsetDateTime now, Pageable pageable) {
+        return repository.findAllByUserIdAndReadYnAndExpiredAtAfterOrderByCreatedAtDesc(userId, false, now, pageable);
+    }
+
+    @Override
     public Long countUnreadByUserId(String userId, OffsetDateTime now) {
         return repository.countByUserIdAndReadYnAndExpiredAtAfter(userId, false, now);
     }

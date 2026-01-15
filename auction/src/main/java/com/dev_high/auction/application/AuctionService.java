@@ -6,12 +6,15 @@ import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
-import com.dev_high.auction.exception.AuctionModifyForbiddenException;
-import com.dev_high.auction.exception.AuctionNotFoundException;
-import com.dev_high.auction.exception.AuctionStatusInvalidException;
-import com.dev_high.auction.exception.DuplicateAuctionException;
+import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
+import com.dev_high.exception.AuctionModifyForbiddenException;
+import com.dev_high.exception.AuctionNotFoundException;
+import com.dev_high.exception.AuctionStatusInvalidException;
+import com.dev_high.exception.DuplicateAuctionException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
+import com.dev_high.auction.presentation.dto.AdminAuctionListRequest;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
+import com.dev_high.auction.presentation.dto.UserAuctionListRequest;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.common.util.DateUtil;
@@ -35,16 +38,23 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
+    private final AuctionSummaryCacheService auctionSummaryCacheService;
 
     private final ApplicationEventPublisher publisher;
 
 
-    public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
-
-        AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
+    public Page<AuctionResponse> getUserAuctionList(UserAuctionListRequest request,
+        Pageable pageable) {
+        AuctionFilterCondition filter = AuctionFilterCondition.fromUserRequest(request, pageable);
         Page<Auction> page = auctionRepository.filterAuctions(filter);
         return page.map(AuctionResponse::fromEntity);
+    }
 
+    public Page<AuctionResponse> getAdminAuctionList(AdminAuctionListRequest request,
+        Pageable pageable) {
+        AuctionFilterCondition filter = AuctionFilterCondition.fromAdminRequest(request, pageable);
+        Page<Auction> page = auctionRepository.filterAuctions(filter);
+        return page.map(AuctionResponse::fromEntity);
     }
 
 
@@ -92,9 +102,10 @@ public class AuctionService {
 
         Auction auction = auctionRepository.save(
                 new Auction(request.startBid(), start,
-                        end, userId, request.productId()));
+                        end, userId, request.productId(),request.productName()));
         // 경매를 등록하고 , 경매 실시간 테이블도 최초 같이등록
-        auctionLiveStateRepository.save(new AuctionLiveState(auction));
+        AuctionLiveState liveState = new AuctionLiveState(auction);
+        auctionLiveStateRepository.save(liveState);
         publishSpringEvent(auction);
         return AuctionResponse.fromEntity(auction);
 
@@ -102,8 +113,8 @@ public class AuctionService {
 
     private void publishSpringEvent(Auction auction) {
 
-        /*TODO: es index 수정 필요*/
-        //        publisher.publishEvent(event);
+        AuctionUpdateSearchRequestEvent event = new AuctionUpdateSearchRequestEvent(auction.getProductId(),auction.getId(),auction.getStartBid() , auction.getDepositAmount() ,auction.getStatus().name(), auction.getAuctionStartAt(), auction.getAuctionEndAt());
+                publisher.publishEvent(event);
 
     }
 
@@ -132,8 +143,9 @@ public class AuctionService {
                 .withNano(0);
         validateAuctionTime(start, end);
 
-        auction.modify(request.startBid(), start, end, userId);
+        auction.modify(request.startBid(), start, end, userId, request.productName());
         publishSpringEvent(auction);
+        AuctionLiveState liveState = auctionLiveStateRepository.findById(auctionId).orElse(null);
 
         //dirty check
         return AuctionResponse.fromEntity(auction);
@@ -161,6 +173,7 @@ public class AuctionService {
 
         auction.remove(userId);
         publisher.publishEvent(auctionId);
+        auctionSummaryCacheService.delete(auctionId);
 
         // dirty check 자동저장
     }

@@ -1,0 +1,28 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 20MB     # 파일 하나의 최대 용량
+      max-request-size: 20MB  # 요청 전체(max-file-size 여러 개 합친 값)
+  ai:
+    vectorstore:
+      pgvector:
+        schema-name: product
+        table-name: product_embed
+        dimensions: 1536
+        initialize-schema: false
+    openai:
+      api-key: ${GPT_API_KEY}
+      base-url: https://api.openai.com/
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          max_completion_tokens: 768
+
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:team5-dev-high-bucket}
+    region: ${AWS_REGION:ap-northeast-2}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}

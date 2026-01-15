@@ -92,4 +92,21 @@ public class WishlistService {
             throw new RuntimeException("wishlist userIds 조회 실패: productId=" + event.productId(), e);
         }
     }
+
+    public ApiResponseDto<WishlistResponse> getWishlistItem(String productId) {
+        String userId = UserContext.get().userId();
+
+        WishlistResponse response = wishlistRepository
+                .findByUserIdAndProductIdAndDeletedYn(userId, productId, "N")
+                .map(WishlistResponse::from)
+                .orElse(null);
+
+        return ApiResponseDto.success(
+                response != null
+                        ? "위시리스트 상품이 정상적으로 조회되었습니다."
+                        : "위시리스트에 등록되지 않은 상품입니다.",
+                response
+        );
+    }
+
 }

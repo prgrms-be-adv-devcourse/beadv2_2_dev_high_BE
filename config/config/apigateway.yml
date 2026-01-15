@@ -1,17 +1,12 @@
 jwt:
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
   secret: ${JWT_SECRET}
+
 spring:
   r2dbc:
     url: ${SPRING_R2DBC_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
-    pool:
-      enabled: true
-      validation-query: SELECT 1
-      max-idle-time: 15m
-      max-acquire-time: 5s
-      max-create-connection-time: 5s
 
 springdoc:
   swagger-ui:
@@ -28,5 +23,3 @@ springdoc:
         url: /swagger/settlement-service
       - name: User
         url: /swagger/user-service
-      - name: File
-        url: /swagger/file-service
