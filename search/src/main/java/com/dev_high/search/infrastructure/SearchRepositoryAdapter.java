@@ -3,6 +3,8 @@ package com.dev_high.search.infrastructure;
 import com.dev_high.search.domain.ProductDocument;
 import com.dev_high.search.domain.SearchRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -26,5 +28,10 @@ public class SearchRepositoryAdapter implements SearchRepository {
     @Override
     public void deleteByProductId(String productId) {
         searchElasticsearchRepository.deleteById(productId);
+    }
+
+    @Override
+    public void saveAll(List<ProductDocument> docs) {
+        searchElasticsearchRepository.saveAll(docs);
     }
 }
