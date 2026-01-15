@@ -2,6 +2,7 @@ package com.dev_high.user.deposit.infrastructure.kafka;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositPaymentfailedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.deposit.application.DepositService;
@@ -79,6 +80,7 @@ public class DepositEventListener {
                         amount
                 );
                 depositService.updateBalance(command);
+                kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE, DepositCompletedEvent.of(userIds, auctionId, amount, "REFUND"));
             });
         } catch (NoSuchElementException e) {
             log.warn("예치금 잔액 정보를 찾을 수 없습니다.", e);

@@ -37,7 +37,7 @@ public class DepositService {
 
         Deposit deposit = Deposit.create(command.userId());
 
-        return DepositDto.Info.from(depositRepository.save(deposit));
+        return DepositDto.Info.from(depositRepository.save(deposit), "");
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +46,7 @@ public class DepositService {
 
         Deposit deposit = depositRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("예치금 계좌를 찾을 수 없습니다: " + userId));
-        return DepositDto.Info.from(deposit);
+        return DepositDto.Info.from(deposit, "");
     }
 
     @Transactional
@@ -77,7 +77,7 @@ public class DepositService {
                 savedDeposit.getBalance()
         );
 
-        depositHistoryService.createHistory(Command);
+        DepositHistoryDto.Info history = depositHistoryService.createHistory(Command);
 
         if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.DEPOSIT) {
             try {
@@ -88,18 +88,6 @@ public class DepositService {
                         new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "DEPOSIT"));
             } catch (Exception e) {
                 log.error("보증금 차감 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
-            }
-        }
-
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.REFUND) {
-            try {
-                // command.userId()를 List<String> 형태로 가공
-                List<String> userIds = List.of(command.userId());
-
-                eventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE,
-                        new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "REFUND"));
-            } catch (Exception e) {
-                log.error("보증금 환불 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
             }
         }
 
@@ -121,6 +109,6 @@ public class DepositService {
             }
         }
 
-        return  DepositDto.Info.from(savedDeposit);
+        return  DepositDto.Info.from(savedDeposit, command.depositOrderId());
     }
 }
