@@ -108,26 +108,32 @@ public class PromptTemplateConfig {
     @Bean
     public PromptTemplate auctionRecommendationTemplate() {
         String template = """
-너는 경매 시작가 추천을 돕는 도우미야. 아래 값을 참고해서 JSON 한 개 객체만 출력해.
-출력 형식은 반드시 {{"price": number, "reason": "string"}} 형태여야 한다.
+너는 경매 시작가 추천을 돕는 도우미야. 아래 값을 참고해서 tool `auction_recommendation`을 반드시 호출해.
+tool 호출 시 인자는 {{"price": number, "reason": "string"}} 형태여야 한다.
 reason은 한국어로 간결하게 2~3문장으로 작성해.
 dataNotes가 비어있지 않으면 반드시 이용해서 reason을 작성해.
-recommendedStartBid가 비어있다면 product 정보와 category 정보를 바탕으로 price를 추정해.
+referencePrice와 priceRange, 낙찰/경매 시작가 요약값을 기반으로 price를 판단해.
+데이터가 부족하면 product 정보와 category 정보를 바탕으로 price를 추정해.
 price는 정수로 출력하고, priceRange가 있다면 범위 안으로 맞춰.
+price는 100원 단위로 반올림해 출력해.
 
 - productId: {productId}
 - productName: {productName}
 - productDescription: {productDescription}
-- categoryIds: {categoryIds}
 - categoryNames: {categoryNames}
 - referencePrice: {referencePrice}
-- recommendedStartBid: {recommendedStartBid}
 - priceRange: {priceRangeMin} ~ {priceRangeMax}
+- winningPriceMin: {winningPriceMin}
+- winningPriceMax: {winningPriceMax}
+- winningPriceAvg: {winningPriceAvg}
+- winningPriceMedian: {winningPriceMedian}
+- auctionStartBidMin: {auctionStartBidMin}
+- auctionStartBidMax: {auctionStartBidMax}
+- auctionStartBidAvg: {auctionStartBidAvg}
+- auctionStartBidMedian: {auctionStartBidMedian}
 - similarCount: {similarCount}
 - winningCount: {winningCount}
 - auctionCount: {auctionCount}
-- minSimilarity: {minSimilarity}
-- blendWeight: winning={winningWeight}, auction={auctionWeight}
 - dataNotes: {dataNotes}
 """;
         return new PromptTemplate(template);

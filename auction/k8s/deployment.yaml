@@ -152,8 +152,8 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul
-                -Xmx160m
-                -XX:MaxMetaspaceSize=128m
+                -Xmx192m
+                -XX:MaxMetaspaceSize=192m
                 -XX:MaxDirectMemorySize=64m
                 -XX:ReservedCodeCacheSize=32m
 
@@ -185,4 +185,4 @@ spec:
               memory: "256Mi"
             limits:
               cpu: "500m"
-              memory: "448Mi"
+              memory: "576Mi"

@@ -1,11 +1,10 @@
 package com.dev_high.auction.application;
 
 import com.dev_high.auction.application.dto.AuctionRecommendationResponse;
-import com.dev_high.auction.application.dto.ProductInfoSummary;
 import com.dev_high.auction.application.dto.AuctionRecommendationResponse.AuctionAiRecommendationResult;
+import com.dev_high.auction.application.dto.ProductInfoSummary;
 import com.dev_high.config.AuctionRecommendationProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,8 +13,9 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,9 +27,7 @@ public class AuctionRecommendationAiService {
   private final PromptTemplate auctionRecommendationTemplate;
   private final AuctionRecommendationProperties properties;
   private final ObjectMapper objectMapper;
-
-  @Value("${spring.ai.openai.api-key:}")
-  private String apiKey;
+  private final AuctionRecommendationTool auctionRecommendationTool;
 
   public AuctionAiRecommendationResult buildResult(
       AuctionRecommendationResponse response,
@@ -38,31 +36,34 @@ public class AuctionRecommendationAiService {
     if (!properties.isAiEnabled()) {
       return null;
     }
-    if (chatClient == null || apiKey == null || apiKey.isBlank() || "changeme".equals(apiKey)) {
-      return null;
-    }
 
     try {
       Prompt prompt = auctionRecommendationTemplate.create(Map.ofEntries(
           Map.entry("productId", safe(response.productId())),
           Map.entry("productName", safe(productInfo == null ? null : productInfo.name())),
           Map.entry("productDescription", safe(productInfo == null ? null : productInfo.description())),
-          Map.entry("categoryIds", safe(buildCategoryIds(productInfo))),
           Map.entry("categoryNames", safe(buildCategoryNames(productInfo))),
           Map.entry("referencePrice", safe(response.referencePrice())),
-          Map.entry("recommendedStartBid", safe(response.recommendedStartBid())),
           Map.entry("priceRangeMin", safe(response.priceRangeMin())),
           Map.entry("priceRangeMax", safe(response.priceRangeMax())),
+          Map.entry("winningPriceMin", safe(response.winningPriceMin())),
+          Map.entry("winningPriceMax", safe(response.winningPriceMax())),
+          Map.entry("winningPriceAvg", safe(response.winningPriceAvg())),
+          Map.entry("winningPriceMedian", safe(response.winningPriceMedian())),
+          Map.entry("auctionStartBidMin", safe(response.auctionStartBidMin())),
+          Map.entry("auctionStartBidMax", safe(response.auctionStartBidMax())),
+          Map.entry("auctionStartBidAvg", safe(response.auctionStartBidAvg())),
+          Map.entry("auctionStartBidMedian", safe(response.auctionStartBidMedian())),
           Map.entry("similarCount", response.similarProductCount()),
           Map.entry("winningCount", response.winningOrderCount()),
           Map.entry("auctionCount", response.auctionCount()),
-          Map.entry("minSimilarity", properties.getMinSimilarity()),
-          Map.entry("winningWeight", properties.getWinningBlendWeight()),
-          Map.entry("auctionWeight", properties.getAuctionBlendWeight()),
           Map.entry("dataNotes", buildDataNotes(response))
       ));
 
-      ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+      ChatResponse chatResponse = chatClient.prompt(prompt)
+          .tools(auctionRecommendationTool)
+          .call()
+          .chatResponse();
       Generation generation = chatResponse.getResult();
       String content = generation.getOutput().getText();
       if (content == null || content.isBlank()) {
