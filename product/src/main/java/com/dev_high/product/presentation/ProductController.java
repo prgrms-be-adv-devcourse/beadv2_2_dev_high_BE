@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -33,15 +34,17 @@ public class ProductController {
         return ApiResponseDto.success("상품이 등록되었습니다.", result);
     }
 
+    //TODO: pagenation
     @Operation(summary = "상품 목록 조회", description = "페이지네이션으로 상품 목록을 조회합니다.")
     @GetMapping
-    public ApiResponseDto<List<ProductInfo>> getProducts(Pageable pageable) {
+    public ApiResponseDto<Page<ProductInfo>> getProducts(Pageable pageable) {
         return ApiResponseDto.success(productService.getProducts(pageable));
     }
 
+    //TODO: pagenation
     @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")
     @GetMapping("/users/{sellerId}")
-    public ApiResponseDto<List<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ID", required = true) @PathVariable String sellerId, Pageable pageable) {
+    public ApiResponseDto<Page<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ID", required = true) @PathVariable String sellerId, Pageable pageable) {
         return ApiResponseDto.success(productService.getProductsBySeller(sellerId, pageable));
     }
 
