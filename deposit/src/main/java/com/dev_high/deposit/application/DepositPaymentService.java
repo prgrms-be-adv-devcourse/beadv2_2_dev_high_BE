@@ -61,6 +61,7 @@ public class DepositPaymentService {
                 .map(DepositPaymentDto.Info::from);
     }
 
+    @Transactional
     public DepositPaymentDto.Info confirmPayment(DepositPaymentDto.ConfirmCommand command) {
         String userId = UserContext.get().userId();
 
@@ -110,11 +111,11 @@ public class DepositPaymentService {
         OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt() : null;
 
         payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
-
-        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(payment.getOrderId(), payment.getUserId(), payment.getAmount()));
+        DepositPayment savedPayment = depositPaymentRepository.save(payment);
+        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(savedPayment.getOrderId(), savedPayment.getUserId(), savedPayment.getAmount()));
 
         // TODO : 현재 충전이라는 방향으로 되어있는데, 추후 직접 결제가 있다면 변경이 필요하다.
-        return DepositPaymentDto.Info.from(depositPaymentRepository.save(payment));
+        return DepositPaymentDto.Info.from(savedPayment);
     }
 
     public void handlePaymentFailure(String orderId, String userId, String code, String message) {

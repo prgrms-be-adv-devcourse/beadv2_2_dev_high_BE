@@ -6,6 +6,7 @@ import com.dev_high.deposit.application.event.PaymentEvent;
 import com.dev_high.deposit.domain.entity.DepositOrder;
 import com.dev_high.deposit.domain.repository.DepositOrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DepositOrderService {
     private final DepositOrderRepository orderRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -54,8 +56,8 @@ public class DepositOrderService {
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
         }
         order.confirmOrder();
-        applicationEventPublisher.publishEvent(PaymentEvent.OrderConfirmed.of(order.getId(), order.getUserId(), order.getAmount()));
         orderRepository.save(order);
+        applicationEventPublisher.publishEvent(PaymentEvent.OrderConfirmed.of(order.getId(), order.getUserId(), order.getAmount()));
     }
 
     @Transactional
@@ -63,8 +65,8 @@ public class DepositOrderService {
         DepositOrder order = orderRepository.findById(command.id())
                 .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
         order.completeOrder();
-        applicationEventPublisher.publishEvent(PaymentEvent.OrderCompleted.of(command.id()));
         orderRepository.save(order);
+        applicationEventPublisher.publishEvent(PaymentEvent.OrderCompleted.of(command.id()));
     }
 
     @Transactional
@@ -72,8 +74,8 @@ public class DepositOrderService {
         DepositOrder order = orderRepository.findById(command.id())
                 .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
         order.failOrder();
-        applicationEventPublisher.publishEvent(PaymentEvent.OrderFailed.of(command.id()));
         orderRepository.save(order);
+        applicationEventPublisher.publishEvent(PaymentEvent.OrderFailed.of(command.id()));
     }
 
     @Transactional

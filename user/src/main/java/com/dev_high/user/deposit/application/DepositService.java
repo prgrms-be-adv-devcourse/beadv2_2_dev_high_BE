@@ -112,7 +112,7 @@ public class DepositService {
             }
         }
 
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("DOR") && command.type() == DepositType.USAGE) {
+        if (command.depositOrderId() != null && command.depositOrderId().startsWith("DOR") && command.type() == DepositType.CHARGE) {
             try {
                 eventPublisher.publish(KafkaTopics.DEPOSIT_PAYMENT_COMPLETE_RESPONSE,
                         DepositPaymentCompletedEvent.of(command.depositOrderId()));

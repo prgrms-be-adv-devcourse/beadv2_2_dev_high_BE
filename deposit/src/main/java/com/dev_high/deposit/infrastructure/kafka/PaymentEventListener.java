@@ -2,7 +2,6 @@ package com.dev_high.deposit.infrastructure.kafka;
 
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.common.type.DepositType;
 import com.dev_high.deposit.application.DepositOrderService;
 import com.dev_high.deposit.application.dto.DepositOrderDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,19 +13,17 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Component
+@Lazy(false)
 @RequiredArgsConstructor
 public class PaymentEventListener {
     private final DepositOrderService depositOrderService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = KafkaTopics.DEPOSIT_PAYMENT_COMPLETE_RESPONSE)
-    @Lazy(false)
     @Transactional
     public void handleDepositPaymentComplete(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         Map<String, Object> payload = envelope.payload();
@@ -46,7 +43,6 @@ public class PaymentEventListener {
     }
 
     @KafkaListener(topics = KafkaTopics.DEPOSIT_PAYMENT_FAIL_RESPONSE)
-    @Lazy(false)
     @Transactional
     public void handleDepositPaymentFail(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
         Map<String, Object> payload = envelope.payload();
