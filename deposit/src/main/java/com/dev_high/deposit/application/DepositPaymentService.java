@@ -144,14 +144,6 @@ public class DepositPaymentService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void donePayment(DepositPaymentDto.CompleteCommand command) {
-        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
-                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
-        payment.donePayment();
-        depositPaymentRepository.save(payment);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failPayment(DepositPaymentDto.failCommand command) {
         DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
                 .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));

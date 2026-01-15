@@ -38,11 +38,6 @@ public class PaymentEventHandler {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderCompleted(PaymentEvent.OrderCompleted event) {
-        depositPaymentService.donePayment(DepositPaymentDto.CompleteCommand.of(event.orderId()));
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderFailed(PaymentEvent.OrderFailed event) {
         depositPaymentService.failPayment(DepositPaymentDto.failCommand.of(event.orderId()));
     }

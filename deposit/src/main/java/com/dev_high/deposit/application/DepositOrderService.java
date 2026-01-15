@@ -66,7 +66,6 @@ public class DepositOrderService {
                 .orElseThrow(() -> new NoSuchElementException("주문 ID를 찾을 수 없습니다: " + command.id()));
         order.completeOrder();
         orderRepository.save(order);
-        applicationEventPublisher.publishEvent(PaymentEvent.OrderCompleted.of(command.id()));
     }
 
     @Transactional

@@ -33,14 +33,6 @@ public class PaymentEvent {
         }
     }
 
-    public record OrderCompleted(
-            String orderId
-    ) {
-        public static OrderCompleted of(String orderId) {
-            return new OrderCompleted(orderId);
-        }
-    }
-
     public record OrderFailed(
             String orderId
     ) {
