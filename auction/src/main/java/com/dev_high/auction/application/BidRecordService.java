@@ -7,6 +7,7 @@ import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionParticipation;
 import com.dev_high.auction.domain.BidType;
 import com.dev_high.auction.domain.idclass.AuctionParticipationId;
+import com.dev_high.common.exception.CustomException;
 import com.dev_high.exception.AlreadyWithdrawnException;
 import com.dev_high.exception.AuctionParticipationNotFoundException;
 import com.dev_high.exception.CannotWithdrawHighestBidderException;
@@ -14,9 +15,7 @@ import com.dev_high.auction.infrastructure.bid.AuctionBidHistoryJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
-import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.auction.application.AuctionEventDispatcher;
 import com.dev_high.common.util.HttpUtil;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +47,7 @@ public class BidRecordService {
 
     private final RestTemplate restTemplate;
     private final EntityManager entityManager;
-    private final KafkaEventPublisher eventPublisher;
+    private final AuctionEventDispatcher eventDispatcher;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuctionBidHistory recordHistory(AuctionBidHistory history) {
@@ -111,20 +110,21 @@ public class BidRecordService {
         }
 
         participation.markWithdraw();
-        entityManager.flush();
 
         recordHistory(new AuctionBidHistory(auctionId, BigDecimal.ZERO, userId, BidType.BID_WITHDRAW));
 
-        depositUpdate(userId, auctionId, participation.getDepositAmount(), "REFUND");
+        if(depositUpdate(userId, auctionId, participation.getDepositAmount(), "REFUND")!=null){
+            processRefundComplete(participation);
+        }
 
-        processRefundComplete(participation);
 
+        auctionParticipationJpaRepository.save(participation);
 
         return AuctionParticipationResponse.isParticipated(participation);
 
     }
 
-    private void depositUpdate(String userId, String auctionId, BigDecimal amount, String type) {
+    private ApiResponseDto<?> depositUpdate(String userId, String auctionId, BigDecimal amount, String type) {
 
         try {
 
@@ -149,10 +149,15 @@ public class BidRecordService {
             if (response.getBody() != null) {
                 log.info("deposit response >>>{}", response.getBody().getData().toString());
 
+                return response.getBody();
+
             }
         } catch (Exception e) {
-            log.error("보증금 환급 실패: {}", e);
+            log.error("예치금 업데이트 실패: {}", e);
+
+
         }
+        return null;
     }
 
     // 환불완료
@@ -169,6 +174,8 @@ public class BidRecordService {
             if (part.getDepositRefundedYn().equals("N")) {
                 processRefundComplete(part);
                 count++;
+            }else{
+                participation.remove(part);
             }
 
         }
@@ -206,19 +213,21 @@ public class BidRecordService {
         AuctionParticipationId id = new AuctionParticipationId(userId, auctionId);
 
 
-        depositUpdate(userId, auctionId, decimal, "DEPOSIT");
+        if(depositUpdate(userId, auctionId, decimal, "DEPOSIT") ==null){
+
+            throw new CustomException("보증금 납부가 실패하였습니다.");
+        }
 
         try {
-            recordHistory(new AuctionBidHistory(auctionId, decimal, userId, BidType.DEPOSIT_SUCCESS));
 
 
             AuctionParticipation participation = auctionParticipationJpaRepository.save(
                     new AuctionParticipation(id, decimal));
-            auctionParticipationJpaRepository.save(participation);
             return AuctionParticipationResponse.isParticipated(participation);
 
         } catch (Exception e) {
-            eventPublisher.publish(KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED, new AuctionDepositRefundRequestEvent(List.of(userId), auctionId, decimal));
+            eventDispatcher.publishDepositRefundRequest(List.of(userId), auctionId, decimal);
+
             throw e;
         }
 

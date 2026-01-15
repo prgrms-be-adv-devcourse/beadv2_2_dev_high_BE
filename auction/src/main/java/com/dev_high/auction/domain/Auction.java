@@ -126,15 +126,15 @@ public class Auction {
         this.updatedBy = updatedBy;
     }
 
-    public void startNow(OffsetDateTime now, String updatedBy) {
+    public void startNow(String updatedBy) {
         this.status = AuctionStatus.IN_PROGRESS;
-        this.auctionStartAt = now;
+        this.auctionStartAt =  OffsetDateTime.now();
         this.updatedBy = updatedBy;
     }
 
-    public void endNow(OffsetDateTime now, String updatedBy) {
+    public void endNow( String updatedBy) {
         this.status = AuctionStatus.COMPLETED;
-        this.auctionEndAt = now;
+        this.auctionEndAt = OffsetDateTime.now();;
         this.updatedBy = updatedBy;
     }
 
