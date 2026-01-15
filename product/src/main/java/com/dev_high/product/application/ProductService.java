@@ -44,7 +44,7 @@ public class ProductService {
                 saved.getName(),
                 toCategoryNames(categories),
                 saved.getDescription(),
-                saved.getFileId(),
+                command.fileURL(),
                 saved.getDeletedYn().name(),
                 saved.getSellerId()
         );
@@ -108,7 +108,7 @@ public class ProductService {
                 product.getName(),
                 toCategoryNames(categories),
                 product.getDescription(),
-                product.getFileId(),
+                command.fileURL(),
                 product.getSellerId()
         );
         eventPublisher.publishEvent(event);
