@@ -221,7 +221,7 @@ public class AuctionRankingService {
         summary.auctionStartAt(),
         summary.auctionEndAt(),
         summary.depositAmount(),
-        summary.deletedYn()
+        summary.deletedYn(), summary.sellerId()
     );
   }
 }

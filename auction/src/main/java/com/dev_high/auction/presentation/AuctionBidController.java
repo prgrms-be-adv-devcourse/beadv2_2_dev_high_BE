@@ -26,9 +26,9 @@ public class AuctionBidController {
 
     @Operation(summary = "경매 참여 현황 조회", description = "본인의 경매 참여 현황을 전체 조회합니다.")
     @GetMapping("participation/me")
-    public ApiResponseDto<?> getParticipationList() {
+    public ApiResponseDto<?> getParticipationList(Pageable pageable) {
 
-        return ApiResponseDto.success(bidRecordService.getAllMyParticipation());
+        return ApiResponseDto.success(bidRecordService.getAllMyParticipation(pageable));
     }
 
 
