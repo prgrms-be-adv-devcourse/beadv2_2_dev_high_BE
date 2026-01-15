@@ -91,18 +91,6 @@ public class DepositService {
             }
         }
 
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.REFUND) {
-            try {
-                // command.userId()를 List<String> 형태로 가공
-                List<String> userIds = List.of(command.userId());
-
-                eventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_REFUND_RESPONSE,
-                        new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "REFUND"));
-            } catch (Exception e) {
-                log.error("보증금 환불 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
-            }
-        }
-
         if (command.depositOrderId() != null && command.depositOrderId().startsWith("ORD") && command.type() == DepositType.USAGE) {
             try {
                 eventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE,
