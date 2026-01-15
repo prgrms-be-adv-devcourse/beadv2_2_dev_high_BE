@@ -4,7 +4,7 @@ import com.dev_high.user.user.domain.OAuthProvider;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import org.springframework.stereotype.Repository;
-
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,5 +39,10 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findByProviderAndProviderUserIdAndDeletedYn(OAuthProvider provider, String userId, String deletedYn) {
         return userJpaRepository.findByProviderAndProviderUserIdAndDeletedYn(provider, userId, deletedYn);
+    }
+
+    @Override
+    public List<User> findByUserIds(List<String> userIds) {
+        return userJpaRepository.findByIdIn(userIds);
     }
 }
