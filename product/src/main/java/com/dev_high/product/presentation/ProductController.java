@@ -44,7 +44,7 @@ public class ProductController {
     //TODO: pagenation
     @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")
     @GetMapping("/users/{sellerId}")
-    public ApiResponseDto<Page<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ID", required = true) @PathVariable String sellerId, Pageable pageable) {
+    public ApiResponseDto<Page<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ", required = true) @PathVariable String sellerId, Pageable pageable) {
         return ApiResponseDto.success(productService.getProductsBySeller(sellerId, pageable));
     }
 

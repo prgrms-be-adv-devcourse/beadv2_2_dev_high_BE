@@ -32,7 +32,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
-    public List<Product> findBySellerId(String sellerId, Pageable pageable) {
+    public Page<Product> findBySellerId(String sellerId, Pageable pageable) {
         return productJpaRepository.findBySellerIdAndDeletedYn(sellerId, Product.DeleteStatus.N, pageable);
     }
 

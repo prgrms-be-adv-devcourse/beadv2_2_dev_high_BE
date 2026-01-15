@@ -138,8 +138,7 @@ public class ProductService {
     //TODO: pagenation
     @Transactional(readOnly = true)
     public Page<ProductInfo> getProducts(Pageable pageable) {
-        Page<Product> products;
-        products = productRepository.findAll(pageable);
+        Page<Product> products=productRepository.findAll(pageable);;
         return products.map(ProductInfo::from);
     }
 
@@ -153,7 +152,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
-        Page<Product> products = new PageImpl<>(productRepository.findBySellerId(sellerId, pageable));
+        Page<Product> products = productRepository.findBySellerId(sellerId, pageable);
         return products.map(ProductInfo::from);
     }
 
