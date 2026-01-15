@@ -2,13 +2,17 @@ package com.dev_high.user.user.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.user.application.UserService;
+import com.dev_high.user.user.application.dto.UserNicknameEmailResponse;
 import com.dev_high.user.user.application.dto.UserResponse;
 import com.dev_high.user.user.presentation.dto.PasswordUpdateRequest;
+import com.dev_high.user.user.presentation.dto.UserNicknameEmailRequest;
 import com.dev_high.user.user.presentation.dto.UserSignUpRequest;
 import com.dev_high.user.user.presentation.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequestMapping("/api/v1/users")
 @RestController
@@ -41,6 +45,11 @@ public class UserController {
     @DeleteMapping
     public ApiResponseDto<Void> deleteUser(){
         return userService.delete();
+    }
+
+    @PostMapping("")
+    public ApiResponseDto<List<UserNicknameEmailResponse>> getUserNicknameAndEmail(@RequestBody UserNicknameEmailRequest request) {
+        return userService.getUserNicknameAndEmail(request.toCommand());
     }
 
     }

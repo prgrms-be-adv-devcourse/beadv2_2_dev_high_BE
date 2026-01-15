@@ -1,13 +1,11 @@
 package com.dev_high.user.user.application;
 
 import com.dev_high.user.seller.application.SellerService;
-import com.dev_high.user.user.application.dto.CreateUserCommand;
-import com.dev_high.user.user.application.dto.UpdatePasswordCommand;
-import com.dev_high.user.user.application.dto.UpdateUserCommand;
-import com.dev_high.user.user.application.dto.UserResponse;
+import com.dev_high.user.user.application.dto.*;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import com.dev_high.user.user.exception.UserAlreadyExistsException;
+import com.dev_high.user.user.util.EmailMasker;
 import lombok.RequiredArgsConstructor;
 import com.dev_high.common.dto.ApiResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -107,5 +109,37 @@ public class UserService {
                 "회원 탈퇴가 정상적으로 처리되었습니다.",
                 null
         );
+    }
+
+    public ApiResponseDto<List<UserNicknameEmailResponse>> getUserNicknameAndEmail(UserNicknameEmailCommand command) {
+        if (command.userIds() == null || command.userIds().isEmpty()) {
+            return ApiResponseDto.success(List.of());
+        }
+
+        List<User> users = userRepository.findByUserIds(command.userIds());
+
+        Map<String, User> userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<UserNicknameEmailResponse> result = new ArrayList<>(command.userIds().size());
+
+        for (String userId : command.userIds()) {
+            User user = userMap.get(userId);
+
+            if (user == null || "Y".equals(user.getDeletedYn())) {
+                result.add(new UserNicknameEmailResponse(userId, null, null));
+                continue;
+            }
+
+            result.add(
+                    new UserNicknameEmailResponse(
+                            user.getId(),
+                            EmailMasker.mask(user.getEmail()),
+                            user.getNickname()
+                    )
+            );
+        }
+
+        return ApiResponseDto.success(result);
     }
 }

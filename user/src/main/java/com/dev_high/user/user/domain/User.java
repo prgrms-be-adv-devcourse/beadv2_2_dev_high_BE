@@ -4,7 +4,6 @@ import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.user.auth.application.dto.SocialProfileResponse;
 import com.dev_high.user.user.application.dto.UpdateUserCommand;
 import jakarta.persistence.*;
-
 import java.time.OffsetDateTime;
 import lombok.Getter;
 
