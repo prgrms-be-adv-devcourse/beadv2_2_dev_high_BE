@@ -23,9 +23,11 @@ public record AuctionParticipationResponse(String auctionId ,boolean isParticipa
     boolean withdrawn = "Y".equals(participation.getWithdrawnYn());
     boolean refund = "Y".equals(participation.getDepositRefundedYn());
     Auction auction = participation.getAuction();
+    AuctionStatus status = auction ==null ? null : auction.getStatus();
+    String productName = auction ==null ? null : auction.getProductName();
     return new AuctionParticipationResponse(participation.getAuctionId(),true, withdrawn, refund,
         participation.getDepositAmount(), participation.getWithdrawnAt(),
-        participation.getDepositRefundedAt(), participation.getBidPrice() , participation.getCreatedAt() ,auction.getStatus(),auction.getProductName()) ;
+        participation.getDepositRefundedAt(), participation.getBidPrice() , participation.getCreatedAt() ,status,productName);
   }
 
   public static AuctionParticipationResponse isNotParticipated(String auctionId) {
