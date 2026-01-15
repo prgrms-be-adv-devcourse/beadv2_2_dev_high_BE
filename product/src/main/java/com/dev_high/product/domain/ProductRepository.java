@@ -22,7 +22,7 @@ public interface ProductRepository {
 
     List<Product> findByIdIn(List<String> productIds);
 
-    List<Product> findBySellerId(String sellerId, Pageable pageable);
+    Page<Product> findBySellerId(String sellerId, Pageable pageable);
 
     List<Product> findByProductIds(List<String> productIds);
 }
