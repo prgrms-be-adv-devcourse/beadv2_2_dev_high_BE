@@ -94,4 +94,8 @@ public class DepositOrder {
     public void failOrder() {
         this.status = DepositOrderStatus.FAILED;
     }
+
+    public void ErrorOrder() {
+        this.status = DepositOrderStatus.ERROR;
+    }
 }

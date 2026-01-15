@@ -110,10 +110,6 @@ public class DepositPayment {
         this.requestedAt = requestedAt;
     }
 
-    public void donePayment() {
-        this.status = DepositPaymentStatus.DONE;
-    }
-
     public void failPayment() {
         this.status = DepositPaymentStatus.FAILED;
     }
