@@ -37,7 +37,7 @@ public class DepositService {
 
         Deposit deposit = Deposit.create(command.userId());
 
-        return DepositDto.Info.from(depositRepository.save(deposit));
+        return DepositDto.Info.from(depositRepository.save(deposit), "");
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +46,7 @@ public class DepositService {
 
         Deposit deposit = depositRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("예치금 계좌를 찾을 수 없습니다: " + userId));
-        return DepositDto.Info.from(deposit);
+        return DepositDto.Info.from(deposit, "");
     }
 
     @Transactional
@@ -77,7 +77,7 @@ public class DepositService {
                 savedDeposit.getBalance()
         );
 
-        depositHistoryService.createHistory(Command);
+        DepositHistoryDto.Info history = depositHistoryService.createHistory(Command);
 
         if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.DEPOSIT) {
             try {
@@ -121,6 +121,6 @@ public class DepositService {
             }
         }
 
-        return  DepositDto.Info.from(savedDeposit);
+        return  DepositDto.Info.from(savedDeposit, command.depositOrderId());
     }
 }

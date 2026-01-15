@@ -27,11 +27,13 @@ public class DepositDto {
     
     public record Info(
             String userId,
+            String orderId,
             BigDecimal balance
     ) {
-        public static Info from(Deposit deposit) {
+        public static Info from(Deposit deposit, String orderId) {
             return new Info(
                     deposit.getUserId(),
+                    orderId,
                     deposit.getBalance()
             );
         }
