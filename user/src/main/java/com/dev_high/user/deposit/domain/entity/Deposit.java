@@ -1,6 +1,7 @@
 package com.dev_high.user.deposit.domain.entity;
 
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.type.DepositType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -63,6 +64,14 @@ public class Deposit {
                 .userId(userId)
                 .balance(BigDecimal.ZERO)
                 .build();
+    }
+
+    public void apply(DepositType type, BigDecimal amount) {
+        switch (type) {
+            case CHARGE, REFUND -> increaseBalance(amount);
+            case USAGE, PAYMENT, DEPOSIT -> decreaseBalance(amount);
+            default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
+        }
     }
 
     public void increaseBalance(BigDecimal amount) {

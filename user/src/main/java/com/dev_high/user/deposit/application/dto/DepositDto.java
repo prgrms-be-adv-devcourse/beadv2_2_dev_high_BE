@@ -24,6 +24,15 @@ public class DepositDto {
             return new UsageCommand(userId, depositOrderId, type, amount);
         }
     }
+
+    public record PublishCommand(
+        String depositOrderId,
+        DepositType type
+    ) {
+        public static PublishCommand of(String depositOrderId, DepositType type) {
+            return new PublishCommand(depositOrderId, type);
+        }
+    }
     
     public record Info(
             String userId,

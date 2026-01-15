@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -18,12 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class DepositHistoryService {
     private final DepositHistoryRepository depositHistoryRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DepositHistoryDto.Info createHistory(DepositHistoryDto.CreateCommand command) {
-        if (command.type() != DepositType.CHARGE && command.type() != DepositType.USAGE && command.type() != DepositType.DEPOSIT && command.type() != DepositType.REFUND) {
-            throw new IllegalArgumentException("지원하지 않는 예치금 유형입니다: " + command.type());
-        }
-
         DepositHistory history = DepositHistory.create(
                 command.userId(),
                 command.orderId(),
@@ -31,9 +28,7 @@ public class DepositHistoryService {
                 command.amount(),
                 command.nowBalance()
         );
-
         DepositHistory savedHistory = depositHistoryRepository.save(history);
-
         return DepositHistoryDto.Info.from(savedHistory);
     }
 
