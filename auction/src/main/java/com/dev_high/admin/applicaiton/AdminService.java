@@ -1,26 +1,113 @@
 package com.dev_high.admin.applicaiton;
 
+import com.dev_high.auction.application.AuctionService;
+import com.dev_high.auction.application.dto.AuctionResponse;
+import com.dev_high.auction.domain.Auction;
+import com.dev_high.auction.domain.AuctionLiveState;
+import com.dev_high.auction.domain.AuctionRepository;
+import com.dev_high.auction.domain.AuctionStatus;
+import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
+import com.dev_high.batch.BatchHelper;
+import com.dev_high.common.context.UserContext;
+import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.auction.AuctionStartEvent;
+import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.util.DateUtil;
+import com.dev_high.exception.AuctionNotFoundException;
+import com.dev_high.exception.AuctionStatusInvalidException;
+import java.time.OffsetDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class AdminService {
 
+    private final AuctionRepository auctionRepository;
+    private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
+    private final BatchHelper batchHelper;
+    private final KafkaEventPublisher eventPublisher;
+    private final ApplicationEventPublisher publisher;
 
+    @Transactional
+    public AuctionResponse startAuctionNow(String auctionId) {
+        String userId = resolveAdminUserId();
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new AuctionStatusInvalidException();
+        }
 
-    public void createAuction(){
-    // 셀러아이디 상관없이 등록가능
-    // 해당상품에 라스트옥션에 해당 데이터 넣어줘야함.
+        OffsetDateTime now = DateUtil.now();
+        auction.startNow(now, userId);
+        OffsetDateTime endAt = auction.getAuctionEndAt();
+        if (endAt == null || !endAt.isAfter(now)) {
+            auction.rescheduleEnd(now.plusHours(1), userId);
+        }
+
+        AuctionLiveState liveState = auctionLiveStateRepository.findById(auctionId).orElse(null);
+        if (liveState == null) {
+            auctionLiveStateRepository.save(new AuctionLiveState(auction));
+        }
+
+        publishSpringEvent(auction);
+        try {
+            eventPublisher.publish(
+                    KafkaTopics.AUCTION_START_EVENT,
+                    new AuctionStartEvent(auction.getProductId(), auction.getId()));
+        } catch (Exception e) {
+            log.error("kafka send failed: {}", e);
+        }
+
+        return AuctionResponse.fromEntity(auction);
     }
 
-    public void modifyAuction(){
-        // 셀러아이디 상관없이 수정가능 (경매상태, 시간 ,가격등)
-        // 시작중일때 중지가능 > 이후로직 처리해야함 참여자들 보증금 환불처리 등, 최종낙찰자 처리 등?
-        // 대기상태 바로 시작가능 > 상태값 진행으로 바꿀때 시작시간 현재시간으로 박아서 사용
-        // 바로 종료처리> 상태값 종료로 바꿀때 종료시간 현재시간으로 바로 적용
+    @Transactional
+    public AuctionResponse endAuctionNow(String auctionId) {
+        String userId = resolveAdminUserId();
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+        if (!List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS).contains(auction.getStatus())) {
+            throw new AuctionStatusInvalidException();
+        }
+
+        OffsetDateTime now = DateUtil.now();
+        auction.endNow(now, userId);
+        publishSpringEvent(auction);
+
+        AuctionLiveState liveState = auctionLiveStateRepository.findById(auctionId).orElse(null);
+        if (liveState == null) {
+            auctionLiveStateRepository.save(new AuctionLiveState(auction));
+        }
+
+        batchHelper.process(auctionId);
+
+        return AuctionResponse.fromEntity(auction);
     }
 
-    public void removeAuction(){
-        // 셀러아이디 상관없이 삭제가능
-        // 해당 상품에 라스트옥션 제거
+    private void publishSpringEvent(Auction auction) {
+        publisher.publishEvent(
+                new com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent(
+                        auction.getProductId(),
+                        auction.getId(),
+                        auction.getStartBid(),
+                        auction.getDepositAmount(),
+                        auction.getStatus().name(),
+                        auction.getAuctionStartAt(),
+                        auction.getAuctionEndAt()
+                )
+        );
+    }
+
+    private String resolveAdminUserId() {
+        if (UserContext.get() == null || UserContext.get().userId() == null) {
+            return "ADMIN";
+        }
+        return UserContext.get().userId();
     }
 }

@@ -189,13 +189,11 @@ public class BidRecordService {
     }
 
 
-    public List<AuctionParticipationResponse> getAllMyParticipation() {
+    public Page<AuctionParticipationResponse> getAllMyParticipation(Pageable pageable) {
         String userId = UserContext.get().userId();
 
-        //TODO: 추가로 조회할 정보 (경매상태 ,최종낙찰여부)
-
-        return auctionParticipationJpaRepository.findByUserId(userId).stream()
-                .map(AuctionParticipationResponse::isParticipated).toList();
+        return auctionParticipationJpaRepository.findByUserId(userId ,pageable)
+                .map(AuctionParticipationResponse::isParticipated);
     }
 
     public AuctionParticipationResponse createParticipation(String auctionId, BigDecimal decimal, String userId) {
