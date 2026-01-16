@@ -25,4 +25,6 @@ public interface ProductRepository {
     Page<Product> findBySellerId(String sellerId, Pageable pageable);
 
     List<Product> findByProductIds(List<String> productIds);
+
+    Page<Product> searchByAdmin(String name, String description, String sellerId, Pageable pageable);
 }
