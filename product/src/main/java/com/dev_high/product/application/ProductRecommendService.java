@@ -1,28 +1,28 @@
 package com.dev_high.product.application;
 
-import com.dev_high.common.dto.ChatResult;
 import com.dev_high.product.application.dto.DraftTonePreset;
 import com.dev_high.product.application.dto.ProductAnswer;
 import com.dev_high.product.application.dto.ProductDetailDto;
+import com.dev_high.product.application.dto.ProductRecommendationToolResponse;
 import com.dev_high.product.application.dto.ProductSearchInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +35,8 @@ public class ProductRecommendService {
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
-    private final PromptTemplate recommendTemplate;
+    private final ProductRecommendationTool productRecommendationTool;
+    private final ObjectMapper objectMapper;
     private final PromptTemplate imageToDetailWithCategoryTemplate;
 
 
@@ -54,6 +55,8 @@ public class ProductRecommendService {
         List<Document> docList=products.stream()
                 .map(this::toDocument)
                 .toList();
+
+
 
         vectorStore.add(docList);
 
@@ -76,7 +79,7 @@ public class ProductRecommendService {
                         .query(query)
                         .topK(topK)
                         .filterExpression(
-                                "deletedYn == 'Y'"
+                                "deletedYn == 'N'"
                         )
                         .build()
         );
@@ -93,24 +96,43 @@ public class ProductRecommendService {
         List<ProductSearchInfo> productSearchInfo= search(query, topK);
         String context = toContext(productSearchInfo);
 
-        Prompt prompt = recommendTemplate.create(Map.of(
-                "question", query,
-                "context", context
-        ));
+        String systemText = """
+                너는 중고 경매 플랫폼의 상품 추천 도우미다.
+                아래 규칙을 반드시 지켜라.
+                1) 반드시 tool "product_recommendation_response"를 호출하여 응답한다.
+                2) intent는 GREETING, PRODUCT, SERVICE, OFF_TOPIC, ABUSIVE 중 하나만 사용한다.
+                3) PRODUCT인 경우 제공된 Context 범위 안에서만 답한다.
+                4) PRODUCT인데 Context가 비어 있으면 추천 가능한 상품이 없음을 안내하고 조건을 요청한다.
+                5) GREETING은 짧게 인사 후 상품/조건 질문을 유도한다.
+                6) SERVICE는 로그인/결제/배송 등 문의에 간단히 답하고 필요한 정보를 요청한다. 확실치 않은 내용은 단정하지 않는다.
+                7) OFF_TOPIC은 부드럽게 주제를 전환한다.
+                8) ABUSIVE는 정중히 거절한다.
+                9) 답변은 한국어 1~3문장으로 작성한다.
+                """;
 
-        ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
+        String userText = """
+                질문: %s
+                Context:
+                %s
+                Context 상태: %s
+                """.formatted(query, context, context.isBlank() ? "EMPTY" : "FILLED");
+
+        ChatResponse response = chatClient.prompt()
+                .system(systemText)
+                .user(userText)
+                .tools(productRecommendationTool)
+                .call()
+                .chatResponse();
         log.info("chat response raw: {}", response);
 
-        Map<String, Object> metadata = new HashMap<>();
-        response.getMetadata().entrySet()
-                .forEach(entry -> metadata.put(entry.getKey(), entry.getValue()));
-
-        String content = response.getResult().getOutput().getText();
-        log.info("chat response: content='{}', metadata={}", content, metadata);
-
-        ChatResult<String> result = new ChatResult<>(content, metadata);
-
-        return new ProductAnswer(result.content(), productSearchInfo);
+        ProductRecommendationToolResponse toolResponse = parseToolResponse(response);
+        if (toolResponse == null || !StringUtils.hasText(toolResponse.answer())) {
+            return new ProductAnswer("현재 추천 답변을 생성하기 어려워요. 찾는 상품이나 조건을 조금 더 알려주세요.", List.of());
+        }
+        if (isProductIntent(toolResponse.intent())) {
+            return new ProductAnswer(toolResponse.answer(), productSearchInfo);
+        }
+        return new ProductAnswer(toolResponse.answer(), List.of());
     }
 
 
@@ -135,6 +157,53 @@ public class ProductRecommendService {
         return value == null ? "" : value;
     }
 
+    private boolean isProductIntent(String intent) {
+        if (intent == null) {
+            return false;
+        }
+        return "PRODUCT".equalsIgnoreCase(intent.trim());
+    }
+
+    private ProductRecommendationToolResponse parseToolResponse(ChatResponse response) {
+        if (response == null || response.getResult() == null) {
+            return null;
+        }
+        String content = response.getResult().getOutput().getText();
+        if (!StringUtils.hasText(content)) {
+            return null;
+        }
+        String json = extractJson(content);
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, ProductRecommendationToolResponse.class);
+        } catch (Exception e) {
+            log.warn("tool response parse failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private String extractJson(String content) {
+        String trimmed = content.trim();
+        if (trimmed.startsWith("```")) {
+            int start = trimmed.indexOf('{');
+            int end = trimmed.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                return trimmed.substring(start, end + 1);
+            }
+        }
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return trimmed;
+        }
+        int start = trimmed.indexOf('{');
+        int end = trimmed.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return trimmed.substring(start, end + 1);
+        }
+        return null;
+    }
+
 
     private Document toDocument(Product product) {
         String categories = product.getCategories().stream()
@@ -156,6 +225,7 @@ public class ProductRecommendService {
         );
 
         return new Document(
+                product.getId(),
                 content,
                 Map.of(
                         "productId", product.getId(),
