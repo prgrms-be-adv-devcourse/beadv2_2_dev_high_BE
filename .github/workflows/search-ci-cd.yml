@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/search
+  IMAGE_NAME: ${{ github.repository_owner }}/search
   SERVICE_NAME: search-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 

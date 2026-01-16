@@ -21,7 +21,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/user
+  IMAGE_NAME: ${{ github.repository_owner }}/user
   SERVICE_NAME: user-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 

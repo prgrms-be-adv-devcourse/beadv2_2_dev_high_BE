@@ -213,7 +213,7 @@ public class SearchService {
                                     .k(k)
                                     .numCandidates(numCandidates)
                             )
-                            .source(src -> src.filter(f -> f.includes("productId", "auctionId", "imageUrl")))
+                            .source(src -> src.filter(f -> f.includes("productId")))
                     , ProductDocument.class);
         } catch (Exception e) {
             log.warn("similar search failed: {}", e.getMessage());
