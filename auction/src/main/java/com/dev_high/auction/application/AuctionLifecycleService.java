@@ -82,13 +82,13 @@ public class AuctionLifecycleService {
         String highestUserId = state.getHighestUserId();
 
         if (highestUserId == null) {
-            auction.changeStatus(AuctionStatus.FAILED, updatedBy);
             try {
                 eventDispatcher.publishAuctionNoBidNotification(sellerId, auction);
             } catch (Exception e) {
                 log.error("kafka send failed :{}", e);
             }
             eventDispatcher.publishSearchUpdate(auction);
+            auction.changeStatus(AuctionStatus.FAILED, updatedBy);
             return;
         }
 
