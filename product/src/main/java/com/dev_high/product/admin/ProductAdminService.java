@@ -1,5 +1,6 @@
 package com.dev_high.product.admin;
 
+import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.product.application.ProductRecommendService;
@@ -14,6 +15,7 @@ import com.dev_high.product.domain.ProductCategoryRelRepository;
 import com.dev_high.product.domain.ProductRepository;
 import com.dev_high.product.exception.CategoryNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
+import com.dev_high.common.context.UserContext.UserInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ProductAdminService {
-
-    private static final String ADMIN_ACTOR = "ADMIN";
 
     private final ProductRepository productRepository;
     private final ProductCategoryRelRepository productCategoryRelRepository;
@@ -51,17 +51,20 @@ public class ProductAdminService {
     }
 
     @Transactional
-    public ProductInfo createProduct(String sellerId, ProductCommand command) {
+    public ProductInfo createProduct(ProductCommand command) {
+        UserInfo user = UserContext.get();
+
         Product product = Product.create(
-            command.name(),
-            command.description(),
-            sellerId,
-            ADMIN_ACTOR,
-            command.fileId()
+                command.name(),
+                command.description(),
+                user.userId(),
+                user.userId(),
+                command.fileId()
         );
+
         Product saved = productRepository.save(product);
         productRepository.flush();
-        List<Category> categories = attachCategories(saved, command.categoryIds(), ADMIN_ACTOR);
+        List<Category> categories = attachCategories(saved, command.categoryIds(), user.userId());
         productRepository.save(saved);
         productRecommendService.indexOne(saved);
 
@@ -83,8 +86,10 @@ public class ProductAdminService {
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
 
-        product.updateDetails(command.name(), command.description(), command.fileId(), ADMIN_ACTOR);
-        List<Category> categories = replaceCategories(product, command.categoryIds(), ADMIN_ACTOR);
+        UserInfo user = UserContext.get();
+
+        product.updateDetails(command.name(), command.description(), command.fileId(), user.userId());
+        List<Category> categories = replaceCategories(product, command.categoryIds(), user.userId());
 
         eventPublisher.publishEvent(new ProductUpdateSearchRequestEvent(
             product.getId(),
@@ -100,9 +105,10 @@ public class ProductAdminService {
 
     @Transactional
     public void deleteProduct(String productId) {
+        UserInfo user = UserContext.get();
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
-        product.markDeleted(ADMIN_ACTOR);
+        product.markDeleted(user.userId());
         eventPublisher.publishEvent(product.getId());
     }
 

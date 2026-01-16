@@ -45,10 +45,9 @@ public class ProductAdminController {
 
     @PostMapping
     public ApiResponseDto<ProductInfo> createProduct(
-        @RequestParam String sellerId,
         @Valid @RequestBody ProductRequest request
     ) {
-        return ApiResponseDto.success(productAdminService.createProduct(sellerId, request.toCommand()));
+        return ApiResponseDto.success(productAdminService.createProduct(request.toCommand()));
     }
 
     @PutMapping("/{productId}")
