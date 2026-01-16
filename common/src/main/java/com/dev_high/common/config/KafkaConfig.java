@@ -112,7 +112,7 @@ public class KafkaConfig {
     ConcurrentKafkaListenerContainerFactory<String, Object> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
-    factory.setConcurrency(3);
+    factory.setConcurrency(2);
     factory.setCommonErrorHandler(errorHandler); // 이제 주입받은 빈 사용
     return factory;
   }
