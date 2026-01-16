@@ -61,8 +61,8 @@ public class AuctionController {
   }
 
     @Operation(summary = "경매 리스트 조회", description = "경매 ID list로 정보를 조회합니다.")
-    @GetMapping("{auctionIds}")
-    public ApiResponseDto<List<AuctionResponse>> getAuctionForIds(@PathVariable List<String> auctionIds) {
+    @GetMapping("by-ids")
+    public ApiResponseDto<List<AuctionResponse>> getAuctionForIds(@RequestParam List<String> auctionIds) {
         return ApiResponseDto.success(auctionService.getAuctions(auctionIds));
     }
 
