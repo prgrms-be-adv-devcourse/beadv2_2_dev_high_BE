@@ -55,7 +55,7 @@ public class AuctionController {
 
 
   @Operation(summary = "경매 단일 조회", description = "경매 ID로 정보를 조회합니다.")
-  @GetMapping("/by-ids/{auctionId}")
+  @GetMapping("{auctionId}")
   public ApiResponseDto<AuctionResponse> getAuction(@PathVariable String auctionId) {
     return ApiResponseDto.success(auctionService.getAuction(auctionId));
   }
