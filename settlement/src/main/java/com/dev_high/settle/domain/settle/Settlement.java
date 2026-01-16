@@ -1,12 +1,14 @@
 package com.dev_high.settle.domain.settle;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
+import com.dev_high.settle.domain.group.SettlementGroup;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 
 /**
@@ -16,103 +18,112 @@ import java.time.OffsetDateTime;
 @Entity
 @NoArgsConstructor
 @Table(name = "settlement", schema = "settlement")
-public class Settlement {
+    public class Settlement {
 
 
-    private final static double chargeRatio = 0.05;
+        private final static double chargeRatio = 0.05;
 
-    /**
-     * 정산 ID (커스텀 생성)
-     */
-    @Id
-    @CustomGeneratedId(method = "settlement")
-    private String id;
+        /**
+         * 정산 ID (커스텀 생성)
+         */
+        @Id
+        @CustomGeneratedId(method = "settlement")
+        private String id;
 
-    /**
-     * 주문 ID
-     */
-    @Column(name = "order_id", nullable = false)
-    private String orderId;
+        /**
+         * 주문 ID
+         */
+        @Column(name = "order_id", nullable = false)
+        private String orderId;
 
-    /**
-     * 판매자 ID
-     */
-    @Column(name = "seller_id", nullable = false)
-    private String sellerId;
+        /**
+         * 판매자 ID
+         */
+        @Column(name = "seller_id", nullable = false)
+        private String sellerId;
 
-    /**
-     * 구매자 ID
-     */
-    @Column(name = "buyer_id", nullable = false)
-    private String buyerId;
+        /**
+         * 구매자 ID
+         */
+        @Column(name = "buyer_id", nullable = false)
+        private String buyerId;
 
-    /**
-     * 경매 ID
-     */
-    @Column(name = "auction_id", nullable = false)
-    private String auctionId;
+        /**
+         * 경매 ID
+         */
+        @Column(name = "auction_id", nullable = false)
+        private String auctionId;
 
-    /**
-     * 낙찰 금액
-     */
-    @Column(name = "winning_amount", nullable = false)
-    private BigDecimal winningAmount;
+        /**
+         * 낙찰 금액
+         */
+        @Column(name = "winning_amount", nullable = false)
+        private BigDecimal winningAmount;
 
-    /**
-     * 수수료
-     */
-    @Column(name = "charge")
-    private BigDecimal charge;
+        /**
+         * 수수료
+         */
+        @Column(name = "charge")
+        private BigDecimal charge;
 
-    /**
-     * 최종 정산 금액
-     */
-    @Column(name = "final_amount")
-    private BigDecimal finalAmount;
+        /**
+         * 최종 정산 금액
+         */
+        @Column(name = "final_amount")
+        private BigDecimal finalAmount;
 
 
-    /**
-     * 정산 상태
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private SettlementStatus status;
+        /**
+         * 정산 상태
+         */
+        @Enumerated(EnumType.STRING)
+        @Column(name = "status", nullable = false, length = 20)
+        private SettlementStatus status;
 
-    /**
-     * 생성일
-     */
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "settlement_group_id", nullable = false)
+        private SettlementGroup settlementGroup;
 
-    /**
-     * 정산 완료일
-     */
-    @Column(name = "complete_date")
-    private OffsetDateTime completeDate;
+        @Column(name = "settlement_group_id", insertable = false, updatable = false)
+        private String settlementGroupId;
 
-    /**
-     * 수정일
-     */
-    @Column(name = "update_date", nullable = false)
-    private OffsetDateTime updateDate;
+        /**
+         * 생성일
+         */
+        @Column(name = "created_at", nullable = false)
+        private OffsetDateTime createdAt;
 
-    /**
-     * 완료 여부 (Y/N)
-     */
-    @Column(name = "complete_yn", nullable = false, length = 1)
-    private String completeYn = "N";
+        /**
+         * 정산 완료일
+         */
+        @Column(name = "complete_date")
+        private OffsetDateTime completeDate;
 
-    /**
-     * 시도 횟수
-     */
-    @Column(name = "try_cnt", nullable = false, length = 1)
-    private Long tryCnt;
+        /**
+         * 수정일
+         */
+        @Column(name = "update_date", nullable = false)
+        private OffsetDateTime updateDate;
+
+        /**
+         * 완료 여부 (Y/N)
+         */
+        @Column(name = "complete_yn", nullable = false, length = 1)
+        private String completeYn = "N";
+
+        /**
+         * 시도 횟수
+         */
+        @Column(name = "try_cnt", nullable = false, length = 1)
+        private Long tryCnt;
     @Transient
     private String historyMessage;
 
-    public Settlement(String orderId, String sellerId, String buyerId, String auctionId,
+    public Settlement(SettlementGroup settlementGroup, String orderId, String sellerId,
+                      String buyerId, String auctionId,
                       BigDecimal winningAmount, SettlementStatus status, Long tryCnt) {
 
+        this.settlementGroup = settlementGroup;
         this.orderId = orderId;
         this.sellerId = sellerId;
         this.buyerId = buyerId;
@@ -120,6 +131,11 @@ public class Settlement {
         this.winningAmount = winningAmount;
         this.status = status;
         this.tryCnt = tryCnt;
+
+        this.charge = winningAmount.multiply(BigDecimal.valueOf(chargeRatio))
+            .setScale(0, RoundingMode.DOWN);
+        this.finalAmount = winningAmount.subtract(charge)
+            .setScale(0, RoundingMode.DOWN);
 
     }
 
@@ -149,12 +165,7 @@ public class Settlement {
         }
     }
 
-    public void ready() {
-
-        if (this.tryCnt == 0) {
-            this.charge = winningAmount.multiply(BigDecimal.valueOf(chargeRatio));
-            this.finalAmount = winningAmount.subtract(charge);
-        }
+    public void retry(){
         this.tryCnt++;
     }
 
@@ -170,6 +181,7 @@ public class Settlement {
     public SettlementResponse toResponse() {
         return new SettlementResponse(
                 id,
+                settlementGroupId,
                 orderId,
                 sellerId,
                 buyerId,

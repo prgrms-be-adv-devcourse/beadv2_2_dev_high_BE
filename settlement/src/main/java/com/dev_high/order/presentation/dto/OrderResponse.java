@@ -1,6 +1,5 @@
 package com.dev_high.order.presentation.dto;
 
-import com.dev_high.order.application.dto.AuctionDto;
 import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.order.domain.OrderStatus;
 

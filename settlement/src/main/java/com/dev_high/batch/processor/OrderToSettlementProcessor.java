@@ -1,10 +1,13 @@
 package com.dev_high.batch.processor;
 
 import com.dev_high.order.domain.WinningOrder;
+import com.dev_high.settle.domain.group.SettlementGroup;
+import com.dev_high.settle.domain.group.SettlementGroupRepository;
 import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementRepository;
 import com.dev_high.settle.domain.settle.SettlementStatus;
 import com.dev_high.batch.listener.SettlementRegistrationStepListener;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.scope.context.StepSynchronizationManager;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class OrderToSettlementProcessor implements ItemProcessor<WinningOrder, Settlement> {
 
   private final SettlementRepository settlementRepository;
+  private final SettlementGroupRepository settlementGroupRepository;
 
   @Override
   public Settlement process(WinningOrder order) {
@@ -26,8 +30,16 @@ public class OrderToSettlementProcessor implements ItemProcessor<WinningOrder, S
       return null;
     }
 
+    LocalDate settlementDate = LocalDate.now();
+    SettlementGroup settlementGroup = settlementGroupRepository
+        .findBySellerIdAndSettlementDate(order.getSellerId(), settlementDate)
+        .orElseGet(() -> settlementGroupRepository.save(
+            new SettlementGroup(order.getSellerId(), settlementDate)
+        ));
+
     // 주문 → 정산 엔티티로 변환
     return new Settlement(
+        settlementGroup,
         order.getId(),
         order.getSellerId(),
         order.getBuyerId(),

@@ -1,6 +1,5 @@
 package com.dev_high.settle.infrastructure;
 
-import com.dev_high.settle.application.SettlementDailySummary;
 import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementRepository;
 import com.dev_high.settle.domain.settle.SettlementStatus;
@@ -40,6 +39,12 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
     }
 
     @Override
+    public Page<Settlement> findAllBySettlementGroupIdOrderByCompleteDateDesc(String settlementGroupId,
+                                                                              Pageable pageable) {
+        return settlementRepository.findAllBySettlementGroup_IdOrderByCompleteDateDesc(settlementGroupId, pageable);
+    }
+
+    @Override
     public boolean existsByOrderId(String orderId) {
         return settlementRepository.existsByOrderId(orderId);
     }
@@ -56,11 +61,5 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
                                                           Pageable pageable) {
         return settlementRepository.findByStatus(status,  pageable);
     }
-
-    @Override
-    public Page<SettlementDailySummary> findDailySummaryBySellerId(String sellerId, Pageable pageable) {
-        return settlementRepository.findDailySummaryBySellerId(sellerId, pageable);
-    }
-
 
 }

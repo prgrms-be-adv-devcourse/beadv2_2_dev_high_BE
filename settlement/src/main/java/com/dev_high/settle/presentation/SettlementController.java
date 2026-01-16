@@ -1,8 +1,8 @@
 package com.dev_high.settle.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.settle.application.SettlementDailySummary;
 import com.dev_high.settle.application.SettlementService;
+import com.dev_high.settle.presentation.dto.SettlementGroupResponse;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +25,15 @@ public class SettlementController {
     }
 
     @GetMapping("/summary")
-    public ApiResponseDto<Page<SettlementDailySummary>> getSettlementSummary(Pageable pageable) {
+    public ApiResponseDto<Page<SettlementGroupResponse>> getSettlementSummary(Pageable pageable) {
 
         return ApiResponseDto.success(settlementService.findSettlementSummary(pageable));
+    }
+
+    @GetMapping("/group/{groupId}/items")
+    public ApiResponseDto<Page<SettlementResponse>> findByGroupId(@PathVariable String groupId,
+                                                                  Pageable pageable) {
+        return ApiResponseDto.success(settlementService.findByGroupId(groupId, pageable));
     }
 
     @GetMapping("{settleId}")
