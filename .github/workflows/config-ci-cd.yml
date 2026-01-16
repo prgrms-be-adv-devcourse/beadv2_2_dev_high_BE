@@ -24,7 +24,7 @@ on:
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/config
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/config
   SERVICE_NAME: config
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 jobs:

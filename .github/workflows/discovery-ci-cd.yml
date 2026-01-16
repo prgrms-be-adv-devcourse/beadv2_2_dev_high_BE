@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/discovery
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/discovery
   SERVICE_NAME: discovery
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 jobs:

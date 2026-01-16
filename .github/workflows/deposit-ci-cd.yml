@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/deposit
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/deposit
   SERVICE_NAME: deposit-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 

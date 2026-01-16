@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/auction
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name }}/auction
   SERVICE_NAME: auction-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 
