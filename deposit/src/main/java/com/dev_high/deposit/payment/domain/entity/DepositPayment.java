@@ -1,7 +1,7 @@
 package com.dev_high.deposit.payment.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-import com.dev_high.deposit.payment.domain.DepositPaymentStatus;
+import com.dev_high.common.type.DepositPaymentStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

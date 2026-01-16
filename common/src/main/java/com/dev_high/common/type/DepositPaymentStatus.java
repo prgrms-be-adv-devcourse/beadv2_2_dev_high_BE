@@ -1,4 +1,4 @@
-package com.dev_high.deposit.payment.domain;
+package com.dev_high.common.type;
 
 /*
  * 예치금 결제 상태 정의
