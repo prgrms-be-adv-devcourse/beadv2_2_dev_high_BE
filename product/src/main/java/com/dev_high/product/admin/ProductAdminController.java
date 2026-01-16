@@ -28,32 +28,17 @@ public class ProductAdminController {
 
     private final ProductAdminService productAdminService;
 
-    @GetMapping
-    public ApiResponseDto<Page<ProductInfo>> getProducts(Pageable pageable) {
-        return ApiResponseDto.success(productAdminService.getProducts(pageable));
-    }
-
-    @GetMapping("/users/{sellerId}")
-    public ApiResponseDto<Page<ProductInfo>> getProductsBySeller(@PathVariable String sellerId, Pageable pageable) {
-        return ApiResponseDto.success(productAdminService.getProductsBySeller(sellerId, pageable));
-    }
-
-    @GetMapping("/{productId}")
-    public ApiResponseDto<ProductInfo> getProduct(@PathVariable String productId) {
-        return ApiResponseDto.success(productAdminService.getProduct(productId));
-    }
-
     @PostMapping
     public ApiResponseDto<ProductInfo> createProduct(
-        @Valid @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
         return ApiResponseDto.success(productAdminService.createProduct(request.toCommand()));
     }
 
     @PutMapping("/{productId}")
     public ApiResponseDto<ProductInfo> updateProduct(
-        @PathVariable String productId,
-        @Valid @RequestBody ProductRequest request
+            @PathVariable String productId,
+            @Valid @RequestBody ProductRequest request
     ) {
         return ApiResponseDto.success(productAdminService.updateProduct(productId, request.toCommand()));
     }
@@ -64,4 +49,23 @@ public class ProductAdminController {
         productAdminService.deleteProduct(productId);
         return ApiResponseDto.success(null);
     }
+
+    // 상품 동적 다건 조회
+    @GetMapping
+    public ApiResponseDto<Page<ProductInfo>> getProducts(
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) String description,
+        @RequestParam(required = false) String sellerId,
+        Pageable pageable
+    ) {
+        return ApiResponseDto.success(productAdminService.searchProducts(name, description, sellerId, pageable));
+    }
+
+    // 상품 단건 조회
+    @GetMapping("/{productId}")
+    public ApiResponseDto<ProductInfo> getProduct(@PathVariable String productId) {
+        return ApiResponseDto.success(productAdminService.getProduct(productId));
+    }
+
+
 }

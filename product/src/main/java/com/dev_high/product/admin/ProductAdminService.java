@@ -35,21 +35,8 @@ public class ProductAdminService {
     private final ApplicationEventPublisher eventPublisher;
     private final ProductService productService;
 
-    @Transactional(readOnly = true)
-    public Page<ProductInfo> getProducts(Pageable pageable) {
-        return productService.getProducts(pageable);
-    }
 
-    @Transactional(readOnly = true)
-    public Page<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
-        return productService.getProductsBySeller(sellerId, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public ProductInfo getProduct(String productId) {
-        return productService.getProduct(productId);
-    }
-
+    //상품생성
     @Transactional
     public ProductInfo createProduct(ProductCommand command) {
         UserInfo user = UserContext.get();
@@ -69,22 +56,24 @@ public class ProductAdminService {
         productRecommendService.indexOne(saved);
 
         eventPublisher.publishEvent(new ProductCreateSearchRequestEvent(
-            saved.getId(),
-            saved.getName(),
-            toCategoryNames(categories),
-            saved.getDescription(),
-            command.fileURL(),
-            saved.getDeletedYn().name(),
-            saved.getSellerId()
+                saved.getId(),
+                saved.getName(),
+                toCategoryNames(categories),
+                saved.getDescription(),
+                command.fileURL(),
+                saved.getDeletedYn().name(),
+                saved.getSellerId()
         ));
 
         return ProductInfo.from(saved);
     }
 
+
+    //상품수정
     @Transactional
     public ProductInfo updateProduct(String productId, ProductCommand command) {
         Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+                .orElseThrow(ProductNotFoundException::new);
 
         UserInfo user = UserContext.get();
 
@@ -92,22 +81,23 @@ public class ProductAdminService {
         List<Category> categories = replaceCategories(product, command.categoryIds(), user.userId());
 
         eventPublisher.publishEvent(new ProductUpdateSearchRequestEvent(
-            product.getId(),
-            product.getName(),
-            toCategoryNames(categories),
-            product.getDescription(),
-            command.fileURL(),
-            product.getSellerId()
+                product.getId(),
+                product.getName(),
+                toCategoryNames(categories),
+                product.getDescription(),
+                command.fileURL(),
+                product.getSellerId()
         ));
 
         return ProductInfo.from(product);
     }
 
+    //상품삭제
     @Transactional
     public void deleteProduct(String productId) {
         UserInfo user = UserContext.get();
         Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+                .orElseThrow(ProductNotFoundException::new);
         product.markDeleted(user.userId());
         eventPublisher.publishEvent(product.getId());
     }
@@ -118,12 +108,12 @@ public class ProductAdminService {
         }
 
         List<Category> categories = categoryIds.stream()
-            .map(id -> categoryRepository.findById(id).orElseThrow(CategoryNotFoundException::new))
-            .toList();
+                .map(id -> categoryRepository.findById(id).orElseThrow(CategoryNotFoundException::new))
+                .toList();
 
         List<ProductCategoryRel> relations = categories.stream()
-            .map(category -> ProductCategoryRel.create(product, category, createdBy))
-            .toList();
+                .map(category -> ProductCategoryRel.create(product, category, createdBy))
+                .toList();
         productCategoryRelRepository.saveAll(relations);
         return categories;
     }
@@ -138,8 +128,23 @@ public class ProductAdminService {
             return List.of();
         }
         return categories.stream()
-            .map(Category::getCategoryName)
-            .filter(name -> name != null && !name.isBlank())
-            .toList();
+                .map(Category::getCategoryName)
+                .filter(name -> name != null && !name.isBlank())
+                .toList();
     }
+
+    //querDSL 상품 조회
+    @Transactional(readOnly = true)
+    public Page<ProductInfo> searchProducts(String name, String description, String sellerId, Pageable pageable) {
+        Page<Product> products = productRepository.searchByAdmin(name, description, sellerId, pageable);
+        return products.map(ProductInfo::from);
+    }
+
+    // 단건 조회
+    @Transactional(readOnly = true)
+    public ProductInfo getProduct(String productId) {
+        return productService.getProduct(productId);
+    }
+
+
 }
