@@ -13,7 +13,6 @@ public record OrderRegisterRequest(
     String auctionId,
     BigDecimal winningAmount,
     BigDecimal depositAmount,
-    OffsetDateTime winningDate,
-    OrderStatus status
+    OffsetDateTime winningDate
 ) {
 }

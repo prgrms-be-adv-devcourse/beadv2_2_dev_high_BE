@@ -11,6 +11,7 @@ public record OrderAdminSearchFilter(
     String auctionId,
     OrderStatus status,
     String payYn,
+    String deletedYn,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime createdFrom,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime createdTo
 ) {

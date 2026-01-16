@@ -1,7 +1,6 @@
 package com.dev_high.order.domain;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
-
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -47,7 +46,7 @@ public class WinningOrder {
     @Column(name = "pay_complete_date")
     private OffsetDateTime payCompleteDate; // NULL 허용
 
-    @Column(name ="payment_limit_date")
+    @Column(name = "payment_limit_date")
     private OffsetDateTime paymentLimitDate;
 
     @Column(nullable = false, length = 1)
@@ -63,6 +62,60 @@ public class WinningOrder {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @Column(name = "deleted_yn", nullable = false)
+    private String deletedYn ="N";
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
+    @Column(name = "created_by", length = 50, nullable = false)
+    private String createdBy;
+
+    @Column(name = "updated_by", length = 50, nullable = false)
+    private String updatedBy;
+
+
+    public WinningOrder(String sellerId, String buyerId, String productId, String productName, String auctionId,
+                        BigDecimal winningAmount, BigDecimal depositAmount, OffsetDateTime winningDate,
+                        OrderStatus status ,String creator) {
+        this.sellerId = sellerId;
+        this.buyerId = buyerId;
+        this.productId = productId;
+        this.productName = productName;
+        this.auctionId = auctionId;
+        this.winningAmount = winningAmount;
+        this.depositAmount = depositAmount;
+        this.winningDate = winningDate;
+        this.paymentLimitDate = calculatePaymentLimitDate(winningDate);
+        this.status = status;
+        this.createdBy=creator;
+        this.updatedBy=creator;
+        this.deletedYn="N";
+    }
+
+    public static WinningOrder fromRequest(OrderRegisterRequest request , String creator) {
+        return new WinningOrder(
+                request.sellerId(),
+                request.buyerId(),
+                request.productId(),
+                request.productName(),
+                request.auctionId(),
+                request.winningAmount(),
+                request.depositAmount(),
+                request.winningDate(),
+                OrderStatus.UNPAID,
+                creator
+        );
+    }
+
+    private static OffsetDateTime calculatePaymentLimitDate(OffsetDateTime winningDate) {
+        OffsetDateTime base = winningDate.plusDays(3);
+        return base.toLocalDate()
+                .plusDays(1)
+                .atStartOfDay()
+                .atOffset(base.getOffset());
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = OffsetDateTime.now();
@@ -74,44 +127,25 @@ public class WinningOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public WinningOrder(String sellerId, String buyerId, String productId, String productName,String auctionId,
-                        BigDecimal winningAmount, BigDecimal depositAmount, OffsetDateTime winningDate,
-                        OrderStatus status) {
-        this.sellerId = sellerId;
-        this.buyerId = buyerId;
-        this.productId =productId;
-        this.productName = productName;
-        this.auctionId = auctionId;
-        this.winningAmount = winningAmount;
-        this.depositAmount = depositAmount;
-        this.winningDate = winningDate;
-        this.paymentLimitDate = winningDate.plusDays(3);
+    public void changeStatus(OrderStatus status, String updatedBy) {
+        if (status == OrderStatus.PAID) {
+            this.payYn = "Y";
+            this.payCompleteDate = OffsetDateTime.now();
+        }
         this.status = status;
+        this.updatedBy = updatedBy;
     }
 
-    public void setStatus(OrderStatus status){
-        this.status= status;
-    }
-    public void setPayCompleteDate(OffsetDateTime payCompleteDate) {
-        this.payCompleteDate = payCompleteDate;
-    }
-    public void setPayYn(String payYn) {
-        this.payYn = payYn;
+
+    public void changePaymentLimitDate(OffsetDateTime paymentLimitDate, String updatedBy) {
+        this.paymentLimitDate = paymentLimitDate;
+        this.updatedBy = updatedBy;
     }
 
-    public static WinningOrder fromRequest(OrderRegisterRequest request) {
-        return new WinningOrder(
-                request.sellerId(),
-                request.buyerId(),
-                request.productId(),
-                request.productName(),
-                request.auctionId(),
-                request.winningAmount(),
-                request.depositAmount(),
-                request.winningDate(),
-                request.status()
-        );
+    public void delete(String updatedBy) {
+        this.deletedYn = "Y";
+        this.deletedAt = OffsetDateTime.now();
+        this.updatedBy = updatedBy;
     }
-
 
 }
