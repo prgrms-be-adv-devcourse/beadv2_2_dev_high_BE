@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/auction
+  IMAGE_NAME: ${{ github.repository_owner }}/beadv2_2_dev_high_be/auction
   SERVICE_NAME: auction-service
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 
@@ -55,7 +55,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.GIT_ACTOR }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
@@ -93,7 +93,7 @@ jobs:
           kubectl create secret docker-registry ghcr-secret \
             --namespace ${{ env.NAMESPACE }} \
             --docker-server=${{ env.REGISTRY }} \
-            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-username=${{ github.actor }} \
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 

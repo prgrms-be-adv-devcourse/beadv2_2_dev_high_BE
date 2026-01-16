@@ -24,7 +24,7 @@ on:
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/config
+  IMAGE_NAME: ${{ github.repository_owner }}/beadv2_2_dev_high_be/config
   SERVICE_NAME: config
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 jobs:
@@ -75,7 +75,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.GIT_ACTOR }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
@@ -112,7 +112,7 @@ jobs:
           kubectl create secret docker-registry ghcr-secret \
             --namespace ${{ env.NAMESPACE }} \
             --docker-server=${{ env.REGISTRY }} \
-            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-username=${{ github.actor }} \
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 

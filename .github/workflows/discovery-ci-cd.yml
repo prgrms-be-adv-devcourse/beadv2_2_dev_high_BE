@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/discovery
+  IMAGE_NAME: ${{ github.repository_owner }}/beadv2_2_dev_high_be/discovery
   SERVICE_NAME: discovery
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 jobs:
@@ -73,7 +73,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.GIT_ACTOR }} #username 고정
+          username: ${{ github.actor }} #username 고정
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image #이미지 빌드 후 ghcr에 push
@@ -112,7 +112,7 @@ jobs:
           kubectl create secret docker-registry ghcr-secret \
             --namespace ${{ env.NAMESPACE }} \
             --docker-server=${{ env.REGISTRY }} \
-            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-username=${{ github.actor }} \
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
