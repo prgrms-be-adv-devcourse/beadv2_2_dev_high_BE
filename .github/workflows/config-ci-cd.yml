@@ -76,7 +76,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.GIT_ACTOR }}
-          password: ${{ secrets.GIT_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
@@ -113,7 +113,7 @@ jobs:
             --namespace ${{ env.NAMESPACE }} \
             --docker-server=${{ env.REGISTRY }} \
             --docker-username=${{ secrets.GIT_ACTOR }} \
-            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy
