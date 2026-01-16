@@ -1,11 +1,11 @@
-package com.dev_high.user.deposit.application;
+package com.dev_high.user.deposit.application.event;
 
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositPaymentCompletedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.user.deposit.application.DepositHistoryService;
 import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
-import com.dev_high.user.deposit.application.event.DepositEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

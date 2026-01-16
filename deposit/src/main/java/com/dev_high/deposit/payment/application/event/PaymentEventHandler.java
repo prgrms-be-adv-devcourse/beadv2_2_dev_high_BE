@@ -1,12 +1,12 @@
-package com.dev_high.deposit.payment.application;
+package com.dev_high.deposit.payment.application.event;
 
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.payment.PaymentDepositConfirmRequestedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.type.DepositType;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
+import com.dev_high.deposit.payment.application.DepositPaymentService;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
-import com.dev_high.deposit.payment.application.event.PaymentEvent;
 import com.dev_high.deposit.order.application.DepositOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
