@@ -4,6 +4,9 @@ import com.dev_high.common.context.UserContext;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementRepository;
+import com.dev_high.settle.domain.group.SettlementGroup;
+import com.dev_high.settle.domain.group.SettlementGroupRepository;
+import com.dev_high.settle.presentation.dto.SettlementGroupResponse;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SettlementService {
 
     private final SettlementRepository settlementRepository;
+    private final SettlementGroupRepository settlementGroupRepository;
 
     /**
      * ID로 정산 정보를 조회합니다.
@@ -50,10 +54,18 @@ public class SettlementService {
         return settlementResponseList;
     }
 
-    public Page<SettlementDailySummary> findSettlementSummary(Pageable pageable) {
+    public Page<SettlementGroupResponse> findSettlementSummary(Pageable pageable) {
         String sellerId = UserContext.get().userId();
 
-        return settlementRepository.findDailySummaryBySellerId(sellerId, pageable);
+        return settlementGroupRepository
+            .findAllBySellerIdOrderBySettlementDateDesc(sellerId, pageable)
+            .map(SettlementGroup::toResponse);
+    }
+
+    public Page<SettlementResponse> findByGroupId(String groupId, Pageable pageable) {
+        Page<Settlement> found = settlementRepository
+            .findAllBySettlementGroupIdOrderByCompleteDateDesc(groupId, pageable);
+        return found.map(Settlement::toResponse);
     }
 
 

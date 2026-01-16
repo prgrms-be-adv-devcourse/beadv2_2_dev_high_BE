@@ -15,17 +15,16 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class SettlementProcessor implements ItemProcessor<Settlement, Settlement> {
 
-    private final List<Settlement> successSettlements;
+    private final List<Settlement> allSettlements;
     private final List<Settlement> failedSettlements;
 
     @Override
     public Settlement process(Settlement settlement) {
 
-        // 수수료/최종금액 계산 및 시도 횟수 증가
-        settlement.ready();
-
+        
         try {
-
+            // 시도 횟수 증가
+            settlement.retry();
             // 임시: 90% 성공, 10% 실패
             boolean success = ThreadLocalRandom.current().nextInt(100) < 90;
             if (!success) {
@@ -34,7 +33,6 @@ public class SettlementProcessor implements ItemProcessor<Settlement, Settlement
 
             // 성공 시 상태 완료 처리
             settlement.updateStatus(SettlementStatus.COMPLETED);
-            successSettlements.add(settlement);
 
         } catch (Exception e) {
             log.error("Settlement failed for id={}", settlement.getId(), e);
@@ -42,6 +40,9 @@ public class SettlementProcessor implements ItemProcessor<Settlement, Settlement
             // 실패 시 재시도 대상으로 전환
             settlement.updateStatus(SettlementStatus.FAILED);
             failedSettlements.add(settlement);
+
+        }finally {
+            allSettlements.add(settlement);
         }
         return settlement;
     }

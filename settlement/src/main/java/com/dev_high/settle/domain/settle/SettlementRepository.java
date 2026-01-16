@@ -1,6 +1,5 @@
 package com.dev_high.settle.domain.settle;
 
-import com.dev_high.settle.application.SettlementDailySummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,14 +16,13 @@ public interface SettlementRepository {
 
     Page<Settlement> findAllBySellerIdOrderByCompleteDateDesc(String sellerId, Pageable pageable);
 
+    Page<Settlement> findAllBySettlementGroupIdOrderByCompleteDateDesc(String settlementGroupId, Pageable pageable);
+
     boolean existsByOrderId(String orderId);
 
     Settlement save(Settlement settlement);
 
     Page<Settlement> findByStatus(SettlementStatus status,
                                                   Pageable pageable);
-
-    Page<SettlementDailySummary> findDailySummaryBySellerId(String sellerId, Pageable pageable);
-
 
 }
