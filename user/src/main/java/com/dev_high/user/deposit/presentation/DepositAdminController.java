@@ -38,7 +38,7 @@ public class DepositAdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositHistoryRequest.Create request) {
         DepositHistoryDto.CreateCommand command = request.toCommand(request.userId(), request.orderId(), request.type(), request.amount(), request.nowBalance());
-        DepositHistoryDto.Info info = historyService.createHistory(command);
+        DepositHistoryDto.Info info = historyService.createHistoryByAdmin(command);
         DepositHistoryResponse.Detail response = DepositHistoryResponse.Detail.from(info);
         return ApiResponseDto.success(response);
     }

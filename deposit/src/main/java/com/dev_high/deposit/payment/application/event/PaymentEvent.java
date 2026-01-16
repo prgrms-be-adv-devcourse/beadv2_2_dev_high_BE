@@ -3,16 +3,6 @@ package com.dev_high.deposit.payment.application.event;
 import java.math.BigDecimal;
 
 public class PaymentEvent {
-    public record OrderCreated(
-            String id,
-            String userId,
-            BigDecimal amount
-    ) {
-        public static OrderCreated of(String id, String userId, BigDecimal amount) {
-            return new OrderCreated(id, userId, amount);
-        }
-    }
-
     public record PaymentConfirmed(
             String id,
             String userId,
@@ -20,16 +10,6 @@ public class PaymentEvent {
     ) {
         public static PaymentConfirmed of(String id, String userId, BigDecimal amount) {
             return new PaymentConfirmed(id, userId, amount);
-        }
-    }
-
-    public record OrderConfirmed(
-            String orderId,
-            String userId,
-            BigDecimal amount
-    ) {
-        public static OrderConfirmed of(String orderId, String userId, BigDecimal amount) {
-            return new OrderConfirmed(orderId, userId, amount);
         }
     }
 
@@ -46,6 +26,18 @@ public class PaymentEvent {
     ) {
         public static PaymentError of(String orderId) {
             return new PaymentError(orderId);
+        }
+    }
+
+    public record PaymentConfrimFailed(
+            String orderId,
+            String userId,
+            BigDecimal amount,
+            String code,
+            String message
+    ) {
+        public static PaymentConfrimFailed of(String orderId, String userId, BigDecimal amount, String code, String message) {
+            return new PaymentConfrimFailed(orderId, userId, amount, code, message);
         }
     }
 }

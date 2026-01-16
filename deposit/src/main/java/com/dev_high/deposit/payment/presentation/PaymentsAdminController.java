@@ -31,8 +31,8 @@ public class PaymentsAdminController {
     @Operation(summary = "예치금 주문 상태 변경", description = "특정 주문의 상태를 변경")
     @PatchMapping("/payments/orders/status")
     public ApiResponseDto<DepositOrderResponse.Detail> updateOrderStatus(@RequestBody @Valid DepositOrderRequest.Update request) {
-        DepositOrderDto.UpdateCommand command = request.toCommand(request.id(), request.status());
-        DepositOrderDto.Info info = depositOrderService.updateOrderStatus(command);
+        DepositOrderDto.ChangeOrderStatusCommand command = request.toCommand(request.id(), request.status());
+        DepositOrderDto.Info info = depositOrderService.ChangeOrderStatus(command);
         DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
         return ApiResponseDto.success(response);
     }

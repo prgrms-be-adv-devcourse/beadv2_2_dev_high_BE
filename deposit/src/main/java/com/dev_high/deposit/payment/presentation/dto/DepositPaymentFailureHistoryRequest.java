@@ -3,6 +3,9 @@ package com.dev_high.deposit.payment.presentation.dto;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentFailureDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
 
 public class DepositPaymentFailureHistoryRequest {
     public record Create(
@@ -14,6 +17,10 @@ public class DepositPaymentFailureHistoryRequest {
             @NotBlank(message = "사용자 ID는 필수입니다.")
             String userId,
 
+            @Schema(description = "금액")
+            @NotNull(message = "금액은 필수입니다.")
+            BigDecimal amount,
+
             @Schema(description = "코드")
             @NotBlank(message = "코드는 필수입니다.")
             String code,
@@ -22,8 +29,8 @@ public class DepositPaymentFailureHistoryRequest {
             @NotBlank(message = "메시지는 필수입니다.")
             String message
     ) {
-        public DepositPaymentFailureDto.CreateCommand toCommand(String orderId, String userId, String code, String message) {
-            return DepositPaymentFailureDto.CreateCommand.of(orderId, userId, code, message);
+        public DepositPaymentFailureDto.CreateCommand toCommand(String orderId, String userId, BigDecimal amount, String code, String message) {
+            return DepositPaymentFailureDto.CreateCommand.of(orderId, userId, amount, code, message);
         }
     }
 

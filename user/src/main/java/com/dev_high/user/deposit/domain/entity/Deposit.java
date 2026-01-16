@@ -74,6 +74,14 @@ public class Deposit {
         }
     }
 
+    public void compensate(DepositType type, BigDecimal amount) {
+        switch (type) {
+            case CHARGE, REFUND -> decreaseBalance(amount);
+            case USAGE, PAYMENT, DEPOSIT -> increaseBalance(amount);
+            default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
+        }
+    }
+
     public void increaseBalance(BigDecimal amount) {
         this.balance = this.balance.add(amount);
     }

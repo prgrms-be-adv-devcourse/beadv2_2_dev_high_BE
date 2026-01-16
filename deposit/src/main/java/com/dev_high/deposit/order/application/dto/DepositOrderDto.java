@@ -15,46 +15,23 @@ public class DepositOrderDto {
         }
     }
 
-    public record UpdateCommand(
-            String id,
-            DepositOrderStatus status
-    ) {
-        public static UpdateCommand of(String id, DepositOrderStatus status) {
-            return new UpdateCommand(id, status);
-        }
-    }
-
     public record ConfirmCommand(
             String id,
             String userId,
-            BigDecimal amount
+            BigDecimal amount,
+            DepositOrderStatus status
     ) {
-        public static ConfirmCommand of(String id, String userId, BigDecimal amount) {
-            return new ConfirmCommand(id, userId, amount);
+        public static ConfirmCommand of(String id, String userId, BigDecimal amount, DepositOrderStatus status) {
+            return new ConfirmCommand(id, userId, amount, status);
         }
     }
 
-    public record FailCommand(
-            String id
+    public record ChangeOrderStatusCommand(
+            String id,
+            DepositOrderStatus status
     ) {
-        public static FailCommand of(String id) {
-            return new FailCommand(id);
-        }
-    }
-
-    public record CompleteCommand(
-            String id
-    ) {
-        public static CompleteCommand of(String id) {
-            return new CompleteCommand(id);
-        }
-    }
-
-    public record ErrorCommand(
-            String id
-    ) {
-        public static ErrorCommand of(String id) {
-            return new ErrorCommand(id);
+        public static ChangeOrderStatusCommand of(String id, DepositOrderStatus status) {
+            return new ChangeOrderStatusCommand(id, status);
         }
     }
 

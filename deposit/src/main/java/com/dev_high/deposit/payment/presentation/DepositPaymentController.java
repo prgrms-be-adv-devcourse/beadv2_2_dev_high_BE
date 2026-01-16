@@ -48,7 +48,7 @@ public class DepositPaymentController {
     @PostMapping("/fail")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositPaymentFailureHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositPaymentFailureHistoryRequest.Create request) {
-        DepositPaymentFailureDto.CreateCommand command = request.toCommand(request.orderId(), request.userId(), request.code(), request.message());
+        DepositPaymentFailureDto.CreateCommand command = request.toCommand(request.orderId(), request.userId(), request.amount(), request.code(), request.message());
         DepositPaymentFailureDto.Info info = historyService.createHistory(command);
         DepositPaymentFailureHistoryResponse.Detail response = DepositPaymentFailureHistoryResponse.Detail.from(info);
         return ApiResponseDto.success(response);

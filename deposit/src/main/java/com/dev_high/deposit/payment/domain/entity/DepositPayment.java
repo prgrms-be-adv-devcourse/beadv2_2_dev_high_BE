@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Table(name = "deposit_payment", schema = "deposit")
+@Table(name = "deposit_payment", schema = "deposit", uniqueConstraints = { @UniqueConstraint(name = "uk_deposit_payment_order_id", columnNames = {"order_id"}) })
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -110,7 +110,7 @@ public class DepositPayment {
         this.requestedAt = requestedAt;
     }
 
-    public void failPayment() {
-        this.status = DepositPaymentStatus.FAILED;
+    public void ChangeStatus(DepositPaymentStatus status) {
+        this.status = status;
     }
 }

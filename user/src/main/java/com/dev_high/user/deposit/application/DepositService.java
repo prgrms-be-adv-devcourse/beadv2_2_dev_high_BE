@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
@@ -53,7 +54,6 @@ public class DepositService {
         deposit.apply(command.type(), command.amount());
         Deposit savedDeposit = depositRepository.save(deposit);
         applicationEventPublisher.publishEvent(DepositEvent.DepositUpdated.of(command.userId(), command.depositOrderId(), command.type(), command.amount(), savedDeposit.getBalance()));
-        eventPublishByDepositType(DepositDto.PublishCommand.of(command.depositOrderId(), command.type()));
         return  DepositDto.Info.from(savedDeposit, command.depositOrderId());
     }
 
@@ -64,5 +64,14 @@ public class DepositService {
             case CHARGE -> applicationEventPublisher.publishEvent(DepositEvent.DepositCharged.of(command.depositOrderId()));
             default -> throw new IllegalArgumentException("지원하지 않는 유형입니다. :" + command.type());
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void compensateBalance(DepositDto.CompensateCommand command) {
+        Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
+                .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
+        deposit.compensate(command.type(), command.amount());
+        depositRepository.save(deposit);
+        applicationEventPublisher.publishEvent(DepositEvent.DepositCompensated.of(command.depositOrderId()));
     }
 }

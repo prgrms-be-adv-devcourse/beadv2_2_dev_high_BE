@@ -6,10 +6,12 @@ package com.dev_high.common.type;
  * CONFIRMED : 결제 승인
  * CANCELED : 결제 취소
  * FAILED : 결제 실패
+ * CONFIRMED_FAILED : 결제 승인 실패
  * */
 public enum DepositPaymentStatus {
     READY,
     CONFIRMED,
     CANCELED,
-    FAILED
+    FAILED,
+    CONFIRMED_FAILED
 }
