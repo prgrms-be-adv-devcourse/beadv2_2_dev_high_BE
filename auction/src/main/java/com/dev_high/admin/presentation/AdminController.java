@@ -4,6 +4,7 @@ import com.dev_high.admin.applicaiton.AdminService;
 import com.dev_high.auction.application.AuctionService;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.presentation.dto.AdminAuctionListRequest;
+import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.dto.ApiResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +21,14 @@ public class AdminController {
 
   private final AuctionService auctionService;
   private final AdminService adminService;
+
+    @Operation(summary = "경매 생성", description = "새로운 경매를 생성합니다.")
+    @PostMapping
+    public ApiResponseDto<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
+        AuctionResponse res = auctionService.createAuction(request);
+        return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
+    }
+
 
 
     @Operation(summary = "경매 목록 전체 조회", description = "페이지네이션과 필터를 통해 경매 목록을 조회합니다.")

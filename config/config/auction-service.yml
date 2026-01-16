@@ -25,7 +25,7 @@ auction:
     lifecycle-cron: 0 */10 * * * *
     ranking-clear-cron: 0 0 0 * * *
   ranking:
-    view-window-minutes: 5
+    view-window-minutes: 1
     bid-weight: 1.0
     view-weight: 1.0
     bidder-weight: 3.0

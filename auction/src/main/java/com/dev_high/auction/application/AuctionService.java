@@ -62,8 +62,13 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
 
-
         return AuctionResponse.fromEntity(auction);
+    }
+
+    public List<AuctionResponse> getAuctions(List<String> auctionIds) {
+
+        return auctionRepository.findByIdIn(auctionIds).stream().map(AuctionResponse::fromEntity).toList();
+
     }
 
     /**

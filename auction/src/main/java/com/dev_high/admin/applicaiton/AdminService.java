@@ -43,9 +43,10 @@ public class AdminService {
         return AuctionResponse.fromEntity(lifecycleService.endNow(auctionId, userId));
     }
 
+
     private String resolveAdminUserId() {
         if (UserContext.get() == null || UserContext.get().userId() == null) {
-            return "ADMIN";
+            return "SYSTEM";
         }
         return UserContext.get().userId();
     }

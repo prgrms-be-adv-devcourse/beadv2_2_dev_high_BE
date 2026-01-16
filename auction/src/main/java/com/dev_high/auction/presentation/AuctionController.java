@@ -60,6 +60,12 @@ public class AuctionController {
     return ApiResponseDto.success(auctionService.getAuction(auctionId));
   }
 
+    @Operation(summary = "경매 리스트 조회", description = "경매 ID list로 정보를 조회합니다.")
+    @GetMapping("{auctionIds}")
+    public ApiResponseDto<List<AuctionResponse>> getAuctionForIds(@PathVariable List<String> auctionIds) {
+        return ApiResponseDto.success(auctionService.getAuctions(auctionIds));
+    }
+
   @Operation(summary = "경매 생성", description = "새로운 경매를 생성합니다.")
   @PostMapping
   public ApiResponseDto<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
