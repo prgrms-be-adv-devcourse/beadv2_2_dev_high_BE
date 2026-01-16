@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/apigateway
+  IMAGE_NAME: ${{ github.repository_owner }}/beadv2_2_dev_high_be/apigateway
   SERVICE_NAME: apigateway
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
 jobs:
