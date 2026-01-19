@@ -2,17 +2,25 @@ package com.dev_high.user.seller.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerCommand;
 import com.dev_high.user.seller.application.dto.SellerResponse;
 import com.dev_high.user.seller.domain.Seller;
 import com.dev_high.user.seller.domain.SellerRepository;
+import com.dev_high.user.seller.domain.SellerSpecification;
+import com.dev_high.user.seller.domain.SellerStatus;
 import com.dev_high.user.seller.exception.SellerAlreadyExistsException;
 import com.dev_high.user.seller.exception.SellerNotFoundException;
 import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +30,7 @@ public class SellerService {
     private final UserDomainService userDomainService;
 
     @Transactional
-    public ApiResponseDto<SellerResponse> create(SellerCommand command) {
+    public ApiResponseDto<SellerResponse> request(SellerCommand command) {
         User user = userDomainService.getUser();
 
         Seller seller = sellerRepository.findById(user.getId())
@@ -36,10 +44,9 @@ public class SellerService {
                 .orElseGet(() -> new Seller(user, command.bankName(), command.bankAccount()));
 
         Seller saved = sellerRepository.save(seller);
-        userDomainService.assignRoleToUser(user, "SELLER");
 
         return ApiResponseDto.success(
-                "판매자 등록이 정상적으로 처리되었습니다.",
+                "판매자 등록 요청이 정상적으로 처리되었습니다.",
                 SellerResponse.from(saved)
         );
     }
@@ -84,5 +91,47 @@ public class SellerService {
 
         return sellerRepository.findByIdAndDeletedYn(userId, "N")
                 .orElseThrow(SellerNotFoundException::new);
+    }
+
+    @Transactional
+    public SellerApproveResult approveSellers(List<Seller> targets, String approvedBy) {
+        if (targets == null || targets.isEmpty()) {
+            return SellerApproveResult.empty();
+        }
+
+        int approved = 0;
+        int roleInserted = 0;
+        int skipped = 0;
+
+        for (Seller seller : targets) {
+            if (seller.getSellerStatus() != SellerStatus.PENDING) {
+                skipped++;
+                continue;
+            }
+
+            User user = userDomainService.getUser(seller.getId());
+
+            seller.markActive(approvedBy);
+
+            if (!userDomainService.getUserRoles(user).contains("SELLER")) {
+                userDomainService.assignRoleToUser(user, "SELLER");
+                roleInserted++;
+            }
+
+            approved++;
+        }
+
+        sellerRepository.saveAll(targets);
+
+        return new SellerApproveResult(approved, roleInserted, skipped, targets.size());
+    }
+
+    public Page<SellerResponse> getAdminSellerList(AdminSellerListRequest request, Pageable pageable) {
+        Page<Seller> page = sellerRepository.findAll(
+                SellerSpecification.from(request),
+                pageable
+        );
+
+        return page.map(SellerResponse::from);
     }
 }
