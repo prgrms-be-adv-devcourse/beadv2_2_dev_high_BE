@@ -115,25 +115,10 @@ public class DepositEventListener {
         if (userId == null || userId.isBlank() || orderId == null || orderId.isBlank() || type == null) {
             log.warn("필수 파라미터 누락 - userId: {}, orderId: {}, type: {}, amount: {}, Offset: {}",
                     userId, orderId, type, amount, record.offset());
+            return;
         }
 
         DepositDto.UsageCommand command = DepositDto.UsageCommand.of(userId, orderId, type, amount);
-        try {
-            depositService.updateBalance(command);
-        } catch (NoSuchElementException e) {
-            log.warn("예치금 잔액 정보를 찾을 수 없습니다", e);
-            depositUpdateFailed(command.depositOrderId());
-        } catch (IllegalArgumentException e) {
-            log.warn("지원하지 않는 예치금 유형입니다.", e);
-            depositUpdateFailed(command.depositOrderId());
-        } catch (Exception e) {
-            log.error("예치금 충전 실패 userId: {}, orderId: {}, amount: {} Offset : {}", command.userId(), command.depositOrderId(), command.type(), record.offset(), e);
-            depositUpdateFailed(command.depositOrderId());
-        }
-    }
-
-    public void depositUpdateFailed(String orderId) {
-        kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_PAYMENT_FAIL_RESPONSE,
-                DepositPaymentfailedEvent.of(orderId));
+        depositService.updateBalance(command);
     }
 }

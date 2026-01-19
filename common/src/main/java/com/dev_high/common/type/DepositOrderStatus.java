@@ -8,6 +8,7 @@ package com.dev_high.common.type;
  * FAILED : 실패 (결제 실패)
  * CANCELLED : 취소 (사용자 요청에 의한 취소)
  * ERROR : 장애발생
+ * PAYMENT_CREATION_ERROR : 결제 생성 시 장애발생
  * */
 public enum DepositOrderStatus {
     PENDING,
@@ -15,5 +16,6 @@ public enum DepositOrderStatus {
     COMPLETED,
     FAILED,
     CANCELLED,
-    ERROR
+    ERROR,
+    PAYMENT_CREATION_ERROR
 }

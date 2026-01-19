@@ -34,4 +34,31 @@ public class DepositEvent {
         }
     }
 
+    public record DepositHistoryCreated(
+            String depositOrderId,
+            DepositType type
+    ) {
+        public static DepositHistoryCreated of(String depositOrderId, DepositType type) {
+            return new DepositHistoryCreated(depositOrderId, type);
+        }
+    }
+
+    public record DepositHistoryFailed(
+            String userId,
+            String depositOrderId,
+            DepositType type,
+            BigDecimal amount
+    ) {
+        public static DepositHistoryFailed of(String userId, String depositOrderId, DepositType type, BigDecimal amount) {
+            return new DepositHistoryFailed(userId, depositOrderId, type, amount);
+        }
+    }
+
+    public record DepositCompensated(
+            String depositOrderId
+    ) {
+        public static DepositCompensated of(String depositOrderId) {
+            return new DepositCompensated(depositOrderId);
+        }
+    }
 }

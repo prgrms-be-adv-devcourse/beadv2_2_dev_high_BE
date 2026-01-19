@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Table(name = "deposit_payment_failure_history", schema = "deposit")
@@ -19,13 +20,16 @@ public class DepositPaymentFailureHistory {
     private long id;
 
     /*
-     * 추후 deposit_order 테이블의 외래 키 관계 명확화를 할수 있음
+     * 추후 deposit_payment 테이블의 외래 키 관계 명확화를 할수 있음
      * */
-    @Column(name = "order_id", length = 20, nullable = false, updatable = false)
-    private String orderId;
+    @Column(name = "payment_id", length = 20, nullable = false, updatable = false)
+    private String paymentId;
 
     @Column(name = "user_id", length = 20, nullable = false, updatable = false)
     private String userId;
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
 
     @Column(name = "code", nullable = false, length = 50, updatable = false)
     private String code;
@@ -40,9 +44,10 @@ public class DepositPaymentFailureHistory {
     private String createdBy;
 
     @Builder
-    public DepositPaymentFailureHistory(String orderId, String userId, String code, String message) {
-        this.orderId = orderId;
+    public DepositPaymentFailureHistory(String paymentId, String userId, BigDecimal amount, String code, String message) {
+        this.paymentId = paymentId;
         this.userId = userId;
+        this.amount = amount;
         this.code = code;
         this.message = message;
         this.createdBy = userId;
@@ -53,10 +58,11 @@ public class DepositPaymentFailureHistory {
         this.createdAt = OffsetDateTime.now();
     }
 
-    public static DepositPaymentFailureHistory create(String orderId, String userId, String code, String message) {
+    public static DepositPaymentFailureHistory create(String paymentId, String userId, BigDecimal amount, String code, String message) {
         return DepositPaymentFailureHistory.builder()
-                .orderId(orderId)
+                .paymentId(paymentId)
                 .userId(userId)
+                .amount(amount)
                 .code(code)
                 .message(message)
                 .build();

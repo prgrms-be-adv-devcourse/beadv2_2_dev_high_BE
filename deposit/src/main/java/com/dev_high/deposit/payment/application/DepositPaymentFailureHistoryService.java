@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
@@ -23,20 +24,14 @@ public class DepositPaymentFailureHistoryService {
     private final DepositOrderRepository depositOrderRepository;
     private final DepositPaymentRepository depositPaymentRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DepositPaymentFailureDto.Info createHistory(DepositPaymentFailureDto.CreateCommand command) {
-        DepositOrder order = depositOrderRepository.findById(command.orderId())
-                .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + command.orderId()));
-
-        DepositPayment payment = depositPaymentRepository.findByDepositOrderId(command.orderId())
-                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + command.orderId()));
-
         DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
-                command.orderId(),
+                command.paymentId(),
                 command.userId(),
+                command.amount(),
                 command.code(),
                 command.message()
-                // [TODO] 실패 당시의 금액 정보도 함께 기록해야 함
         );
         return DepositPaymentFailureDto.Info.from(historyRepository.save(history));
     }
@@ -56,13 +51,13 @@ public class DepositPaymentFailureHistoryService {
 
     @Transactional(readOnly = true)
     public Page<DepositPaymentFailureDto.Info> findHistoriesByOrderId(DepositPaymentFailureDto.SearchCommand command, Pageable pageable) {
-        if (command.orderId() == null || command.orderId().isBlank()) {
+        if (command.paymentId() == null || command.paymentId().isBlank()) {
             throw new IllegalArgumentException("결제 ID는 필수 검색 조건입니다.");
         }
 
-        String orderId = command.orderId();
+        String paymentId = command.paymentId();
 
-        return historyRepository.findByOrderId(orderId, pageable)
+        return historyRepository.findByPaymentId(paymentId, pageable)
                 .map(DepositPaymentFailureDto.Info::from);
     }
 
