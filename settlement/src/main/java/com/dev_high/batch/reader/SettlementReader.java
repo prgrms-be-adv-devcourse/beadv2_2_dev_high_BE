@@ -5,7 +5,10 @@ import com.dev_high.settle.domain.settle.SettlementRepository;
 import com.dev_high.settle.domain.settle.SettlementStatus;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemReader;
@@ -35,9 +38,8 @@ public class SettlementReader implements ItemReader<Settlement> {
     }
 
 
-    Page<Settlement> settlements = settlementRepository.findByStatus(
-        SettlementStatus.valueOf(statusParam),
-        PageRequest.of(page, pageSize));
+    Page<Settlement> settlements = settlementRepository.findByStatusIn(
+            EnumSet.of(SettlementStatus.valueOf(statusParam),SettlementStatus.FAILED), PageRequest.of(page, pageSize));
 
     if (settlements.isEmpty()) {
       return null;
