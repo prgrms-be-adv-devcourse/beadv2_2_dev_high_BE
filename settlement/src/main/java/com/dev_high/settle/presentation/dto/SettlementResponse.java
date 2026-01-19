@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 
 public record SettlementResponse(
         String id,
+        String settlementGroupId,
         String orderId,
         String sellerId,
         String buyerId,

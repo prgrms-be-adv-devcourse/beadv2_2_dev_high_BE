@@ -1,16 +1,17 @@
 package com.dev_high.search.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.search.application.RecommendService;
-import com.dev_high.search.application.SearchService;
-import com.dev_high.search.application.dto.ProductRecommendSummaryResponse;
-import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
-import com.dev_high.search.presentation.dto.RecommendProductsRequest;
+import com.dev_high.search.application.SearchService;
+import com.dev_high.search.application.dto.ProductAutocompleteResponse;
+import com.dev_high.search.application.dto.ProductSearchResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -21,7 +22,6 @@ import java.util.List;
 public class SearchController {
 
     private final SearchService searchService;
-    private final RecommendService recommendService;
 
     @GetMapping()
     public ApiResponseDto<Page<ProductSearchResponse>> searchProductDocument(
@@ -45,10 +45,11 @@ public class SearchController {
         return ApiResponseDto.success(searchService.findSimilarProducts(productId, limit));
     }
 
-    @PostMapping("/recommend")
-    public ApiResponseDto<ProductRecommendSummaryResponse> recommendProducts(
-            @RequestBody RecommendProductsRequest recommendProductsRequest
+    @GetMapping("/autocomplete")
+    public ApiResponseDto<ProductAutocompleteResponse> autocomplete(
+            @RequestParam String prefix,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return recommendService.recommendByWishlistWithSummary(recommendProductsRequest.wishlistProductids());
+        return searchService.autocompleteProductName(prefix, size);
     }
 }

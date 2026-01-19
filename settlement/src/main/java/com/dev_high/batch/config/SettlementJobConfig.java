@@ -47,7 +47,7 @@ public class SettlementJobConfig {
 
   @Bean
   @JobScope
-  public List<Settlement> successSettlements() {
+  public List<Settlement> allSettlements() {
     return Collections.synchronizedList(new ArrayList<>());
   }
 

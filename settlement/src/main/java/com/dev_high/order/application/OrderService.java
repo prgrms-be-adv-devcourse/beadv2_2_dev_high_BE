@@ -1,21 +1,20 @@
 package com.dev_high.order.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.dto.WinningOrderRecommendationResponse;
 import com.dev_high.common.exception.CustomException;
 import com.dev_high.order.application.dto.UpdateOrderProjection;
-import com.dev_high.settle.application.dto.SettlementRegisterRequest;
-import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.order.domain.OrderRepository;
 import com.dev_high.order.domain.OrderStatus;
+import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,16 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import com.dev_high.common.dto.WinningOrderRecommendationResponse;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final ObjectProvider<OrderSettlementRegistrar> settlementRegistrarProvider;
 
 
 
@@ -56,24 +52,18 @@ public class OrderService {
 
 
     /* 구매 확정 수동 처리 */
-    public OrderResponse update(OrderModifyRequest request) {
+    @Transactional
+    public OrderResponse update(OrderModifyRequest request ) {
         WinningOrder order = orderRepository.findById(request.id()).orElse(null);
-
+        String adminUserId = resolveAdminUserId();
         if (order == null) {
             throw new CustomException(HttpStatus.NOT_FOUND,"주문이 존재하지 않습니다.");
         }
 
 
-        order.setStatus(request.status());
-        if (request.status() == OrderStatus.PAID) {
-            order.setPayYn("Y");
-            order.setPayCompleteDate(OffsetDateTime.now());
-        }
+        order.changeStatus(request.status(),adminUserId);
         order = orderRepository.save(order);
-        if (request.status() == OrderStatus.CONFIRM_BUY) {
-            SettlementRegisterRequest registerRequest = SettlementRegisterRequest.fromOrder(order);
-            settlementRegistrarProvider.ifAvailable(registrar -> registrar.register(registerRequest));
-        }
+
 
         return OrderResponse.fromEntity(order);
     }
@@ -97,29 +87,26 @@ public class OrderService {
             );
         }
 
-        if (newStatus == OrderStatus.CONFIRM_BUY) {
-            settlementRegistrarProvider.ifAvailable(registrar -> updated.forEach(item -> registrar.register(
-                new SettlementRegisterRequest(
-                    item.getId(),
-                    item.getSellerId(),
-                    item.getBuyerId(),
-                    item.getAuctionId(),
-                    item.getWinningAmount()
-                )
-            )));
-        }
+
 
         return updated;
     }
-
+    @Transactional
     public OrderResponse create(OrderRegisterRequest request) {
 
         String validate = validateRegisterParam(request);
+        String adminUserId = resolveAdminUserId();
 
         if (validate != null) {
             throw new CustomException(validate);
         }
-        WinningOrder order = WinningOrder.fromRequest(request);
+
+        if (orderRepository.existsByAuctionIdAndStatus(request.auctionId(), OrderStatus.UNPAID)) {
+            throw new CustomException("해당 경매의 미결제 주문이 이미 존재합니다.");
+        }
+
+        WinningOrder order = WinningOrder.fromRequest(request,adminUserId);
+
         WinningOrder result = orderRepository.save(order);
 
         return OrderResponse.fromEntity(result);
@@ -209,5 +196,12 @@ public class OrderService {
                 order.getWinningDate(),
                 order.getStatus().name()
         )).toList();
+    }
+
+    private String resolveAdminUserId() {
+        if (UserContext.get() == null || UserContext.get().userId() == null) {
+            return "SYSTEM";
+        }
+        return UserContext.get().userId();
     }
 }

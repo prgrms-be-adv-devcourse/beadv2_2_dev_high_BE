@@ -94,17 +94,38 @@ subprojects {
         implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     }
+    project(':apigateway'){
+        configurations.configureEach {
+            exclude group: 'org.springframework.ai', module: 'spring-ai-starter-model-openai'
+            exclude group: 'org.springframework.kafka', module:'spring-kafka'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-jpa'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-core'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-apt'
+        }
+    }
 
     project(':config') {
         configurations.configureEach {
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-config'
+            exclude group: 'org.springframework.ai', module: 'spring-ai-starter-model-openai'
+            exclude group: 'org.springframework.kafka', module:'spring-kafka'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-jpa'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-core'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-apt'
+            exclude group: 'org.springdoc', module: 'springdoc-openapi-starter-webmvc-ui'
         }
     }
     project(':discovery') {
         configurations.configureEach {
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-config'
             exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
+            exclude group: 'org.springframework.ai', module: 'spring-ai-starter-model-openai'
+            exclude group: 'org.springframework.kafka', module:'spring-kafka'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-jpa'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-core'
+            exclude group: 'io.github.openfeign.querydsl', module: 'querydsl-apt'
+            exclude group: 'org.springdoc', module: 'springdoc-openapi-starter-webmvc-ui'
         }
     }
 

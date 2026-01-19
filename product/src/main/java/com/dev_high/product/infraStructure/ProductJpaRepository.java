@@ -19,5 +19,5 @@ public interface ProductJpaRepository extends JpaRepository<Product, String> {
 
     List<Product> findByIdIn(List<String> ids);
 
-    List<Product> findBySellerIdAndDeletedYn(String sellerId, DeleteStatus deletedYn, Pageable pageable);
+    Page<Product> findBySellerIdAndDeletedYn(String sellerId, DeleteStatus deletedYn, Pageable pageable);
 }

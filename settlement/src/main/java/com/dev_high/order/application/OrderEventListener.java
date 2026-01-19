@@ -40,11 +40,11 @@ public class OrderEventListener {
 
             OrderResponse res = orderService.create(
                     new OrderRegisterRequest(payload.sellerId(), payload.buyerId(), payload.productId(), payload.productName(),payload.auctionId(),
-                            payload.amount(),payload.depositAmount(), payload.orderDateTime(), OrderStatus.UNPAID));
+                            payload.amount(),payload.depositAmount(), payload.orderDateTime()));
 
             NotificationRequestEvent notificationRequestEvent = new NotificationRequestEvent(
                     List.of(res.buyerId()),
-                    "주문이 생성되었습니다. 3일내 결제를 완료해주세요. 미결제시 주문이 취소됩니다.",
+                    "주문이 완료되었습니다. 구매 기한 내 결제를 완료해 주세요. 기한 내 미결제 시 주문이 자동 취소됩니다.",
                     "/orders/" + res.id(),
                     NotificationCategory.Type.ORDER_CREATED
                     );
@@ -71,7 +71,7 @@ public class OrderEventListener {
             DepositOrderCompletedEvent payload = JsonUtil.fromPayload(envelope.payload(),
                     DepositOrderCompletedEvent.class);
 
-            orderService.update(new OrderModifyRequest(payload.orderId(), OrderStatus.valueOf(payload.status())));
+            orderService.update(new OrderModifyRequest(payload.orderId(), OrderStatus.valueOf(payload.status()) ,null));
 
         } catch (Exception e) {
             log.error("주문 상태 실패 재시도: {}", e);

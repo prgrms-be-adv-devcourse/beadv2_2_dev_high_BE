@@ -71,6 +71,7 @@ public class AuctionSummaryCacheService {
         OffsetDateTime auctionEndAt = parseOffsetDateTime(raw.get("auctionEndAt"));
         BigDecimal depositAmount = parseBigDecimal(raw.get("depositAmount"));
         boolean deletedYn = "Y".equalsIgnoreCase(toString(raw.get("deletedYn")));
+        String sellerId = toString(raw.get("sellerId"));
         return new AuctionSummary(
                 id,
                 productId,
@@ -82,7 +83,8 @@ public class AuctionSummaryCacheService {
                 auctionStartAt,
                 auctionEndAt,
                 depositAmount,
-                deletedYn
+                deletedYn,
+                sellerId
         );
     }
 
@@ -148,7 +150,8 @@ public class AuctionSummaryCacheService {
             OffsetDateTime auctionStartAt,
             OffsetDateTime auctionEndAt,
             BigDecimal depositAmount,
-            boolean deletedYn
+            boolean deletedYn,
+            String sellerId
     ) {
     }
 }

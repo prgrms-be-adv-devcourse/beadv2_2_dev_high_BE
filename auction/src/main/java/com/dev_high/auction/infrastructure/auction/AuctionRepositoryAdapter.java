@@ -6,6 +6,8 @@ import com.dev_high.auction.domain.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -102,6 +105,11 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     @Override
     public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
+        NumberExpression<BigDecimal> effectiveBid = new CaseBuilder()
+                .when(qLiveState.currentBid.isNull().or(qLiveState.currentBid.eq(BigDecimal.ZERO)))
+                .then(qAuction.startBid)
+                .otherwise(qLiveState.currentBid);
+
         BooleanBuilder builder = new BooleanBuilder();
         if (condition.deletedYn() != null) {
             builder.and(qAuction.deletedYn.eq(condition.deletedYn()));
@@ -111,10 +119,10 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         }
 
         if (condition.minBid() != null) {
-            builder.and(qAuction.startBid.goe(condition.minBid()));
+            builder.and(effectiveBid.goe(condition.minBid()));
         }
         if (condition.maxBid() != null) {
-            builder.and(qAuction.startBid.loe(condition.maxBid()));
+            builder.and(effectiveBid.loe(condition.maxBid()));
         }
 
         if (condition.productId() != null) {
@@ -122,7 +130,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         }
 
         if (condition.sellerId() != null) {
-            builder.and(qAuction.createdBy.eq(condition.sellerId()));
+            builder.and(qAuction.sellerId.eq(condition.sellerId()));
         }
 
         if (condition.startFrom() != null) {
@@ -144,6 +152,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         long total = Optional.ofNullable(
                 queryFactory.select(qAuction.count())
                         .from(qAuction)
+                        .leftJoin(qAuction.liveState, qLiveState)
                         .where(builder)
                         .fetchOne()
         ).orElse(0L);
@@ -152,6 +161,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         long offset = (long) condition.pageNumber() * condition.pageSize();
 
         List<Auction> content = queryFactory.selectFrom(qAuction)
+                .leftJoin(qAuction.liveState, qLiveState)
                 .where(builder)
                 .offset(offset)
                 .limit(condition.pageSize())

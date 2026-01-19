@@ -19,13 +19,12 @@ public class OrderRepositoryAdapter implements OrderRepository {
 
     private final OrderJpaRepository orderRepository;
 
+
     @Override
-    public Page<WinningOrder> findAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Optional<WinningOrder> findById(String id) {
+        return orderRepository.findById(id);
     }
-
-
-
+    
     @Override
     public WinningOrder save(WinningOrder order) {
         return orderRepository.save(order);
@@ -33,23 +32,20 @@ public class OrderRepositoryAdapter implements OrderRepository {
 
     @Override
     public Page<WinningOrder> findAllOrdersBySellerId(String sellerId ,Pageable pageable) {
-        return orderRepository.findAllOrdersBySellerId(sellerId ,pageable);
+
+        return orderRepository.findAllOrdersBySellerIdAndDeletedYn(sellerId ,pageable ,"N");
     }
 
     @Override
     public Page<WinningOrder> findAllOrdersByBuyerId(String buyerId ,Pageable pageable) {
-        return orderRepository.findAllOrdersByBuyerId(buyerId ,pageable);
+        return orderRepository.findAllOrdersByBuyerIdAndDeletedYn(buyerId ,pageable,"N");
     }
 
-    @Override
-    public Optional<WinningOrder> findById(String id) {
-        return orderRepository.findById(id);
-    }
 
     @Override
     public Page<WinningOrder> findAllByStatusAndUpdatedAtBetween(OrderStatus status, OffsetDateTime start,
                                                                  OffsetDateTime end, Pageable pageable) {
-        return orderRepository.findAllByStatusAndUpdatedAtBetween(status, start, end, pageable);
+        return orderRepository.findAllByStatusAndUpdatedAtBetweenAndDeletedYn(status, start, end, pageable,"N");
     }
 
     @Override
@@ -76,17 +72,22 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public Long getStatusCount(String buyerId, OrderStatus status) {
 
-        return orderRepository.countByBuyerIdAndStatus(buyerId, status);
+        return orderRepository.countByBuyerIdAndStatusAndDeletedYn(buyerId, status,"N");
     }
 
     @Override
     public Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable) {
-        return orderRepository.findByBuyerIdAndStatus(buyerId, status ,pageable);
+        return orderRepository.findByBuyerIdAndStatusAndDeletedYn(buyerId, status ,pageable,"N");
     }
 
     @Override
     public Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable) {
-        return orderRepository.findBySellerIdAndStatus(sellerId, status ,pageable);
+        return orderRepository.findBySellerIdAndStatusAndDeletedYn(sellerId, status ,pageable,"N");
+    }
+
+    @Override
+    public boolean existsByAuctionIdAndStatus(String auctionId, OrderStatus status) {
+        return orderRepository.existsByAuctionIdAndStatusAndDeletedYn(auctionId, status,"N");
     }
 
     @Override
@@ -95,10 +96,12 @@ public class OrderRepositoryAdapter implements OrderRepository {
         OffsetDateTime winningDate,
         Pageable pageable
     ) {
-        return orderRepository.findByProductIdInAndWinningDateAfter(
+
+        return orderRepository.findByProductIdInAndWinningDateAfterAndDeletedYn(
             productIds,
             winningDate,
-            pageable
+            pageable,
+                "N"
         );
     }
 

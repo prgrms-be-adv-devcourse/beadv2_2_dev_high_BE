@@ -12,7 +12,7 @@ public record AuctionResponse(String id, String productId, String productName,Au
                               BigDecimal currentBid,
                               String highestUserId,
                               OffsetDateTime auctionStartAt, OffsetDateTime auctionEndAt,
-                              BigDecimal depositAmount, boolean deletedYn
+                              BigDecimal depositAmount, boolean deletedYn ,String sellerId
 ) {
 
 
@@ -25,6 +25,6 @@ public record AuctionResponse(String id, String productId, String productName,Au
 
         return new AuctionResponse(auction.getId(), auction.getProductId(), auction.getProductName(), auction.getStatus(),
                 auction.getStartBid(), current, highestUserId, auction.getAuctionStartAt(),
-                auction.getAuctionEndAt(), auction.getDepositAmount(), delYn);
+                auction.getAuctionEndAt(), auction.getDepositAmount(), delYn ,auction.getSellerId());
     }
 }

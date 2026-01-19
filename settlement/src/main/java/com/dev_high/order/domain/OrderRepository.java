@@ -9,8 +9,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface OrderRepository {
 
-    // 관리자용 조건 추가하기  queryDsl 예정,
-    Page<WinningOrder> findAllOrders(Pageable pageable);
 
     WinningOrder save(WinningOrder order);
 
@@ -41,11 +39,14 @@ public interface OrderRepository {
 
     Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
 
+    boolean existsByAuctionIdAndStatus(String auctionId, OrderStatus status);
+
     List<WinningOrder> findWinningOrdersForRecommendation(
         List<String> productIds,
         OffsetDateTime winningDate,
         Pageable pageable
     );
+
 
 
 }

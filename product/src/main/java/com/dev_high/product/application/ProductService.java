@@ -15,9 +15,12 @@ import com.dev_high.product.exception.ProductUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -132,11 +135,11 @@ public class ProductService {
         return ProductInfo.from(product);
     }
 
+    //TODO: pagenation
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProducts(Pageable pageable) {
-        Page<Product> products;
-        products = productRepository.findAll(pageable);
-        return products.stream().map(ProductInfo::from).toList();
+    public Page<ProductInfo> getProducts(Pageable pageable) {
+        Page<Product> products=productRepository.findAll(pageable);;
+        return products.map(ProductInfo::from);
     }
 
 
@@ -148,10 +151,9 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
-        return productRepository.findBySellerId(sellerId, pageable).stream()
-                .map(ProductInfo::from)
-                .toList();
+    public Page<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
+        Page<Product> products = productRepository.findBySellerId(sellerId, pageable);
+        return products.map(ProductInfo::from);
     }
 
     @Transactional(readOnly = true)
