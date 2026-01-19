@@ -161,4 +161,8 @@ public class AdminService {
         return UserContext.get().userId();
     }
 
+    public Long getOrderCount(OrderStatus status) {
+
+        return adminRepository.countOrders(status);
+    }
 }

@@ -2,6 +2,7 @@ package com.dev_high.admin.domain;
 
 import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
+import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.settle.domain.group.SettlementGroup;
 import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.settle.domain.settle.Settlement;
@@ -12,5 +13,5 @@ public interface AdminRepository {
 
     Page<WinningOrder> findAllWinningOrder(Pageable pageable, OrderAdminSearchFilter filter);
     Page<SettlementGroup> findAllSettlementGroups(Pageable pageable, SettlementAdminSearchFilter filter);
-
+    Long countOrders(OrderStatus status);
 }

@@ -5,6 +5,7 @@ import com.dev_high.admin.application.AdminService;
 import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
 import com.dev_high.order.application.OrderService;
+import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
 import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
@@ -34,6 +35,12 @@ public class AdminController {
         Pageable pageable) {
 
         return ApiResponseDto.success(adminService.findAllOrders(filter, pageable));
+    }
+
+    @GetMapping("orders/count")
+    public ApiResponseDto<Long> getOrderCount(@RequestParam(required = false) OrderStatus status) {
+
+     return  ApiResponseDto.success(adminService.getOrderCount(status));
     }
 
     @PostMapping("orders")
