@@ -9,6 +9,7 @@ spring:
         schema-name: product
         table-name: product_embed
         dimensions: 1536
+        id-type: TEXT
         initialize-schema: false
     openai:
       api-key: ${GPT_API_KEY}
