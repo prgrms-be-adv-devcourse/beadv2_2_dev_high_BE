@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 
 public class DepositPaymentFailureHistoryRequest {
     public record Create(
-            @Schema(description = "예치금 주문 ID")
-            @NotBlank(message = "예치금 주문 ID는 필수입니다.")
-            String orderId,
+            @Schema(description = "주문 ID")
+            @NotBlank(message = "주문 ID는 필수입니다.")
+            String paymentId,
 
             @Schema(description = "사용자 ID")
             @NotBlank(message = "사용자 ID는 필수입니다.")
@@ -29,17 +29,17 @@ public class DepositPaymentFailureHistoryRequest {
             @NotBlank(message = "메시지는 필수입니다.")
             String message
     ) {
-        public DepositPaymentFailureDto.CreateCommand toCommand(String orderId, String userId, BigDecimal amount, String code, String message) {
-            return DepositPaymentFailureDto.CreateCommand.of(orderId, userId, amount, code, message);
+        public DepositPaymentFailureDto.CreateCommand toCommand(String paymentId, String userId, BigDecimal amount, String code, String message) {
+            return DepositPaymentFailureDto.CreateCommand.of(paymentId, userId, amount, code, message);
         }
     }
 
     public record Search(
-            String orderId,
+            String paymentId,
             String userId
     ) {
-        public DepositPaymentFailureDto.SearchCommand toCommand(String orderId, String userId) {
-            return DepositPaymentFailureDto.SearchCommand.of(orderId, userId);
+        public DepositPaymentFailureDto.SearchCommand toCommand(String paymentId, String userId) {
+            return DepositPaymentFailureDto.SearchCommand.of(paymentId, userId);
         }
     }
 }

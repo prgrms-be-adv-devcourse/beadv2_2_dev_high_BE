@@ -29,15 +29,15 @@ public class PaymentEvent {
         }
     }
 
-    public record PaymentConfrimFailed(
+    public record PaymentConfirmFailed(
             String orderId,
             String userId,
             BigDecimal amount,
             String code,
             String message
     ) {
-        public static PaymentConfrimFailed of(String orderId, String userId, BigDecimal amount, String code, String message) {
-            return new PaymentConfrimFailed(orderId, userId, amount, code, message);
+        public static PaymentConfirmFailed of(String orderId, String userId, BigDecimal amount, String code, String message) {
+            return new PaymentConfirmFailed(orderId, userId, amount, code, message);
         }
     }
 }

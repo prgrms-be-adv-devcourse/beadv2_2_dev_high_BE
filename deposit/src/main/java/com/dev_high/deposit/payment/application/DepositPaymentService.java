@@ -112,7 +112,7 @@ public class DepositPaymentService {
         DepositPayment payment = loadPayment(orderId);
         payment.ChangeStatus(DepositPaymentStatus.CONFIRMED_FAILED);
         depositPaymentRepository.save(payment);
-        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfrimFailed.of(orderId, userId, amount, code, message));
+        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmFailed.of(orderId, userId, amount, code, message));
     }
 
     private DepositPayment createAndSavePayment(String orderId, String userId, BigDecimal amount) {

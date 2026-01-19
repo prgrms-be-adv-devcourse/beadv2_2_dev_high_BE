@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 public class DepositPaymentResponse {
     public record Detail(
-            @Schema(description = "예치금 주문 ID")
+            @Schema(description = "주문 ID")
             String orderId,
 
             @Schema(description = "사용자 ID")

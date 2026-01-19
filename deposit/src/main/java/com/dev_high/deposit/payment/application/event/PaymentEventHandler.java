@@ -41,7 +41,7 @@ public class PaymentEventHandler {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentConfirmFailed(PaymentEvent.PaymentConfrimFailed event) {
+    public void handlePaymentConfirmFailed(PaymentEvent.PaymentConfirmFailed event) {
         failureHistoryService.createHistory(DepositPaymentFailureDto.CreateCommand.of(event.orderId(), event.userId(), event.amount(), event.code(), event.message()));
     }
 

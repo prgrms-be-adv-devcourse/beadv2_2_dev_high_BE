@@ -27,7 +27,7 @@ public class DepositPaymentFailureHistoryService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DepositPaymentFailureDto.Info createHistory(DepositPaymentFailureDto.CreateCommand command) {
         DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
-                command.orderId(),
+                command.paymentId(),
                 command.userId(),
                 command.amount(),
                 command.code(),
@@ -51,13 +51,13 @@ public class DepositPaymentFailureHistoryService {
 
     @Transactional(readOnly = true)
     public Page<DepositPaymentFailureDto.Info> findHistoriesByOrderId(DepositPaymentFailureDto.SearchCommand command, Pageable pageable) {
-        if (command.orderId() == null || command.orderId().isBlank()) {
+        if (command.paymentId() == null || command.paymentId().isBlank()) {
             throw new IllegalArgumentException("결제 ID는 필수 검색 조건입니다.");
         }
 
-        String orderId = command.orderId();
+        String paymentId = command.paymentId();
 
-        return historyRepository.findByOrderId(orderId, pageable)
+        return historyRepository.findByPaymentId(paymentId, pageable)
                 .map(DepositPaymentFailureDto.Info::from);
     }
 

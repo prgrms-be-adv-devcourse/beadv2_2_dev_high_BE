@@ -48,7 +48,7 @@ public class DepositPaymentController {
     @PostMapping("/fail")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositPaymentFailureHistoryResponse.Detail> createHistory(@RequestBody @Valid DepositPaymentFailureHistoryRequest.Create request) {
-        DepositPaymentFailureDto.CreateCommand command = request.toCommand(request.orderId(), request.userId(), request.amount(), request.code(), request.message());
+        DepositPaymentFailureDto.CreateCommand command = request.toCommand(request.paymentId(), request.userId(), request.amount(), request.code(), request.message());
         DepositPaymentFailureDto.Info info = historyService.createHistory(command);
         DepositPaymentFailureHistoryResponse.Detail response = DepositPaymentFailureHistoryResponse.Detail.from(info);
         return ApiResponseDto.success(response);
@@ -66,7 +66,7 @@ public class DepositPaymentController {
     @Operation(summary = "주문 ID별 실패 이력 조회", description = "주문 ID로 결제 실패 이력을 조회")
     @GetMapping("/fail/paymentId")
     public ApiResponseDto<Page<DepositPaymentFailureHistoryResponse.Detail>> findHistoriesByOrderId(@RequestBody DepositPaymentFailureHistoryRequest.Search request, Pageable pageable) {
-        DepositPaymentFailureDto.SearchCommand command = request.toCommand(request.orderId(), request.userId());
+        DepositPaymentFailureDto.SearchCommand command = request.toCommand(request.paymentId(), request.userId());
         Page<DepositPaymentFailureDto.Info> infos = historyService.findHistoriesByOrderId(command, pageable);
         Page<DepositPaymentFailureHistoryResponse.Detail> response = infos.map(DepositPaymentFailureHistoryResponse.Detail::from);
         return ApiResponseDto.success(response);
@@ -75,7 +75,7 @@ public class DepositPaymentController {
     @Operation(summary = "사용자 ID별 실패 이력 조회", description = "사용자 ID로 결제 실패 이력을 조회")
     @GetMapping("/search/user/userId")
     public ApiResponseDto<Page<DepositPaymentFailureHistoryResponse.Detail>> findHistoriesByUserId(@RequestBody DepositPaymentFailureHistoryRequest.Search request, Pageable pageable) {
-        DepositPaymentFailureDto.SearchCommand command = request.toCommand(request.orderId(), request.userId());
+        DepositPaymentFailureDto.SearchCommand command = request.toCommand(request.paymentId(), request.userId());
         Page<DepositPaymentFailureDto.Info> infos = historyService.findHistoriesByUserId(command, pageable);
         Page<DepositPaymentFailureHistoryResponse.Detail> response = infos.map(DepositPaymentFailureHistoryResponse.Detail::from);
         return ApiResponseDto.success(response);

@@ -6,29 +6,29 @@ import java.math.BigDecimal;
 
 public class DepositPaymentFailureDto {
     public record CreateCommand(
-            String orderId,
+            String paymentId,
             String userId,
             BigDecimal amount,
             String code,
             String message
     ) {
-        public static CreateCommand of(String orderId, String userId, BigDecimal amount, String code, String message) {
-            return new CreateCommand(orderId, userId, amount, code, message);
+        public static CreateCommand of(String paymentId, String userId, BigDecimal amount, String code, String message) {
+            return new CreateCommand(paymentId, userId, amount, code, message);
         }
     }
 
     public record SearchCommand(
-            String orderId,
+            String paymentId,
             String userId
     ) {
-        public static SearchCommand of(String orderId, String userId) {
-            return new SearchCommand(orderId, userId);
+        public static SearchCommand of(String paymentId, String userId) {
+            return new SearchCommand(paymentId, userId);
         }
     }
 
     public record Info(
             Long id,
-            String orderId,
+            String paymentId,
             String userId,
             String code,
             String message
@@ -36,7 +36,7 @@ public class DepositPaymentFailureDto {
         public static Info from(DepositPaymentFailureHistory depositPaymentFailureHistory) {
             return new Info(
                     depositPaymentFailureHistory.getId(),
-                    depositPaymentFailureHistory.getOrderId(),
+                    depositPaymentFailureHistory.getPaymentId(),
                     depositPaymentFailureHistory.getUserId(),
                     depositPaymentFailureHistory.getCode(),
                     depositPaymentFailureHistory.getMessage()

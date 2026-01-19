@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 public class DepositPaymentRequest {
     public record Create(
-            @Schema(description = "예치금 주문 ID")
+            @Schema(description = "주문 ID")
             @NotBlank(message = "주문 ID는 필수입니다.")
             String orderId,
 

@@ -8,8 +8,8 @@ public class DepositPaymentFailureHistoryResponse {
             @Schema(description = "이력 ID")
             Long id,
 
-            @Schema(description = "예치금 주문 ID")
-            String orderId,
+            @Schema(description = "주문 ID")
+            String paymentId,
 
             @Schema(description = "사용자 ID")
             String userId,
@@ -23,7 +23,7 @@ public class DepositPaymentFailureHistoryResponse {
         public static Detail from(DepositPaymentFailureDto.Info info) {
             return new Detail(
                     info.id(),
-                    info.orderId(),
+                    info.paymentId(),
                     info.userId(),
                     info.code(),
                     info.message()
