@@ -2,12 +2,10 @@ package com.dev_high.user.user.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.user.application.UserService;
+import com.dev_high.user.user.application.dto.UserAddressResponse;
 import com.dev_high.user.user.application.dto.UserNicknameEmailResponse;
 import com.dev_high.user.user.application.dto.UserResponse;
-import com.dev_high.user.user.presentation.dto.PasswordUpdateRequest;
-import com.dev_high.user.user.presentation.dto.UserNicknameEmailRequest;
-import com.dev_high.user.user.presentation.dto.UserSignUpRequest;
-import com.dev_high.user.user.presentation.dto.UserUpdateRequest;
+import com.dev_high.user.user.presentation.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -52,4 +50,23 @@ public class UserController {
         return userService.getUserNicknameAndEmail(request.toCommand());
     }
 
+    @GetMapping("/address")
+    public ApiResponseDto<List<UserAddressResponse>> getAddressList() {
+        return userService.getAddressList();
     }
+
+    @PostMapping("/address")
+    public ApiResponseDto<UserAddressResponse> registerAddress(@RequestBody UserAddressRequest request) {
+        return userService.registerAddress(request.toCommand());
+    }
+
+    @PutMapping("/address/{addressId}")
+    public ApiResponseDto<UserAddressResponse> updateAddress(@RequestParam String addressId, @RequestBody UserAddressRequest request) {
+        return userService.updateAddress(addressId, request.toCommand());
+    }
+
+    @DeleteMapping("/address/{addressId}")
+    public ApiResponseDto<Void> deleteAddress(@RequestParam String addressId) {
+        return userService.deleteAddress(addressId);
+    }
+}

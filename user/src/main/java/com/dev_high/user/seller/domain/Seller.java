@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Entity
-@Table(name = "seller", schema = "\"user\"")
+@Table(name = "seller", schema = "user")
 @Getter
 public class Seller {
 
@@ -46,7 +46,6 @@ public class Seller {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
-
 
     @PrePersist
     public void prePersist() {
