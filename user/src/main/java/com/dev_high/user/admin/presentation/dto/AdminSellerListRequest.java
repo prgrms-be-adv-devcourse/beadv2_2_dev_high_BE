@@ -1,4 +1,4 @@
-package com.dev_high.user.seller.admin.presentation.dto;
+package com.dev_high.user.admin.presentation.dto;
 
 public record AdminSellerListRequest(
         String userId,

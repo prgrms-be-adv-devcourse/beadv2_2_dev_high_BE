@@ -1,6 +1,6 @@
 package com.dev_high.user.seller.domain;
 
-import com.dev_high.user.seller.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;

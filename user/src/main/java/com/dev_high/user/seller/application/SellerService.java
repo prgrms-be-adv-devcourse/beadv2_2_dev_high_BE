@@ -2,7 +2,7 @@ package com.dev_high.user.seller.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.seller.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerCommand;
 import com.dev_high.user.seller.application.dto.SellerResponse;

@@ -1,7 +1,7 @@
-package com.dev_high.user.seller.admin.service;
+package com.dev_high.user.admin.service;
 
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.seller.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerResponse;
@@ -21,7 +21,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SellerAdminService {
+public class AdminService {
     private final JobLauncher jobLauncher;
     private final Job sellerApproveJob;
     private final SellerService sellerService;

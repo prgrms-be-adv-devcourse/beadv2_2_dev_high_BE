@@ -1,10 +1,10 @@
-package com.dev_high.user.seller.admin.presentation;
+package com.dev_high.user.admin.presentation;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.seller.admin.presentation.dto.AdminSellerListRequest;
-import com.dev_high.user.seller.admin.presentation.dto.SellerApproveRequest;
-import com.dev_high.user.seller.admin.service.SellerAdminService;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.SellerApproveRequest;
+import com.dev_high.user.admin.service.AdminService;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,28 +14,28 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/admin/sellers")
-public class SellerAdminController {
+@RequestMapping("/api/v1/admin")
+public class AdminController {
 
-    private final SellerAdminService sellerAdminService;
+    private final AdminService adminService;
 
-    @GetMapping
-    public ApiResponseDto<Page<SellerResponse>> getAuctionList(
+    @GetMapping("/sellers")
+    public ApiResponseDto<Page<SellerResponse>> getSellerList(
             @ModelAttribute AdminSellerListRequest request,
             Pageable pageable) {
-        return sellerAdminService.getAdminSellerList(request, pageable);
+        return adminService.getAdminSellerList(request, pageable);
     }
 
-    @PostMapping("/approve/batch")
+    @PostMapping("/sellers/approve/batch")
     public ApiResponseDto<Void> approveBatch() {
-        return sellerAdminService.runApproveBatch();
+        return adminService.runApproveBatch();
     }
 
-    @PostMapping("/approve/selected")
+    @PostMapping("/sellers/approve/selected")
     public ApiResponseDto<SellerApproveResult> approveSelected(
             @RequestBody SellerApproveRequest request
     ) {
         String adminId = UserContext.get().userId();
-        return sellerAdminService.approveSelectedSeller(request.sellerIds(), adminId);
+        return adminService.approveSelectedSeller(request.sellerIds(), adminId);
     }
 }
