@@ -1,10 +1,6 @@
 package com.dev_high.product.application;
 
-import com.dev_high.product.application.dto.DraftTonePreset;
-import com.dev_high.product.application.dto.ProductAnswer;
-import com.dev_high.product.application.dto.ProductDetailDto;
-import com.dev_high.product.application.dto.ProductRecommendationToolResponse;
-import com.dev_high.product.application.dto.ProductSearchInfo;
+import com.dev_high.product.application.dto.*;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
@@ -13,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -22,10 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
 
 @Service
 @Slf4j
@@ -35,9 +31,16 @@ public class ProductRecommendService {
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
-    private final ProductRecommendationTool productRecommendationTool;
+    private final UserIntentResponseTool userIntentResponseTool;
     private final ObjectMapper objectMapper;
     private final PromptTemplate imageToDetailWithCategoryTemplate;
+    private final PromptTemplate userIntentTemplate;
+    private final PromptTemplate greetingPromptTemplate;
+    private final PromptTemplate productPromptTemplate;
+    private final PromptTemplate servicePromptTemplate;
+    private final PromptTemplate nonProductPromptTemplate;
+    private final PromptTemplate offTopicPromptTemplate;
+    private final PromptTemplate abusivePromptTemplate;
 
 
     //단건색인
@@ -51,6 +54,14 @@ public class ProductRecommendService {
     public int indexAll() {
 
         List<Product> products= productRepository.findAll();
+
+        List<String> productIds = products.stream()
+                .map(Product::getId)
+                .toList();
+
+        if (!productIds.isEmpty()) {
+            vectorStore.delete(productIds);
+        }
 
         List<Document> docList=products.stream()
                 .map(this::toDocument)
@@ -90,49 +101,88 @@ public class ProductRecommendService {
                 .map(ProductSearchInfo::from).toList();
     }
 
-    // 상품RAG 추천
+    // 상품RAG 추천 (플랫폼 전반에 대한 안내로 확장)
     public ProductAnswer answer(String query, int topK) {
 
-        List<ProductSearchInfo> productSearchInfo= search(query, topK);
-        String context = toContext(productSearchInfo);
-
-        String systemText = """
-                너는 중고 경매 플랫폼의 상품 추천 도우미다.
-                아래 규칙을 반드시 지켜라.
-                1) 반드시 tool "product_recommendation_response"를 호출하여 응답한다.
-                2) intent는 GREETING, PRODUCT, SERVICE, OFF_TOPIC, ABUSIVE 중 하나만 사용한다.
-                3) PRODUCT인 경우 제공된 Context 범위 안에서만 답한다.
-                4) PRODUCT인데 Context가 비어 있으면 추천 가능한 상품이 없음을 안내하고 조건을 요청한다.
-                5) GREETING은 짧게 인사 후 상품/조건 질문을 유도한다.
-                6) SERVICE는 로그인/결제/배송 등 문의에 간단히 답하고 필요한 정보를 요청한다. 확실치 않은 내용은 단정하지 않는다.
-                7) OFF_TOPIC은 부드럽게 주제를 전환한다.
-                8) ABUSIVE는 정중히 거절한다.
-                9) 답변은 한국어 1~3문장으로 작성한다.
-                """;
-
-        String userText = """
-                질문: %s
-                Context:
-                %s
-                Context 상태: %s
-                """.formatted(query, context, context.isBlank() ? "EMPTY" : "FILLED");
-
-        ChatResponse response = chatClient.prompt()
-                .system(systemText)
-                .user(userText)
-                .tools(productRecommendationTool)
-                .call()
-                .chatResponse();
-        log.info("chat response raw: {}", response);
-
-        ProductRecommendationToolResponse toolResponse = parseToolResponse(response);
-        if (toolResponse == null || !StringUtils.hasText(toolResponse.answer())) {
-            return new ProductAnswer("현재 추천 답변을 생성하기 어려워요. 찾는 상품이나 조건을 조금 더 알려주세요.", List.of());
+        // 질문 종류(의사) 분류
+        UserIntentResponse userIntentResponse;
+        try {
+            userIntentResponse = chatClient.prompt(userIntentTemplate.create(Map.of("message", query)))
+                    .tools(userIntentResponseTool)
+                    .call()
+                    .entity(UserIntentResponse.class);
+        } catch (Exception e) {
+            log.warn("user intent parse failed: {}", e.getMessage());
+            userIntentResponse = null;
         }
-        if (isProductIntent(toolResponse.intent())) {
-            return new ProductAnswer(toolResponse.answer(), productSearchInfo);
+
+        Map<IntentType, PromptTemplate> templates = Map.of(
+                IntentType.GREETING, greetingPromptTemplate,
+                IntentType.PRODUCT, productPromptTemplate,
+                IntentType.SERVICE, servicePromptTemplate,
+                IntentType.NON_PRODUCT, nonProductPromptTemplate,
+                IntentType.OFF_TOPIC, offTopicPromptTemplate,
+                IntentType.ABUSIVE, abusivePromptTemplate
+        );
+
+        //intent 추출 및 enum값으로 변환
+        IntentType intent = IntentType.from(userIntentResponse != null ? userIntentResponse.intent() : null);
+        PromptTemplate template = templates.get(intent);
+
+        ProductRecommendationResponse recommendResponse;
+
+        // 만약 intent가 product일 경우에는 similarSearch 실행
+        if(isProductIntent(intent.name())){
+            try {
+                List<ProductSearchInfo> productSearchInfo= search(query, topK);
+                String context=toContext(productSearchInfo);
+
+                String userText = """
+                    질문: %s
+                    Context:
+                    %s
+                    """.formatted(query, context);
+                log.info("userText: {}",userText);
+
+                recommendResponse = chatClient.prompt()
+                        .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                        .system(template.render(Map.of(
+                                "intent", intent.name(),
+                                "reasoning", Objects.toString(userIntentResponse.intent(), ""))))
+                        .user(userText)
+                        .call()
+                        .entity(ProductRecommendationResponse.class);
+
+                // LLM이 추천한 결과를 바탕으로 제품정보 필터링
+                List<String> selectedIds = recommendResponse.productIds().stream()
+                                .filter(StringUtils::hasText)
+                                .distinct()
+                                .toList();
+                List<ProductSearchInfo> filtered = productSearchInfo.stream()
+                        .filter(info -> selectedIds.contains(info.productId()))
+                        .toList();
+
+                //답변내용과 최종상품추천 전달
+                return new ProductAnswer(recommendResponse.answer(), filtered);
+            } catch (Exception e) {
+                log.warn("recommend response parse failed: {}", e.getMessage());
+                recommendResponse = null;
+            }
+
+            // intent가 product가 아닌 나머지 답변은 DB조회 없이 바로 LLM에게 답변요청
+        } else {
+            String content= chatClient.prompt()
+                    .system(template.render(Map.of(
+                            "intent", intent.name(),
+                            "reasoning", Objects.toString(userIntentResponse.answer(), ""))))
+                    .user(query)
+                    .call()
+                    .content();
+
+            return new ProductAnswer(content, List.of());
         }
-        return new ProductAnswer(toolResponse.answer(), List.of());
+
+        return new ProductAnswer(recommendResponse.answer(), List.of());
     }
 
 
@@ -162,46 +212,6 @@ public class ProductRecommendService {
             return false;
         }
         return "PRODUCT".equalsIgnoreCase(intent.trim());
-    }
-
-    private ProductRecommendationToolResponse parseToolResponse(ChatResponse response) {
-        if (response == null || response.getResult() == null) {
-            return null;
-        }
-        String content = response.getResult().getOutput().getText();
-        if (!StringUtils.hasText(content)) {
-            return null;
-        }
-        String json = extractJson(content);
-        if (!StringUtils.hasText(json)) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(json, ProductRecommendationToolResponse.class);
-        } catch (Exception e) {
-            log.warn("tool response parse failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private String extractJson(String content) {
-        String trimmed = content.trim();
-        if (trimmed.startsWith("```")) {
-            int start = trimmed.indexOf('{');
-            int end = trimmed.lastIndexOf('}');
-            if (start >= 0 && end > start) {
-                return trimmed.substring(start, end + 1);
-            }
-        }
-        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-            return trimmed;
-        }
-        int start = trimmed.indexOf('{');
-        int end = trimmed.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-            return trimmed.substring(start, end + 1);
-        }
-        return null;
     }
 
 
@@ -254,7 +264,6 @@ public class ProductRecommendService {
         String addContext = DraftTonePreset.buildExtraContext(retryCount);
         String userText = "첨부된 여러 장의 이미지를 종합해서, 위 필드 목록을 만족하는 JSON 한 개 객체만 출력해줘.\n추가 컨텍스트: " + addContext;
 
-
         try {
             return callEntity(systemText, userText, files);
         } catch (Exception e) {
@@ -282,6 +291,9 @@ public class ProductRecommendService {
 
 
     private void validateImage(MultipartFile file) {
+
+
+
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
         String ct = file.getContentType();
         if (ct == null || !ct.startsWith("image/")) {

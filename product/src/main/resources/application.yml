@@ -16,6 +16,15 @@ spring:
       - optional:configserver:http://localhost:8888
       - optional:file:.env[.properties]
 
+  ai:
+    vectorstore:
+      pgvector:
+        schema-name: product
+        table-name: product_embed
+        dimensions: 1536
+        id-type: TEXT
+        initialize-schema: false
+
 ---
 spring:
   config:
