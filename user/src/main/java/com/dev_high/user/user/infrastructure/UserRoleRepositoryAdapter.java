@@ -1,5 +1,7 @@
 package com.dev_high.user.user.infrastructure;
 
+import com.dev_high.user.user.domain.Role;
+import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRole;
 import com.dev_high.user.user.domain.UserRoleRepository;
 import org.springframework.stereotype.Repository;
@@ -44,5 +46,10 @@ public class UserRoleRepositoryAdapter implements UserRoleRepository {
     @Override
     public void deleteAll(List<UserRole> userRoles) {
         userRoleJpaRepository.deleteAll(userRoles);
+    }
+
+    @Override
+    public boolean existsByUserAndRole(User user, Role role) {
+        return userRoleJpaRepository.existsByUserAndRole(user, role);
     }
 }

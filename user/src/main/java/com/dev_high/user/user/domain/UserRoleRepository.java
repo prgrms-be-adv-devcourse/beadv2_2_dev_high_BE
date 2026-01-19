@@ -11,4 +11,5 @@ public interface UserRoleRepository {
     void delete(UserRole userRole);
     List<UserRole> findByUserId(String id);
     void deleteAll(List<UserRole> userRoles);
+    boolean existsByUserAndRole(User user, Role role);
 }

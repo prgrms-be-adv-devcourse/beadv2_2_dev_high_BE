@@ -59,7 +59,6 @@ public class Seller {
     @PreUpdate
     public void preUpdate() {
         updatedAt = OffsetDateTime.now();
-        updatedBy = user.getId();
     }
 
     protected Seller() {
@@ -71,7 +70,12 @@ public class Seller {
         this.bankName = bankName;
         this.bankAccount = bankAccount;
         this.deletedYn = "N";
+        this.sellerStatus = SellerStatus.PENDING;
+    }
+
+    public void markActive(String approvedUserId) {
         this.sellerStatus = SellerStatus.ACTIVE;
+        this.updatedBy = approvedUserId;
     }
 
     public void remove() {
@@ -83,6 +87,7 @@ public class Seller {
     public void update(String bankName, String bankAccount) {
         this.bankName = bankName;
         this.bankAccount = bankAccount;
+        updatedBy = user.getId();
     }
 
     public void revive(String bankName, String bankAccount) {
@@ -90,5 +95,6 @@ public class Seller {
         this.deletedYn = "N";
         this.bankName = bankName;
         this.bankAccount = bankAccount;
+        this.sellerStatus = SellerStatus.PENDING;
     }
 }
