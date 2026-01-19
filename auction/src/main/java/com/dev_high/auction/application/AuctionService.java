@@ -75,21 +75,16 @@ public class AuctionService {
      * 경매를 최초 생성할 때 상품의 커밋이 완료된 이후에 호출되어야 합니다.
      */
     @Transactional
-    public AuctionResponse createAuction(AuctionRequest request) {
-        /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
-        String userId = UserContext.get().userId();
+    public AuctionResponse createAuction(AuctionRequest request ,boolean isAdmin) {
+        String userId =isMine(null,isAdmin);
 
-        if (!userId.equals(request.sellerId())) {
-            throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
-
-        }
 
         validateAuction(request);
-        OffsetDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+        OffsetDateTime start = request.auctionStartAt()
                 .withSecond(0)
                 .withNano(0);
 
-        OffsetDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+        OffsetDateTime end = request.auctionEndAt()
                 .withSecond(0)
                 .withNano(0);
 
@@ -120,26 +115,22 @@ public class AuctionService {
     }
 
     @Transactional
-    public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
-        String userId = UserContext.get().userId();
+    public AuctionResponse modifyAuction(String auctionId, AuctionRequest request, boolean isAdmin) {
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
-        String sellerId = auction.getCreatedBy();
-        if (!sellerId.equals(userId)) {
-            throw new AuctionModifyForbiddenException();
-        }
 
         if (auction.getStatus() != AuctionStatus.READY) {
             throw new AuctionStatusInvalidException(
             );
         }
+        String userId =isMine(auction.getSellerId(),isAdmin);
 
         validateAuction(request);
-        OffsetDateTime start = DateUtil.parse(request.auctionStartAt()).withMinute(0)
+        OffsetDateTime start = request.auctionStartAt()
                 .withSecond(0)
                 .withNano(0);
-        OffsetDateTime end = DateUtil.parse(request.auctionEndAt()).withMinute(0)
+        OffsetDateTime end = request.auctionEndAt()
                 .withSecond(0)
                 .withNano(0);
         validateAuctionTime(start, end);
@@ -155,16 +146,13 @@ public class AuctionService {
 
 
     @Transactional
-    public void removeAuction(String auctionId) {
-        String userId = UserContext.get().userId();
+    public AuctionResponse removeAuction(String auctionId ,boolean isAdmin) {
 
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
-        String sellerId = auction.getCreatedBy();
-        if (!sellerId.equals(userId)) {
-            throw new AuctionModifyForbiddenException();
-        }
+        String userId =isMine(auction.getSellerId(),isAdmin);
+
 
         if (!List.of(AuctionStatus.READY, AuctionStatus.CANCELLED, AuctionStatus.FAILED)
                 .contains(auction.getStatus())) {
@@ -174,20 +162,21 @@ public class AuctionService {
 
         auction.remove(userId);
         auctionSummaryCacheService.delete(auctionId);
+        auction =auctionRepository.save(auction);
 
         // dirty check 자동저장
+        return AuctionResponse.fromEntity(auction);
     }
 
     // 유효성 체크
     private void validateAuction(AuctionRequest request) {
 
 
-        /*TODO: 즉시시작 추가여부에 따라서 변경*/
-        if (!StringUtils.hasText(request.auctionStartAt()) || !StringUtils.hasText(
-                request.auctionEndAt())) {
+        if (request.auctionStartAt() ==null ||
+                request.auctionEndAt() ==null) {
             throw new CustomException("경매 시작/종료 시간은 반드시 입력해야 합니다.");
         }
-        if (DateUtil.parse(request.auctionStartAt()).isAfter(DateUtil.parse(request.auctionEndAt()))) {
+        if (request.auctionStartAt().isAfter(request.auctionEndAt())) {
             throw new CustomException("경매 시작 시간은 종료 시간보다 이전이어야 합니다.");
         }
 
@@ -198,7 +187,6 @@ public class AuctionService {
 
     // 시간 검증
     private void validateAuctionTime(OffsetDateTime start, OffsetDateTime end) {
-        /*TODO: 즉시시작 추가여부에 따라서 변경*/
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -226,5 +214,19 @@ public class AuctionService {
 
         return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity)
                 .toList();
+    }
+
+    private String isMine(String sellerId, boolean isAdmin) {
+        String userId = UserContext.get().userId();
+
+        if(sellerId == null || isAdmin) {
+            return userId;
+        }
+
+        if(StringUtils.isEmpty(userId) || !userId.equals(sellerId)) {
+            throw new AuctionModifyForbiddenException();
+        }
+
+        return userId;
     }
 }

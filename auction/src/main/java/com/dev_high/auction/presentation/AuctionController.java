@@ -69,7 +69,7 @@ public class AuctionController {
   @Operation(summary = "경매 생성", description = "새로운 경매를 생성합니다.")
   @PostMapping
   public ApiResponseDto<AuctionResponse> createAuction(@RequestBody AuctionRequest request) {
-    AuctionResponse res = auctionService.createAuction(request);
+    AuctionResponse res = auctionService.createAuction(request,false);
     return ApiResponseDto.of("CREATED", "성공적으로 저장하였습니다.", res);
 
   }
@@ -78,15 +78,14 @@ public class AuctionController {
   @PutMapping("{auctionId}")
   public ApiResponseDto<AuctionResponse> modifyAuction(@PathVariable String auctionId,
       @RequestBody AuctionRequest request) {
-    AuctionResponse res = auctionService.modifyAuction(auctionId, request);
+    AuctionResponse res = auctionService.modifyAuction(auctionId, request,false);
     return ApiResponseDto.success(res);
   }
 
   @Operation(summary = "경매 삭제", description = "경매 ID로 경매를 삭제합니다.")
   @DeleteMapping("{auctionId}")
-  public ApiResponseDto<Void> removeAuction(@PathVariable String auctionId) {
-    auctionService.removeAuction(auctionId);
-    return ApiResponseDto.success(null);
+  public ApiResponseDto<AuctionResponse> removeAuction(@PathVariable String auctionId) {
+    return ApiResponseDto.success(auctionService.removeAuction(auctionId,false));
   }
 
   @Operation(summary = "오늘의 인기 경매 TOP 조회", description = "입찰 횟수와 입장 조회수를 기반으로 TOP 경매를 조회합니다.")

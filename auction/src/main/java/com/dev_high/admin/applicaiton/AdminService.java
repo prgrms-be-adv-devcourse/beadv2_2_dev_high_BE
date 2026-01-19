@@ -1,17 +1,19 @@
 package com.dev_high.admin.applicaiton;
 
-import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.application.AuctionLifecycleService;
+import com.dev_high.auction.application.dto.AuctionResponse;
+import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.exception.AuctionNotFoundException;
 import com.dev_high.exception.AuctionStatusInvalidException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,8 @@ public class AdminService {
 
     private final AuctionRepository auctionRepository;
     private final AuctionLifecycleService lifecycleService;
+
+
 
     @Transactional
     public AuctionResponse startAuctionNow(String auctionId) {
@@ -42,6 +46,25 @@ public class AdminService {
         }
         return AuctionResponse.fromEntity(lifecycleService.endNow(auctionId, userId));
     }
+
+    public Long getAuctionCount(AuctionStatus status){
+
+
+        return auctionRepository.getAuctionCount(status);
+    }
+
+    public List<AuctionResponse> getAuctionsByProductId(String productId){
+
+        return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity).toList();
+    }
+
+
+
+    public Long getEndingSoonAuctionCount(AuctionStatus status, int withinHours) {
+
+        return auctionRepository.getEndingSoonAuctionCount(status,withinHours);
+    }
+
 
 
     private String resolveAdminUserId() {

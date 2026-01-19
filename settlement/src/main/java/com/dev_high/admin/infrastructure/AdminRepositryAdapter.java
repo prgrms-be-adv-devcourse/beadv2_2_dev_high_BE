@@ -3,6 +3,7 @@ package com.dev_high.admin.infrastructure;
 import com.dev_high.admin.domain.AdminRepository;
 import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
+import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.domain.QWinningOrder;
 import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.settle.domain.group.QSettlementGroup;
@@ -72,6 +73,12 @@ public class AdminRepositryAdapter implements AdminRepository {
             .fetchOne();
 
         return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
+    @Override
+    public Long countOrders(OrderStatus status) {
+        return queryFactory.select(winningOrder.count()).from(winningOrder).where(winningOrder.status.eq(status).and(winningOrder.deletedYn.eq("N"))).fetchOne();
+
     }
 
     private BooleanBuilder buildOrderPredicate(OrderAdminSearchFilter filter) {
