@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -42,18 +41,22 @@ public class UserDomainService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
+    @Transactional(readOnly = true)
     public Set<String> getUserRoles(User user) {
         return userRoleService.getUserRoles(user);
     }
 
+    @Transactional
     public void assignRoleToUser(User user, String roleName) {
         userRoleService.assignRoleToUser(user, roleName);
     }
 
+    @Transactional
     public void revokeRoleFromUser(User user, String roleName) {
         userRoleService.revokeRoleFromUser(user, roleName);
     }
 
+    @Transactional
     public User createOAuthUser(SocialProfileResponse socialProfileResponse) {
         User user = new User (
                 socialProfileResponse.email(),
@@ -79,6 +82,7 @@ public class UserDomainService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public UUID getRoleIdByName(String roleName) {
         Optional<Role> role = roleRepository.findByName(roleName);
         return role.map(Role::getId).orElse(null);
