@@ -84,6 +84,7 @@ public class WishlistService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<String> publishNotificationRequestOnAuctionStart(AuctionStartEvent event) {
         try {
             List<String> userIds = wishlistRepository.findUserIdByProductIdAndDeletedYn(event.productId(), "N");
@@ -93,6 +94,7 @@ public class WishlistService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ApiResponseDto<WishlistResponse> getWishlistItem(String productId) {
         String userId = UserContext.get().userId();
 
