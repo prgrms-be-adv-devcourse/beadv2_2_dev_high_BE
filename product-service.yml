@@ -19,6 +19,10 @@ spring:
           model: gpt-4o-mini
           temperature: 0.2
           max_completion_tokens: 768
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 
 aws:
