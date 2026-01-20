@@ -1,4 +1,8 @@
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
   servlet:
     multipart:
       max-file-size: 20MB     # 파일 하나의 최대 용량
