@@ -2,6 +2,7 @@ package com.dev_high.user.seller.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.kafka.event.user.SellerApprovedEvent;
 import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerCommand;
@@ -15,11 +16,12 @@ import com.dev_high.user.seller.exception.SellerNotFoundException;
 import com.dev_high.user.user.application.UserDomainService;
 import com.dev_high.user.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,6 +30,7 @@ public class SellerService {
 
     private final SellerRepository sellerRepository;
     private final UserDomainService userDomainService;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public ApiResponseDto<SellerResponse> request(SellerCommand command) {
@@ -103,6 +106,8 @@ public class SellerService {
         int roleInserted = 0;
         int skipped = 0;
 
+        List<String> userIds = new ArrayList<>();
+
         for (Seller seller : targets) {
             if (seller.getSellerStatus() != SellerStatus.PENDING) {
                 skipped++;
@@ -116,6 +121,7 @@ public class SellerService {
             if (!userDomainService.getUserRoles(user).contains("SELLER")) {
                 userDomainService.assignRoleToUser(user, "SELLER");
                 roleInserted++;
+                userIds.add(seller.getId());
             }
 
             approved++;
@@ -123,6 +129,9 @@ public class SellerService {
 
         sellerRepository.saveAll(targets);
 
+        publisher.publishEvent(
+                new SellerApprovedEvent(userIds)
+        );
         return new SellerApproveResult(approved, roleInserted, skipped, targets.size());
     }
 

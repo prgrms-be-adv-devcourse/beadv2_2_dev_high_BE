@@ -35,10 +35,10 @@ public class AdminService {
                             .addLong("time", System.currentTimeMillis())
                             .toJobParameters()
             );
-            return ApiResponseDto.success("Batch started. status=" + exec.getStatus(), null);
+            return ApiResponseDto.success("배치 작업이 정상적으로 시작되었습니다. 상태: "+ exec.getStatus(), null);
         } catch (Exception e) {
-            log.warn("admin batch run failed {}", e.getMessage());
-            return ApiResponseDto.fail("Batch run failed: " + e.getMessage(), null);
+            log.warn("관리자 승인 배치 실행 중 오류가 발생했습니다: {}", e.getMessage());
+            return ApiResponseDto.fail("배치 실행에 실패했습니다. 오류 메시지: " + e.getMessage());
         }
     }
 

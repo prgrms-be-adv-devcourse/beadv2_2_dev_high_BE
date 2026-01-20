@@ -61,12 +61,12 @@ public class UserController {
     }
 
     @PutMapping("/address/{addressId}")
-    public ApiResponseDto<UserAddressResponse> updateAddress(@RequestParam String addressId, @RequestBody UserAddressRequest request) {
+    public ApiResponseDto<UserAddressResponse> updateAddress(@PathVariable String addressId, @RequestBody UserAddressRequest request) {
         return userService.updateAddress(addressId, request.toCommand());
     }
 
     @DeleteMapping("/address/{addressId}")
-    public ApiResponseDto<Void> deleteAddress(@RequestParam String addressId) {
+    public ApiResponseDto<Void> deleteAddress(@PathVariable String addressId) {
         return userService.deleteAddress(addressId);
     }
 }
