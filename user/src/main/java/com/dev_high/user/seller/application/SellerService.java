@@ -135,6 +135,7 @@ public class SellerService {
         return new SellerApproveResult(approved, roleInserted, skipped, targets.size());
     }
 
+    @Transactional(readOnly = true)
     public Page<SellerResponse> getAdminSellerList(AdminSellerListRequest request, Pageable pageable) {
         Page<Seller> page = sellerRepository.findAll(
                 SellerSpecification.from(request),
