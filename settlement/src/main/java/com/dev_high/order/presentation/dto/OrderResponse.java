@@ -22,7 +22,8 @@ public record OrderResponse(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         String payYn,
-        String deletedYn
+        String deletedYn,
+        String addressId
 ) {
 
     public static OrderResponse fromEntity(WinningOrder order) {
@@ -41,7 +42,8 @@ public record OrderResponse(
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 order.getPayYn(),
-                order.getDeletedYn()
+                order.getDeletedYn(),
+                order.getAddressId()
         );
     }
 }

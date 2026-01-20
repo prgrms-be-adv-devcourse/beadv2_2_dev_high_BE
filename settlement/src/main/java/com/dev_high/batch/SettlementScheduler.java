@@ -61,7 +61,7 @@ public class SettlementScheduler {
     /**
      * 주문 상태 전환 (기본값은 테스트용, 운영은 config 값 사용)
      */
-    @Scheduled(cron = "${settlement.batch.order-status-cron:5 */3 * * * *}")
+    @Scheduled(cron = "${settlement.batch.order-status-cron:0 */10 * * * *}")
     public void runOrderStatusJob() {
         try {
             // 주문 상태 자동 전환 배치 실행

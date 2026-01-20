@@ -74,6 +74,8 @@ public class WinningOrder {
     @Column(name = "updated_by", length = 50, nullable = false)
     private String updatedBy;
 
+    @Column(name = "address_id")
+    private String addressId;
 
     public WinningOrder(String sellerId, String buyerId, String productId, String productName, String auctionId,
                         BigDecimal winningAmount, BigDecimal depositAmount, OffsetDateTime winningDate,
@@ -133,6 +135,11 @@ public class WinningOrder {
             this.payCompleteDate = OffsetDateTime.now();
         }
         this.status = status;
+        this.updatedBy = updatedBy;
+    }
+
+    public void changeAddress(String addressId, String updatedBy) {
+        this.addressId = addressId;
         this.updatedBy = updatedBy;
     }
 
