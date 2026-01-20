@@ -1,31 +1,27 @@
 package com.dev_high.product.application;
 
-import com.dev_high.common.dto.ChatResult;
-import com.dev_high.product.application.dto.DraftTonePreset;
-import com.dev_high.product.application.dto.ProductAnswer;
-import com.dev_high.product.application.dto.ProductDetailDto;
-import com.dev_high.product.application.dto.ProductSearchInfo;
+import com.dev_high.product.application.dto.*;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
 
 @Service
 @Slf4j
@@ -35,8 +31,16 @@ public class ProductRecommendService {
     private final ProductRepository productRepository;
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
-    private final PromptTemplate recommendTemplate;
+    private final UserIntentResponseTool userIntentResponseTool;
+    private final ObjectMapper objectMapper;
     private final PromptTemplate imageToDetailWithCategoryTemplate;
+    private final PromptTemplate userIntentTemplate;
+    private final PromptTemplate greetingPromptTemplate;
+    private final PromptTemplate productPromptTemplate;
+    private final PromptTemplate servicePromptTemplate;
+    private final PromptTemplate nonProductPromptTemplate;
+    private final PromptTemplate offTopicPromptTemplate;
+    private final PromptTemplate abusivePromptTemplate;
 
 
     //단건색인
@@ -51,9 +55,19 @@ public class ProductRecommendService {
 
         List<Product> products= productRepository.findAll();
 
+        List<String> productIds = products.stream()
+                .map(Product::getId)
+                .toList();
+
+        if (!productIds.isEmpty()) {
+            vectorStore.delete(productIds);
+        }
+
         List<Document> docList=products.stream()
                 .map(this::toDocument)
                 .toList();
+
+
 
         vectorStore.add(docList);
 
@@ -76,7 +90,7 @@ public class ProductRecommendService {
                         .query(query)
                         .topK(topK)
                         .filterExpression(
-                                "deletedYn == 'Y'"
+                                "deletedYn == 'N'"
                         )
                         .build()
         );
@@ -87,30 +101,88 @@ public class ProductRecommendService {
                 .map(ProductSearchInfo::from).toList();
     }
 
-    // 상품RAG 추천
+    // 상품RAG 추천 (플랫폼 전반에 대한 안내로 확장)
     public ProductAnswer answer(String query, int topK) {
 
-        List<ProductSearchInfo> productSearchInfo= search(query, topK);
-        String context = toContext(productSearchInfo);
+        // 질문 종류(의사) 분류
+        UserIntentResponse userIntentResponse;
+        try {
+            userIntentResponse = chatClient.prompt(userIntentTemplate.create(Map.of("message", query)))
+                    .tools(userIntentResponseTool)
+                    .call()
+                    .entity(UserIntentResponse.class);
+        } catch (Exception e) {
+            log.warn("user intent parse failed: {}", e.getMessage());
+            userIntentResponse = null;
+        }
 
-        Prompt prompt = recommendTemplate.create(Map.of(
-                "question", query,
-                "context", context
-        ));
+        Map<IntentType, PromptTemplate> templates = Map.of(
+                IntentType.GREETING, greetingPromptTemplate,
+                IntentType.PRODUCT, productPromptTemplate,
+                IntentType.SERVICE, servicePromptTemplate,
+                IntentType.NON_PRODUCT, nonProductPromptTemplate,
+                IntentType.OFF_TOPIC, offTopicPromptTemplate,
+                IntentType.ABUSIVE, abusivePromptTemplate
+        );
 
-        ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
-        log.info("chat response raw: {}", response);
+        //intent 추출 및 enum값으로 변환
+        IntentType intent = IntentType.from(userIntentResponse != null ? userIntentResponse.intent() : null);
+        PromptTemplate template = templates.get(intent);
 
-        Map<String, Object> metadata = new HashMap<>();
-        response.getMetadata().entrySet()
-                .forEach(entry -> metadata.put(entry.getKey(), entry.getValue()));
+        ProductRecommendationResponse recommendResponse;
 
-        String content = response.getResult().getOutput().getText();
-        log.info("chat response: content='{}', metadata={}", content, metadata);
+        // 만약 intent가 product일 경우에는 similarSearch 실행
+        if(isProductIntent(intent.name())){
+            try {
+                List<ProductSearchInfo> productSearchInfo= search(query, topK);
+                String context=toContext(productSearchInfo);
 
-        ChatResult<String> result = new ChatResult<>(content, metadata);
+                String userText = """
+                    질문: %s
+                    Context:
+                    %s
+                    """.formatted(query, context);
+                log.info("userText: {}",userText);
 
-        return new ProductAnswer(result.content(), productSearchInfo);
+                recommendResponse = chatClient.prompt()
+                        .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                        .system(template.render(Map.of(
+                                "intent", intent.name(),
+                                "reasoning", Objects.toString(userIntentResponse.intent(), ""))))
+                        .user(userText)
+                        .call()
+                        .entity(ProductRecommendationResponse.class);
+
+                // LLM이 추천한 결과를 바탕으로 제품정보 필터링
+                List<String> selectedIds = recommendResponse.productIds().stream()
+                                .filter(StringUtils::hasText)
+                                .distinct()
+                                .toList();
+                List<ProductSearchInfo> filtered = productSearchInfo.stream()
+                        .filter(info -> selectedIds.contains(info.productId()))
+                        .toList();
+
+                //답변내용과 최종상품추천 전달
+                return new ProductAnswer(recommendResponse.answer(), filtered);
+            } catch (Exception e) {
+                log.warn("recommend response parse failed: {}", e.getMessage());
+                recommendResponse = null;
+            }
+
+            // intent가 product가 아닌 나머지 답변은 DB조회 없이 바로 LLM에게 답변요청
+        } else {
+            String content= chatClient.prompt()
+                    .system(template.render(Map.of(
+                            "intent", intent.name(),
+                            "reasoning", Objects.toString(userIntentResponse.answer(), ""))))
+                    .user(query)
+                    .call()
+                    .content();
+
+            return new ProductAnswer(content, List.of());
+        }
+
+        return new ProductAnswer(recommendResponse.answer(), List.of());
     }
 
 
@@ -135,6 +207,13 @@ public class ProductRecommendService {
         return value == null ? "" : value;
     }
 
+    private boolean isProductIntent(String intent) {
+        if (intent == null) {
+            return false;
+        }
+        return "PRODUCT".equalsIgnoreCase(intent.trim());
+    }
+
 
     private Document toDocument(Product product) {
         String categories = product.getCategories().stream()
@@ -156,6 +235,7 @@ public class ProductRecommendService {
         );
 
         return new Document(
+                product.getId(),
                 content,
                 Map.of(
                         "productId", product.getId(),
@@ -184,7 +264,6 @@ public class ProductRecommendService {
         String addContext = DraftTonePreset.buildExtraContext(retryCount);
         String userText = "첨부된 여러 장의 이미지를 종합해서, 위 필드 목록을 만족하는 JSON 한 개 객체만 출력해줘.\n추가 컨텍스트: " + addContext;
 
-
         try {
             return callEntity(systemText, userText, files);
         } catch (Exception e) {
@@ -212,6 +291,9 @@ public class ProductRecommendService {
 
 
     private void validateImage(MultipartFile file) {
+
+
+
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
         String ct = file.getContentType();
         if (ct == null || !ct.startsWith("image/")) {

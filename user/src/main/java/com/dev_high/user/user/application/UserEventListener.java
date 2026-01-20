@@ -15,7 +15,6 @@ public class UserEventListener {
 
     private final KafkaEventPublisher eventPublisher;
 
-
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(String event) {
         eventPublisher.publish(KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED, event);
