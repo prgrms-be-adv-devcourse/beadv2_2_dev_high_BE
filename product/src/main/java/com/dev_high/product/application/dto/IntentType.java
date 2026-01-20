@@ -6,6 +6,7 @@ public enum IntentType {
 
     GREETING("인사"),
     PRODUCT("상품 문의"),
+    GENERIC_RECOMMENDATION("범용 추천 요청"),
     SERVICE("서비스 문의"),
     NON_PRODUCT("비상품 질문"),
     OFF_TOPIC("주제 외 질문"),

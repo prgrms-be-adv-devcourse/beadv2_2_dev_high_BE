@@ -4,7 +4,6 @@ import com.dev_high.product.application.dto.*;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.AdvisorParams;
@@ -13,13 +12,13 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -32,7 +31,8 @@ public class ProductRecommendService {
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
     private final UserIntentResponseTool userIntentResponseTool;
-    private final ObjectMapper objectMapper;
+    private final FileService fileService;
+    private final StringRedisTemplate stringRedisTemplate;
     private final PromptTemplate imageToDetailWithCategoryTemplate;
     private final PromptTemplate userIntentTemplate;
     private final PromptTemplate greetingPromptTemplate;
@@ -41,6 +41,9 @@ public class ProductRecommendService {
     private final PromptTemplate nonProductPromptTemplate;
     private final PromptTemplate offTopicPromptTemplate;
     private final PromptTemplate abusivePromptTemplate;
+
+    private static final String SUMMARY_KEY_PREFIX = "auction:summary:";
+    private static final String RANKING_KEY = "auction:ranking:today";
 
 
     //단건색인
@@ -119,6 +122,7 @@ public class ProductRecommendService {
         Map<IntentType, PromptTemplate> templates = Map.of(
                 IntentType.GREETING, greetingPromptTemplate,
                 IntentType.PRODUCT, productPromptTemplate,
+                IntentType.GENERIC_RECOMMENDATION, productPromptTemplate,
                 IntentType.SERVICE, servicePromptTemplate,
                 IntentType.NON_PRODUCT, nonProductPromptTemplate,
                 IntentType.OFF_TOPIC, offTopicPromptTemplate,
@@ -129,7 +133,44 @@ public class ProductRecommendService {
         IntentType intent = IntentType.from(userIntentResponse != null ? userIntentResponse.intent() : null);
         PromptTemplate template = templates.get(intent);
 
+        log.info("question intent: {}", intent.toString());
+
         ProductRecommendationResponse recommendResponse;
+
+        if (intent == IntentType.GENERIC_RECOMMENDATION) {
+            List<ProductSearchInfo> rankedProducts =
+                    fetchProductsByIds(getProductIdsByAuctionRanking());
+            String context = toContext(rankedProducts);
+            String userText = """
+                    질문: %s
+                    Context:
+                    %s
+                    """.formatted(query, context);
+
+            String answer = "인기 경매 기준으로 추천했어요.";
+            try {
+                ProductRecommendationResponse response = chatClient.prompt()
+                        .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
+                        .system(template.render(Map.of(
+                                "intent", intent.name(),
+                                "reasoning", Objects.toString(userIntentResponse != null ? userIntentResponse.intent() : null, ""))))
+                        .user(userText)
+                        .call()
+                        .entity(ProductRecommendationResponse.class);
+                if (response != null && StringUtils.hasText(response.answer())) {
+                    answer = response.answer();
+                }
+            } catch (Exception e) {
+                log.warn("generic recommendation response parse failed: {}", e.getMessage());
+            }
+
+            List<FileGroupResponse> fileGroups = fetchFileGroups(rankedProducts);
+            return new ProductAnswer(
+                    answer,
+                    rankedProducts,
+                    fileGroups
+            );
+        }
 
         // 만약 intent가 product일 경우에는 similarSearch 실행
         if(isProductIntent(intent.name())){
@@ -162,8 +203,11 @@ public class ProductRecommendService {
                         .filter(info -> selectedIds.contains(info.productId()))
                         .toList();
 
+                List<FileGroupResponse> fileGroups = fetchFileGroups(filtered);
+
+
                 //답변내용과 최종상품추천 전달
-                return new ProductAnswer(recommendResponse.answer(), filtered);
+                return new ProductAnswer(recommendResponse.answer(), filtered, fileGroups);
             } catch (Exception e) {
                 log.warn("recommend response parse failed: {}", e.getMessage());
                 recommendResponse = null;
@@ -179,10 +223,45 @@ public class ProductRecommendService {
                     .call()
                     .content();
 
-            return new ProductAnswer(content, List.of());
+            return new ProductAnswer(content, List.of(), List.of());
         }
 
-        return new ProductAnswer(recommendResponse.answer(), List.of());
+        return new ProductAnswer(recommendResponse.answer(), List.of(), List.of());
+    }
+
+
+
+    private List<ProductSearchInfo> fetchProductsByIds(List<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> products = productRepository.findByProductIds(productIds);
+        Map<String, Product> byId = products.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p, (a, b) -> a));
+
+        return productIds.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .map(ProductSearchInfo::from)
+                .toList();
+    }
+
+    private List<FileGroupResponse> fetchFileGroups(List<ProductSearchInfo> products) {
+        List<String> fileGroupIds = products.stream()
+                .map(ProductSearchInfo::fileGroupId)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+
+        if (fileGroupIds.isEmpty()) {
+            return List.of();
+        }
+
+        return Objects.requireNonNullElseGet(
+                fileService.findByFileGroupIds(fileGroupIds).getData(),
+                List::of
+        );
     }
 
 
@@ -234,17 +313,19 @@ public class ProductRecommendService {
                 product.getSellerId()
         );
 
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("productId", product.getId());
+        metadata.put("name", nullToEmpty(product.getName()));
+        metadata.put("description", nullToEmpty(product.getDescription()));
+        metadata.put("sellerId", nullToEmpty(product.getSellerId()));
+        metadata.put("FileGroupId", nullToEmpty(product.getFileId()));
+        metadata.put("categories", nullToEmpty(categories));
+        metadata.put("deletedYn", product.getDeletedYn().name());
+
         return new Document(
                 product.getId(),
                 content,
-                Map.of(
-                        "productId", product.getId(),
-                        "name", product.getName(),
-                        "description", product.getDescription() != null ? product.getDescription() : "",
-                        "sellerId", product.getSellerId(),
-                        "categories", categories,
-                        "deletedYn", product.getDeletedYn().name()
-                )
+                metadata
         );
     }
 
@@ -291,14 +372,35 @@ public class ProductRecommendService {
 
 
     private void validateImage(MultipartFile file) {
-
-
-
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
         String ct = file.getContentType();
         if (ct == null || !ct.startsWith("image/")) {
             throw new IllegalArgumentException("only image/* allowed. contentType=" + ct);
         }
+    }
+
+    //redis 저장된 auction ranking으로 productIds 찾기
+    public  List<String> getProductIdsByAuctionRanking() {
+
+        Set<String> auctionIds = stringRedisTemplate.opsForZSet().reverseRange(RANKING_KEY, 0, 2);
+
+        log.info("auctionIds: {}", auctionIds.toString());
+        if(auctionIds == null || auctionIds.isEmpty()) {
+            return List.of();
+        }
+
+        return auctionIds.stream()
+                .map(auctionId ->
+                        stringRedisTemplate.opsForHash()
+                                .get(summaryKey(auctionId), "productId")
+                )
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .toList();
+    }
+
+    private String summaryKey(String auctionId) {
+        return SUMMARY_KEY_PREFIX + auctionId;
     }
 
 
