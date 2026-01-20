@@ -24,6 +24,16 @@ public class DepositOrderRequest {
         }
     }
 
+    public record OrderPayWithDeposit(
+            @Schema(description = "주문 ID")
+            @NotBlank(message = "주문 ID는 필수 입니다.")
+            String id
+    ) {
+        public DepositOrderDto.OrderPayWithDepositCommand toCommand(String id) {
+            return DepositOrderDto.OrderPayWithDepositCommand.of(id);
+        }
+    }
+
     public record Update(
             @Schema(description = "변경할 주문 ID")
             @NotBlank(message = "주문 ID는 필수 입니다.")

@@ -1,6 +1,7 @@
 package com.dev_high.deposit.order.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.type.DepositOrderStatus;
 import com.dev_high.deposit.order.application.DepositOrderService;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.presentation.dto.DepositOrderRequest;
@@ -39,6 +40,16 @@ public class DepositOrderController {
         return ApiResponseDto.success(response);
     }
 
-
-
+    @Operation(summary = "주문 ID의 예치금 사용 처리", description = "주문 ID의 예치금 사용 처리")
+    @PostMapping("/orders/pay-by-deposit")
+    public ApiResponseDto<?> payOrderByDeposit(@RequestBody @Valid DepositOrderRequest.OrderPayWithDeposit request) {
+        DepositOrderDto.OrderPayWithDepositCommand command = request.toCommand(request.id());
+        DepositOrderDto.Info info = depositOrderService.payOrderByDeposit(command);
+        if (info.status().equals(DepositOrderStatus.DEPOSIT_APPLIED_ERROR)) {
+            return ApiResponseDto.fail("예치금 사용에 실패하였습니다", info.status().name());
+        } else {
+            DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+            return ApiResponseDto.success(response);
+        }
+    }
 }

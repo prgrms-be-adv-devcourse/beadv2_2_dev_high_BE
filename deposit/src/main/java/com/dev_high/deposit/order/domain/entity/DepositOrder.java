@@ -46,7 +46,7 @@ public class DepositOrder {
     @Column(name = "deposit", nullable = false)
     private BigDecimal deposit;
 
-    @Column(name = "parid_amount", nullable = false)
+    @Column(name = "paid_amount", nullable = false)
     private BigDecimal paidAmount;
 
 
