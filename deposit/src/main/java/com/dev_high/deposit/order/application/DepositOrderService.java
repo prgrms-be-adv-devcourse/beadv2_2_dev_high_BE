@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
@@ -59,15 +58,14 @@ public class DepositOrderService {
     @Transactional
     public DepositOrderDto.Info payOrderByDeposit(DepositOrderDto.OrderPayWithDepositCommand command) {
         DepositOrder order = loadOrder(command.id());
+        validatePayableOrder(order);
+
         if (!order.isDeposit()) {
             return DepositOrderDto.Info.from(order);
         }
 
-        if(useDeposit(order.getUserId(), order.getId(), DepositType.USAGE, order.getDeposit()) != null) {
-            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED);
-        } else {
-            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED_ERROR);
-        }
+        ApiResponseDto<?> result = useDeposit(order);
+        updateOrderStatusAfterUseDeposit(order, result);
         return DepositOrderDto.Info.from(orderRepository.save(order));
     }
 
@@ -92,8 +90,14 @@ public class DepositOrderService {
                 .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + orderId));
     }
 
-    public ApiResponseDto<?> useDeposit(String userId, String orderId, DepositType type, BigDecimal amount) {
-        DepositOrderDto.useDepositCommand command = DepositOrderDto.useDepositCommand.of(userId, orderId, type, amount);
+    private void validatePayableOrder(DepositOrder order) {
+        if (!order.isPayableWithDeposit()) {
+            throw new IllegalArgumentException("결제를 진행할 수 없는 주문 상태입니다: " + order.getStatus());
+        }
+    }
+
+    private ApiResponseDto<?> useDeposit(DepositOrder order) {
+        DepositOrderDto.useDepositCommand command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), DepositType.USAGE, order.getDeposit());
         HttpEntity<DepositOrderDto.useDepositCommand> entity = HttpUtil.createGatewayEntity(command);
         try {
             ResponseEntity<ApiResponseDto<?>> response = restTemplate.exchange(
@@ -107,6 +111,19 @@ public class DepositOrderService {
         } catch (RestClientException e) {
             log.error("예치금 사용에 실패하였습니다", e);
             return null;
+        }
+    }
+
+    private void updateOrderStatusAfterUseDeposit(DepositOrder order, ApiResponseDto<?> result) {
+        if(result == null) {
+            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED_ERROR);
+            return;
+        }
+
+        if (order.isPayment()) {
+            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED);
+        } else {
+            order.ChangeStatus(DepositOrderStatus.COMPLETED);
         }
     }
 
