@@ -69,6 +69,20 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderResponse updateAddress(String orderId, String addressId) {
+        WinningOrder order = orderRepository.findById(orderId).orElse(null);
+        String userId = resolveAdminUserId();
+        if (order == null) {
+            throw new CustomException(HttpStatus.NOT_FOUND,"주문이 존재하지 않습니다.");
+        }
+
+        order.changeAddress(addressId,userId);
+        order = orderRepository.save(order);
+
+        return OrderResponse.fromEntity(order);
+    }
+
+    @Transactional
     public List<UpdateOrderProjection> updateStatusBulk(OrderStatus oldStatus,
                                                         OrderStatus newStatus, OffsetDateTime targetDate
     ) {

@@ -58,7 +58,7 @@ public class OrderStatusBatchConfig {
             step(new OrderStatusChangeRequest(
                 OrderStatus.UNPAID,
                 OrderStatus.UNPAID_CANCEL,
-                Duration.ofDays(3),
+                Duration.ZERO,
                 "미결제로 인하여 주문이 자동 취소되었습니다.",
                 "/orders"
             )))
