@@ -8,5 +8,5 @@ public interface AdminRepository {
 
     Page<UserDetailResponse> findAll(UserFilterCondition filterCondition);
 
-    long getTodaySignUpCount();
+    Long getTodaySignUpCount();
 }

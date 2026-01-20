@@ -1,7 +1,7 @@
 package com.dev_high.user.admin.infrastructure;
 
 
-import com.dev_high.user.admin.application.dto.QUserDetailResponse;
+import com.dev_high.user.admin.service.dto.QUserDetailResponse;
 import com.dev_high.user.admin.service.dto.UserDetailResponse;
 import com.dev_high.user.admin.service.dto.UserFilterCondition;
 import com.dev_high.user.admin.domain.AdminRepository;
@@ -118,7 +118,7 @@ public class AdminRepositoryAdapter implements AdminRepository {
     }
 
     @Override
-    public long getTodaySignUpCount() {
+    public Long getTodaySignUpCount() {
         ZoneId zone = ZoneId.of("Asia/Seoul");
         OffsetDateTime start = LocalDate.now(zone).atStartOfDay(zone).toOffsetDateTime();
 
