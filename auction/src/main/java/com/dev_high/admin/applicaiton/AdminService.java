@@ -1,5 +1,6 @@
 package com.dev_high.admin.applicaiton;
 
+import com.dev_high.admin.applicaiton.dto.DashboardAuctionStatusRatioItem;
 import com.dev_high.auction.application.AuctionLifecycleService;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.domain.Auction;
@@ -13,6 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -50,7 +58,7 @@ public class AdminService {
     public Long getAuctionCount(AuctionStatus status){
 
 
-        return auctionRepository.getAuctionCount(status);
+        return auctionRepository.getAuctionCount(status, null);
     }
 
     public List<AuctionResponse> getAuctionsByProductId(String productId){
@@ -65,6 +73,16 @@ public class AdminService {
         return auctionRepository.getEndingSoonAuctionCount(status,withinHours);
     }
 
+    public List<DashboardAuctionStatusRatioItem> getAuctionStatusRatio(String asOf, String timezone) {
+        OffsetDateTime target = resolveAsOf(asOf, timezone);
+        return Arrays.stream(AuctionStatus.values())
+                .map(status -> new DashboardAuctionStatusRatioItem(
+                        status,
+                        safeCount(auctionRepository.getAuctionCount(status, target))
+                ))
+                .toList();
+    }
+
 
 
     private String resolveAdminUserId() {
@@ -72,5 +90,44 @@ public class AdminService {
             return "SYSTEM";
         }
         return UserContext.get().userId();
+    }
+
+    private static long safeCount(Long value) {
+        return value == null ? 0L : value;
+    }
+
+    private static OffsetDateTime resolveAsOf(String asOf, String timezone) {
+        ZoneId zone = resolveZone(timezone);
+        if (asOf == null || asOf.isBlank()) {
+            return OffsetDateTime.now(zone);
+        }
+
+        try {
+            return OffsetDateTime.parse(asOf);
+        } catch (DateTimeParseException ignored) {
+        }
+
+        try {
+            return LocalDateTime.parse(asOf).atZone(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+
+        try {
+            return LocalDate.parse(asOf).atStartOfDay(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+
+        return OffsetDateTime.now(zone);
+    }
+
+    private static ZoneId resolveZone(String timezone) {
+        if (timezone == null || timezone.isBlank()) {
+            return ZoneId.of("Asia/Seoul");
+        }
+        try {
+            return ZoneId.of(timezone);
+        } catch (DateTimeException ignored) {
+            return ZoneId.of("Asia/Seoul");
+        }
     }
 }
