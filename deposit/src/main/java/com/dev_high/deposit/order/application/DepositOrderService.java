@@ -1,7 +1,10 @@
 package com.dev_high.deposit.order.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.type.DepositOrderStatus;
+import com.dev_high.common.type.DepositType;
+import com.dev_high.common.util.HttpUtil;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.application.event.OrderEvent;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
@@ -11,12 +14,19 @@ import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
@@ -26,6 +36,7 @@ public class DepositOrderService {
     private final DepositOrderRepository orderRepository;
     private final DepositPaymentService paymentService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RestTemplate restTemplate;
 
     @Transactional
     public DepositOrderDto.Info createOrder(DepositOrderDto.CreateCommand command) {
@@ -45,12 +56,27 @@ public class DepositOrderService {
                 .map(DepositOrderDto.Info::from);
     }
 
+    @Transactional
+    public DepositOrderDto.Info payOrderByDeposit(DepositOrderDto.OrderPayWithDepositCommand command) {
+        DepositOrder order = loadOrder(command.id());
+        if (!order.isDeposit()) {
+            return DepositOrderDto.Info.from(order);
+        }
+
+        if(useDeposit(order.getUserId(), order.getId(), DepositType.USAGE, order.getDeposit()) != null) {
+            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED);
+        } else {
+            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED_ERROR);
+        }
+        return DepositOrderDto.Info.from(orderRepository.save(order));
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void confirmOrder(DepositOrderDto.ConfirmCommand command) {
         DepositOrder order = loadOrder(command.id());
         order.ChangeStatus(command.status());
         orderRepository.save(order);
-        applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), order.getAmount()));
+        applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), DepositType.CHARGE, order.getAmount()));
     }
 
     @Transactional
@@ -65,4 +91,23 @@ public class DepositOrderService {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + orderId));
     }
+
+    public ApiResponseDto<?> useDeposit(String userId, String orderId, DepositType type, BigDecimal amount) {
+        DepositOrderDto.useDepositCommand command = DepositOrderDto.useDepositCommand.of(userId, orderId, type, amount);
+        HttpEntity<DepositOrderDto.useDepositCommand> entity = HttpUtil.createGatewayEntity(command);
+        try {
+            ResponseEntity<ApiResponseDto<?>> response = restTemplate.exchange(
+                    "http://USER-SERVICE/api/v1/deposit/usages",
+                    HttpMethod.POST,
+                    entity,
+                    new ParameterizedTypeReference<ApiResponseDto<?>>() {
+                    }
+            );
+            return ApiResponseDto.success(response.getBody());
+        } catch (RestClientException e) {
+            log.error("예치금 사용에 실패하였습니다", e);
+            return null;
+        }
+    }
+
 }

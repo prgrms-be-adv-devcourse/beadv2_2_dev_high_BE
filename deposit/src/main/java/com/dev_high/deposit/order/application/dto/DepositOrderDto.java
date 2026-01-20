@@ -1,5 +1,6 @@
 package com.dev_high.deposit.order.application.dto;
 
+import com.dev_high.common.type.DepositType;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import com.dev_high.common.type.DepositOrderStatus;
 
@@ -13,6 +14,25 @@ public class DepositOrderDto {
     ) {
         public static CreateCommand of(BigDecimal amount, BigDecimal deposit) {
             return new CreateCommand(amount, deposit);
+        }
+    }
+
+    public record OrderPayWithDepositCommand(
+            String id
+    ) {
+        public static OrderPayWithDepositCommand of(String id) {
+            return new OrderPayWithDepositCommand(id);
+        }
+    }
+
+    public record useDepositCommand(
+            String userId,
+            String depositOrderId,
+            DepositType type,
+            BigDecimal amount
+    ) {
+        public static useDepositCommand of(String userId, String depositOrderId, DepositType type, BigDecimal amount) {
+            return new useDepositCommand(userId, depositOrderId, type, amount);
         }
     }
 
