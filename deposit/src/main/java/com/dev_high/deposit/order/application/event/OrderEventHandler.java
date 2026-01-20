@@ -21,11 +21,6 @@ public class OrderEventHandler {
     private final KafkaEventPublisher kafkaEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderCreated(OrderEvent.OrderCreated event) {
-        depositPaymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(event.id(), event.userId(), event.amount()));
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderConfirmed(OrderEvent.OrderConfirmed event) {
         kafkaEventPublisher.publish(KafkaTopics.PAYMENT_DEPOSIT_CONFIRM_REQUESTED, PaymentDepositConfirmRequestedEvent.of(event.userId(), event.orderId(), DepositType.CHARGE, event.amount()));
     }

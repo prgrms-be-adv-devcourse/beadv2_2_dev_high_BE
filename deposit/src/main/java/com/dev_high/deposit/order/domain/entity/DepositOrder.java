@@ -79,8 +79,8 @@ public class DepositOrder {
                 .build();
     }
 
-    public void updateStatus(DepositOrderStatus status) {
-        this.status = status;
+    public boolean isCreatablePayment() {
+        return this.status == DepositOrderStatus.PENDING;
     }
 
     public void ChangeStatus(DepositOrderStatus status) {
