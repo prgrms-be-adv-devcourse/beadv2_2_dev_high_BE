@@ -1,6 +1,7 @@
 package com.dev_high.deposit.order.application;
 
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.type.DepositOrderStatus;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.application.event.OrderEvent;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
@@ -29,8 +30,11 @@ public class DepositOrderService {
     @Transactional
     public DepositOrderDto.Info createOrder(DepositOrderDto.CreateCommand command) {
         String userId = UserContext.get().userId();
-        DepositOrder order = orderRepository.save(DepositOrder.create(userId, command.amount()));
-        paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getAmount()));
+        DepositOrder order = orderRepository.save(DepositOrder.create(userId, command.amount(), command.deposit()));
+        if (order.isPayment()) {
+            paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));
+        }
+        order.ChangeStatus(DepositOrderStatus.PENDING);
         return DepositOrderDto.Info.from(order);
     }
 

@@ -45,14 +45,13 @@ public class DepositPaymentService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
-    public DepositPaymentDto.Info createPayment(DepositPaymentDto.CreateCommand command) {
+    public DepositPaymentDto.Info createInitialPayment(DepositPaymentDto.CreateCommand command) {
         validateOrder(command.orderId());
-        return DepositPaymentDto.Info.from(savePayment(command.orderId(), command.userId(), command.amount()));
-    }
-
-    public void createInitialPayment(DepositPaymentDto.CreateCommand command) {
-        validateOrder(command.orderId());
-        savePayment(command.orderId(), command.userId(), command.amount());
+        try {
+            return DepositPaymentDto.Info.from(savePayment(command.orderId(), command.userId(), command.amount()));
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("이미 결제가 생성된 주문입니다: " + command.orderId(), e);
+        }
     }
 
     @Transactional(readOnly = true)

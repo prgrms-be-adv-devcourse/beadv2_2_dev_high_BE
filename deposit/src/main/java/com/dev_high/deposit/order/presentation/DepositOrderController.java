@@ -25,7 +25,7 @@ public class DepositOrderController {
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositOrderResponse.Detail> createOrder(@RequestBody @Valid DepositOrderRequest.Create request) {
-        DepositOrderDto.CreateCommand command = request.toCommand(request.amount());
+        DepositOrderDto.CreateCommand command = request.toCommand(request.amount(), request.deposit());
         DepositOrderDto.Info info = depositOrderService.createOrder(command);
         DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
         return ApiResponseDto.success(response);
