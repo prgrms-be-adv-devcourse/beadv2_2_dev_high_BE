@@ -1,6 +1,7 @@
 package com.dev_high.admin.presentation;
 
 import com.dev_high.admin.applicaiton.AdminService;
+import com.dev_high.admin.applicaiton.dto.DashboardAuctionStatusRatioItem;
 import com.dev_high.auction.application.AuctionService;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.domain.AuctionStatus;
@@ -67,6 +68,15 @@ public class AdminController {
     ) {
         Long res = adminService.getEndingSoonAuctionCount(status, withinHours);
         return ApiResponseDto.success(res);
+    }
+
+    @Operation(summary = "경매 상태 비율 조회", description = "기준 시점의 경매 상태별 건수를 조회합니다.")
+    @GetMapping("/dashboard/status-ratio")
+    public ApiResponseDto<List<DashboardAuctionStatusRatioItem>> getAuctionStatusRatio(
+            @RequestParam(required = false) String asOf,
+            @RequestParam(required = false) String timezone
+    ) {
+        return ApiResponseDto.success(adminService.getAuctionStatusRatio(asOf, timezone));
     }
 
     @Operation(summary = "경매 즉시 시작", description = "경매 시작 시간을 현재로 설정하고 진행중 상태로 변경합니다.")

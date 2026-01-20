@@ -1,22 +1,28 @@
 package com.dev_high.admin.presentation;
 
-import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.admin.application.AdminService;
+import com.dev_high.admin.application.dto.DashboardSellerRankItem;
+import com.dev_high.admin.application.dto.DashboardTrendPoint;
 import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
+import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.order.application.OrderService;
 import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderRegisterRequest;
-import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
-import com.dev_high.settle.presentation.dto.SettlementGroupResponse;
-import com.dev_high.settle.presentation.dto.SettlementResponse;
 import com.dev_high.order.presentation.dto.OrderResponse;
+import com.dev_high.settle.presentation.dto.SettlementGroupResponse;
+import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
+import com.dev_high.settle.presentation.dto.SettlementResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import java.util.List;
 
 @RequestMapping("/api/v1/admin")
 @RestController
@@ -41,6 +47,26 @@ public class AdminController {
     public ApiResponseDto<Long> getOrderCount(@RequestParam(required = false) OrderStatus status) {
 
      return  ApiResponseDto.success(adminService.getOrderCount(status));
+    }
+
+    @GetMapping("orders/dashboard/gmv-trend")
+    public ApiResponseDto<List<DashboardTrendPoint>> getGmvTrend(
+        @RequestParam(required = false) String from,
+        @RequestParam(required = false) String to,
+        @RequestParam(required = false) String groupBy,
+        @RequestParam(required = false) String timezone
+    ) {
+        return ApiResponseDto.success(adminService.getGmvTrend(from, to, groupBy, timezone));
+    }
+
+    @GetMapping("orders/dashboard/rank/sellers")
+    public ApiResponseDto<List<DashboardSellerRankItem>> getSellerRank(
+        @RequestParam(required = false) String from,
+        @RequestParam(required = false) String to,
+        @RequestParam(required = false) Integer limit,
+        @RequestParam(required = false) String timezone
+    ) {
+        return ApiResponseDto.success(adminService.getSellerRank(from, to, limit, timezone));
     }
 
     @PostMapping("orders")

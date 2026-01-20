@@ -2,6 +2,7 @@ package com.dev_high.auction.domain;
 
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionProductProjection;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -40,7 +41,7 @@ public interface AuctionRepository {
 
   Page<Auction> filterAuctions(AuctionFilterCondition condition);
 
-  Long getAuctionCount(AuctionStatus status);
-
   Long getEndingSoonAuctionCount(AuctionStatus status, int withinHours);
+
+  Long getAuctionCount(AuctionStatus status, OffsetDateTime asOf);
 }

@@ -159,11 +159,6 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     }
 
     @Override
-    public Long getAuctionCount(AuctionStatus status) {
-        return queryFactory.select(qAuction.count()).from(qAuction).where(qAuction.status.eq(status).and(qAuction.deletedYn.eq("N"))).fetchOne();
-    }
-
-    @Override
     public Long getEndingSoonAuctionCount(AuctionStatus status, int withinHours) {
         OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Asia/Seoul"));
         OffsetDateTime until = now.plusHours(withinHours);
@@ -173,6 +168,21 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         ).fetchOne();
 
 
+    }
+
+    @Override
+    public Long getAuctionCount(AuctionStatus status, OffsetDateTime asOf) {
+        BooleanBuilder builder = new BooleanBuilder()
+                .and(qAuction.status.eq(status))
+                .and(qAuction.deletedYn.eq("N"));
+        if (asOf != null) {
+            builder.and(qAuction.updatedAt.loe(asOf));
+        }
+        return queryFactory
+                .select(qAuction.count())
+                .from(qAuction)
+                .where(builder)
+                .fetchOne();
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {
