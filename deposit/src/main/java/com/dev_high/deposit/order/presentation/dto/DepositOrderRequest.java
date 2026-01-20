@@ -14,10 +14,13 @@ public class DepositOrderRequest {
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Positive(message = "주문 금액은 0보다 커야 합니다.")
-            BigDecimal amount
+            BigDecimal amount,
+
+            @Schema(description = "예치금")
+            BigDecimal deposit
     ) {
-        public DepositOrderDto.CreateCommand toCommand(BigDecimal amount) {
-            return DepositOrderDto.CreateCommand.of(amount);
+        public DepositOrderDto.CreateCommand toCommand(BigDecimal amount, BigDecimal deposit) {
+            return DepositOrderDto.CreateCommand.of(amount, deposit);
         }
     }
 

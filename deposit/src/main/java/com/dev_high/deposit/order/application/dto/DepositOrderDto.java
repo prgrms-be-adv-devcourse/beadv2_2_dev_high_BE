@@ -8,10 +8,11 @@ import java.time.OffsetDateTime;
 
 public class DepositOrderDto {
     public record CreateCommand(
-            BigDecimal amount
+            BigDecimal amount,
+            BigDecimal deposit
     ) {
-        public static CreateCommand of(BigDecimal amount) {
-            return new CreateCommand(amount);
+        public static CreateCommand of(BigDecimal amount, BigDecimal deposit) {
+            return new CreateCommand(amount, deposit);
         }
     }
 
@@ -40,7 +41,9 @@ public class DepositOrderDto {
             String userId,
             BigDecimal amount,
             DepositOrderStatus status,
-            OffsetDateTime createdAt
+            OffsetDateTime createdAt,
+            BigDecimal deposit,
+            BigDecimal paidAmount
     ) {
         public static Info from(DepositOrder depositOrder) {
             return new Info(
@@ -48,7 +51,9 @@ public class DepositOrderDto {
                     depositOrder.getUserId(),
                     depositOrder.getAmount(),
                     depositOrder.getStatus(),
-                    depositOrder.getCreatedAt()
+                    depositOrder.getCreatedAt(),
+                    depositOrder.getDeposit(),
+                    depositOrder.getPaidAmount()
             );
         }
     }
