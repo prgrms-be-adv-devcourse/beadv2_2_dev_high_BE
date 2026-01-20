@@ -1,6 +1,7 @@
 package com.dev_high.product.admin;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.product.application.dto.DashboardCategoryCountItem;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.presentation.dto.ProductRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -65,6 +68,16 @@ public class ProductAdminController {
     @GetMapping("/{productId}")
     public ApiResponseDto<ProductInfo> getProduct(@PathVariable String productId) {
         return ApiResponseDto.success(productAdminService.getProduct(productId));
+    }
+
+    @GetMapping("/dashboard/charts/category-product-count")
+    public ApiResponseDto<List<DashboardCategoryCountItem>> getCategoryProductCount(
+        @RequestParam(required = false) String from,
+        @RequestParam(required = false) String to,
+        @RequestParam(required = false) Integer limit,
+        @RequestParam(required = false) String timezone
+    ) {
+        return ApiResponseDto.success(productAdminService.getCategoryProductCounts(from, to, limit, timezone));
     }
 
 

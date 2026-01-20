@@ -1,11 +1,17 @@
 package com.dev_high.product.infraStructure;
 
+import com.dev_high.product.application.dto.DashboardCategoryCountItem;
 import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.ProductRepository;
+import com.dev_high.product.domain.QCategory;
 import com.dev_high.product.domain.QProduct;
+import com.dev_high.product.domain.QProductCategoryRel;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -18,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.time.OffsetDateTime;
 
 @Repository
 @RequiredArgsConstructor
@@ -26,6 +33,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
     private final ProductJpaRepository productJpaRepository;
     private final JPAQueryFactory queryFactory;
     private final QProduct product = QProduct.product;
+    private final QProductCategoryRel rel = QProductCategoryRel.productCategoryRel;
+    private final QCategory category = QCategory.category;
 
     @Override
     public Product save(Product product) {
@@ -80,6 +89,57 @@ public class ProductRepositoryAdapter implements ProductRepository {
             .fetchOne();
 
         return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
+    @Override
+    public List<DashboardCategoryCountItem> getCategoryProductCounts(
+        OffsetDateTime from,
+        OffsetDateTime toExclusive,
+        int limit
+    ) {
+        BooleanExpression base = product.deletedYn.eq(Product.DeleteStatus.N);
+        BooleanBuilder predicate = new BooleanBuilder(base);
+
+        if (from != null) {
+            predicate.and(product.createdAt.goe(from));
+        }
+        if (toExclusive != null) {
+            predicate.and(product.createdAt.lt(toExclusive));
+        }
+
+        var countExpr = product.id.countDistinct();
+        var categoryIdKey = Expressions.stringTemplate(
+            "coalesce({0}, 'UNASSIGNED')",
+            category.id
+        );
+        var categoryNameKey = Expressions.stringTemplate(
+            "coalesce({0}, '미분류')",
+            category.categoryName
+        );
+
+        List<Tuple> rows = queryFactory
+            .select(categoryIdKey, categoryNameKey, countExpr)
+            .from(product)
+            .leftJoin(rel).on(rel.product.eq(product))
+            .leftJoin(rel.category, category)
+            .where(predicate)
+            .groupBy(categoryIdKey, categoryNameKey)
+            .orderBy(countExpr.desc(), categoryIdKey.asc())
+            .limit(limit)
+            .fetch();
+
+        List<DashboardCategoryCountItem> result = new ArrayList<>();
+        for (Tuple row : rows) {
+            String categoryId = row.get(categoryIdKey);
+            String categoryName = row.get(categoryNameKey);
+            Long count = row.get(countExpr);
+            result.add(new DashboardCategoryCountItem(
+                categoryId,
+                categoryName,
+                count == null ? 0L : count
+            ));
+        }
+        return result;
     }
 
     @Override

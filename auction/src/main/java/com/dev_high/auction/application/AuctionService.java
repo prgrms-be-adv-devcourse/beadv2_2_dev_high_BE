@@ -212,7 +212,7 @@ public class AuctionService {
 
     public List<AuctionResponse> getAuctionListByProductId(String productId) {
 
-        return auctionRepository.findByProductId(productId).stream().map(AuctionResponse::fromEntity)
+        return auctionRepository.findByProductIdAndDeletedYn(productId).stream().map(AuctionResponse::fromEntity)
                 .toList();
     }
 
