@@ -24,7 +24,11 @@ spring:
         dimensions: 1536
         id-type: TEXT
         initialize-schema: false
-
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: 1
 ---
 spring:
   config:

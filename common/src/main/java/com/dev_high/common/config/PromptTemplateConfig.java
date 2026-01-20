@@ -165,6 +165,7 @@ public class PromptTemplateConfig {
 			의도(intent)는 반드시 아래 중 하나여야 한다.
 			- GREETING: 인사
 			- PRODUCT: 상품 문의, 추천, 비교, 구매 관련 질문
+			- GENERIC_RECOMMENDATION: 조건 없이 아무거나 추천 요청
 			- SERVICE: 배송, 결제, 환불, 계정, 이용 방법 문의
 			- NON_PRODUCT: 상품과 직접 관련 없는 일반 질문
 			- OFF_TOPIC: 서비스 목적과 무관하거나 엉뚱한 질문
@@ -173,6 +174,7 @@ public class PromptTemplateConfig {
 			규칙:
 			- intent는 반드시 하나만 선택하라
 			- 욕설이나 공격적인 표현이 있으면 다른 조건보다 ABUSIVE를 우선한다
+			- 조건/필터 없이 "아무거나 추천", "랜덤 추천", "요즘 뭐 추천", "인기 상품 추천"처럼 구체 조건 없이 추천을 요청하면 GENERIC_RECOMMENDATION을 선택한다
 			- answer는 한국어로 1~3문장으로 작성하라
 			- 장황한 설명이나 불필요한 말은 하지 마라
 			- 사과가 필요한 경우에만 간단히 사과하라
