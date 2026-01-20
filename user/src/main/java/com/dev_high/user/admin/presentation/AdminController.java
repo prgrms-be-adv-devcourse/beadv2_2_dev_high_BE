@@ -2,9 +2,11 @@ package com.dev_high.user.admin.presentation;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
-import com.dev_high.user.admin.presentation.dto.SellerApproveRequest;
 import com.dev_high.user.admin.service.AdminService;
+import com.dev_high.user.admin.service.dto.UserDetailResponse;
+import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.AdminUserListRequest;
+import com.dev_high.user.admin.presentation.dto.SellerApproveRequest;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +39,28 @@ public class AdminController {
     ) {
         String adminId = UserContext.get().userId();
         return adminService.approveSelectedSeller(request.sellerIds(), adminId);
+    }
+
+    @GetMapping("/users")
+    public ApiResponseDto<Page<UserDetailResponse>> getUserList(@ModelAttribute AdminUserListRequest request, Pageable pageable) {
+
+        return ApiResponseDto.success(adminService.getUserList(request,pageable));
+    }
+    @GetMapping("/users/count/today-signup")
+    public ApiResponseDto<Long> getTodaySignUpCount(){
+
+        return ApiResponseDto.success(adminService.getTodaySignUpCount());
+    }
+
+    @PatchMapping("/users")
+    public ApiResponseDto<ApiResponseDto<?>> modifyUserStatus(){
+
+        return ApiResponseDto.success(adminService.modifyUserStatus());
+    }
+
+    @DeleteMapping("/users")
+    public ApiResponseDto<ApiResponseDto<?>> removeUser(){
+
+        return ApiResponseDto.success(adminService.removeUser());
     }
 }

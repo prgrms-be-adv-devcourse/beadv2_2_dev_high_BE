@@ -1,7 +1,11 @@
 package com.dev_high.user.admin.service;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.user.admin.service.dto.UserDetailResponse;
+import com.dev_high.user.admin.service.dto.UserFilterCondition;
+import com.dev_high.user.admin.domain.AdminRepository;
 import com.dev_high.user.admin.presentation.dto.AdminSellerListRequest;
+import com.dev_high.user.admin.presentation.dto.AdminUserListRequest;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.application.dto.SellerApproveResult;
 import com.dev_high.user.seller.application.dto.SellerResponse;
@@ -26,6 +30,7 @@ public class AdminService {
     private final Job sellerApproveJob;
     private final SellerService sellerService;
     private final SellerRepository sellerRepository;
+    private  final AdminRepository adminRepository;
 
     public ApiResponseDto<Void> runApproveBatch() {
         try {
@@ -51,5 +56,28 @@ public class AdminService {
     public ApiResponseDto<Page<SellerResponse>> getAdminSellerList(AdminSellerListRequest request, Pageable pageable) {
         Page<SellerResponse> result = sellerService.getAdminSellerList(request, pageable);
         return ApiResponseDto.success("판매자 목록 조회가 완료되었습니다.", result);
+    }
+
+    /*TODO: filter add */
+    public Page<UserDetailResponse> getUserList(AdminUserListRequest request, Pageable pageable){
+
+        return adminRepository.findAll(UserFilterCondition.fromAdminRequest(request,pageable));
+
+    }
+    /*TODO */
+    public ApiResponseDto<?> modifyUserStatus() {
+
+        return null;
+    }
+
+    /*TODO */
+    public ApiResponseDto<?> removeUser() {
+
+        return null;
+    }
+
+    public Long getTodaySignUpCount() {
+
+        return adminRepository.getTodaySignUpCount();
     }
 }
