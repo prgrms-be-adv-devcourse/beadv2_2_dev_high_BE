@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class DepositOrderController {
     private final DepositOrderService depositOrderService;
 
-    @Operation(summary = "예치금 주문 생성", description = "예치금 주문을 생성하고 저장")
+    @Operation(summary = "주문 생성", description = "주문을 생성하고 저장")
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositOrderResponse.Detail> createOrder(@RequestBody @Valid DepositOrderRequest.Create request) {

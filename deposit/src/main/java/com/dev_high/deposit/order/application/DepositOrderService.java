@@ -5,6 +5,8 @@ import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.application.event.OrderEvent;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import com.dev_high.deposit.order.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.payment.application.DepositPaymentService;
+import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,13 +23,14 @@ import java.util.NoSuchElementException;
 @Slf4j
 public class DepositOrderService {
     private final DepositOrderRepository orderRepository;
+    private final DepositPaymentService paymentService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public DepositOrderDto.Info createOrder(DepositOrderDto.CreateCommand command) {
         String userId = UserContext.get().userId();
         DepositOrder order = orderRepository.save(DepositOrder.create(userId, command.amount()));
-        applicationEventPublisher.publishEvent(OrderEvent.OrderCreated.of(order.getId(), userId, order.getAmount()));
+        paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getAmount()));
         return DepositOrderDto.Info.from(order);
     }
 

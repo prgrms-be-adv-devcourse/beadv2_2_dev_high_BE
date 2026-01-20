@@ -26,23 +26,7 @@ public class PaymentEventHandler {
     private final DepositPaymentFailureHistoryService failureHistoryService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentConfirmed(PaymentEvent.PaymentConfirmed event) {
-        depositOrderService.confirmOrder(DepositOrderDto.ConfirmCommand.of(event.id(), event.userId(), event.amount(), DepositOrderStatus.PAYMENT_CONFIRMED));
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderFailed(PaymentEvent.OrderFailed event) {
         depositPaymentService.failPayment(DepositPaymentDto.failCommand.of(event.orderId()));
     }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentError(PaymentEvent.PaymentError event) {
-        depositOrderService.ChangeOrderStatus(DepositOrderDto.ChangeOrderStatusCommand.of(event.orderId(), DepositOrderStatus.PAYMENT_CREATION_ERROR));
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentConfirmFailed(PaymentEvent.PaymentConfirmFailed event) {
-        failureHistoryService.createHistory(DepositPaymentFailureDto.CreateCommand.of(event.orderId(), event.userId(), event.amount(), event.code(), event.message()));
-    }
-
 }
