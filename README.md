@@ -26,6 +26,16 @@ Kubernetes **2-Node 클러스터 환경**에서 운영됩니다.
 
 ---
 
+## 🛠 주요 기술 스택
+- Spring Boot / Spring Cloud (Gateway, Config, Eureka)
+- Spring Security (JWT), WebFlux
+- Kafka, WebSocket(STOMP)
+- PostgreSQL, Redis, Elasticsearch
+- Spring AI + pgvector
+- Kubernetes, GitHub Actions
+
+---
+
 ## 🏗 아키텍처 요약
 
 - **API Gateway**
@@ -88,15 +98,12 @@ Kubernetes **2-Node 클러스터 환경**에서 운영됩니다.
     - apigateway
     - discovery
     - config
-    - auction-service
-    - product-service
-    - order-service
-    - user-service
-    - deposit-service
-    - settlement-service
-    - notification-service
-    - search-service
-    - file-service
+    - auction
+    - product
+    - user
+    - deposit
+    - settlement
+    - search
 
 ---
 
@@ -117,9 +124,6 @@ backend
 |-- config
 |-- discovery
 |-- deposit
-|-- file-service
-|-- notification
-|-- order
 |-- product
 |-- search
 |-- settlement
@@ -131,25 +135,6 @@ backend
 
 ---
 
-## 🔌 서비스 포트
-
-| Service | Port |
-|---|---|
-| apigateway | 8000 |
-| auction-service | 8081 |
-| deposit-service | 8083 |
-| order-service | 8084 |
-| product-service | 8085 |
-| search-service | 8086 |
-| settlement-service | 8087 |
-| user-service | 8088 |
-| notification-service | 8089 |
-| file-service | 9027 |
-| discovery | 8761 |
-| config | 8888 |
-
----
-
 ## 🧠 주요 서비스 책임
 
 ### apigateway
@@ -157,44 +142,31 @@ backend
 - JWT 인증 / 인가
 - Swagger 그룹 집계
 
-### auction-service
+### auction
 - 경매 / 입찰 / 참여 관리
 - WebSocket 기반 실시간 경매
 - Kafka 이벤트 발행 / 수신
 
-### product-service
+### product
 - 상품 / 카테고리 관리
 - 최신 경매 ID 갱신 및 내부 조회 API 제공
 
-### search-service
+### search
 - Elasticsearch 기반 경매 검색
 - Kafka 이벤트 기반 인덱스 동기화
 
-### deposit-service
+### deposit
 - 예치금 계좌 / 결제 / 환불
 - Toss 결제 연동
 
-### order-service
-- 주문 생성 / 조회 / 수정
-- 배치 기반 주문 상태 자동 전환
-
-### settlement-service
+### settlement
 - 정산 이력 / 요약 조회
 - 정산 등록 / 집계 배치
 
-### user-service
+### user
 - 인증 / 토큰 발급
 - 사용자 / 판매자 관리
 - 위시리스트 기능
-
-### notification-service
-- 알림 생성 / 조회
-- Kafka 이벤트 기반 알림 처리
-
-### file-service
-- 파일 업로드
-- AWS S3 연동
-- 파일 그룹 조회
 
 ---
 
@@ -212,7 +184,11 @@ backend
   - 단일 진입점(Single Entry Point)
   - JWT 검증 및 사용자 식별
   - 인증 필요/불필요 API 분리
-  - Swagger 접근 제어 (환경별 설정
+  - Swagger 접근 제어 (환경별 설정)
+- **Gateway 단 인가 처리**
+  - DB의 `endpoint`, `endpoint_role`, `user.role` 정보를 기반으로 엔드포인트별 인가 정책을 로드
+  - 메서드/경로 패턴 매칭으로 대상 엔드포인트를 결정하고 `auth_required` 여부 확인
+  - JWT 역할(roles)과 엔드포인트 허용 역할을 비교하여 인가 결정
 
 ###  서비스 간 통신 보안
 
@@ -276,6 +252,26 @@ Auction Service→ Kafka Event 발행→ Search Service (인덱스 갱신)→ No
 - **DB ↔ Elasticsearch 직접 동기화 로직 제거**
 ---
 
+## 🤖 AI 활용
+
+### 1. 상품 (product)
+- Spring AI 기반 ChatClient/VectorStore(pgvector) 사용
+- 상품 임베딩/벡터 검색으로 유사도 기반 추천 제공
+- RAG 추천: 유사 검색 결과를 컨텍스트로 LLM 답변 및 추천 상품 생성
+- 사용자 의도 분류로 추천/안내/응답 템플릿 분기
+- 이미지 기반 상품 상세 초안 생성
+
+### 2. 검색 (search)
+- Spring AI EmbeddingModel로 상품 텍스트 임베딩 생성/갱신
+- Elasticsearch `dense_vector`에 임베딩 저장 후 kNN 유사 검색
+- 위시리스트 임베딩 평균 벡터로 추천 후보 검색
+- 추천 결과 요약 문장을 Spring AI ChatClient로 생성
+
+### 3. 경매 (auction)
+- Spring AI ChatClient + Tool 기반 경매 시작가 추천
+- 유사 상품/낙찰 데이터/가격 범위를 프롬프트로 전달해 추천값/사유 생성
+- `auction.recommendation.ai-enabled` 설정으로 AI 추천 사용 여부 제어
+
 ## ▶ 실행 방법
 
 ```bash
@@ -291,9 +287,9 @@ Auction Service→ Kafka Event 발행→ Search Service (인덱스 갱신)→ No
 
 ---
 ## 👥 팀 구성 및 역할
-| 이름 | 역할 | 주요 담당 |
-|---|---|---|
-| **이종탄** | 팀장 | PG 결제 연동, 예치금 기능 구현 |
-| **전다윤** | 서기 | 보안 설계, Elasticsearch 기능 구현 |
-| **김근환** | Frontend | 인프라 구성, 경매 기능 구현 |
-| **박다빈** | Backend | 인프라 구성, 상품(Product) 기능 구현 |
+| 이름 | 역할                | 주요 담당                          |
+|---|-------------------|--------------------------------|
+| **이종탄** | 팀장, Backend       | PG 결제 연동, 예치금 기능 구현            |
+| **전다윤** | 서기, Backend       | Spring Security, Elasticsearch 기능 구현 |
+| **김근환** | Frontend, Backend | 인프라 구성, 경매 및 주문 기능 구현          |
+| **박다빈** | Backend           | 인프라 구성, 상품 기능 구현               |
