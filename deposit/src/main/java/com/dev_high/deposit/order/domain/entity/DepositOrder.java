@@ -106,6 +106,10 @@ public class DepositOrder {
         return this.status == DepositOrderStatus.CREATED;
     }
 
+    public boolean isPayableWithDeposit() {
+        return this.status == DepositOrderStatus.PENDING;
+    }
+
     public void ChangeStatus(DepositOrderStatus status) {
         this.status = status;
     }
