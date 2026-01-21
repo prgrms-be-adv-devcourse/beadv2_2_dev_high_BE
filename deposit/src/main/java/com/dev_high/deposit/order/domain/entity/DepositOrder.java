@@ -2,6 +2,7 @@ package com.dev_high.deposit.order.domain.entity;
 
 import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.common.type.DepositOrderStatus;
+import com.dev_high.common.type.DepositOrderType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Table(name = "deposit_order", schema = "deposit")
 @Entity
@@ -49,11 +51,14 @@ public class DepositOrder {
     @Column(name = "paid_amount", nullable = false)
     private BigDecimal paidAmount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 20)
+    private DepositOrderType type;
 
     private static final BigDecimal MIN_ORDER_AMOUNT = BigDecimal.ONE;
 
     @Builder
-    public DepositOrder(String userId, BigDecimal amount, DepositOrderStatus status, BigDecimal deposit) {
+    public DepositOrder(String userId, BigDecimal amount, DepositOrderStatus status, BigDecimal deposit, DepositOrderType type) {
         this.userId = userId;
         this.amount = amount;
         this.status = status;
@@ -61,6 +66,7 @@ public class DepositOrder {
         this.updatedBy = userId;
         this.deposit = deposit;
         this.paidAmount = amount.subtract(deposit);
+        this.type = type;
     }
 
     @PrePersist
@@ -75,7 +81,7 @@ public class DepositOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public static DepositOrder create(String userId, BigDecimal amount, BigDecimal deposit) {
+    public static DepositOrder createOrder(String userId, BigDecimal amount, BigDecimal deposit) {
         if (amount.compareTo(MIN_ORDER_AMOUNT) < 0) {
             throw new IllegalArgumentException(
                     String.format("주문 금액은 %s원 이상이어야 합니다. (요청 금액: %s원)", MIN_ORDER_AMOUNT.toPlainString(), amount.toPlainString())
@@ -89,8 +95,25 @@ public class DepositOrder {
         return DepositOrder.builder()
                 .userId(userId)
                 .amount(amount)
-                .status(DepositOrderStatus.CREATED) // default : PENDING
+                .status(DepositOrderStatus.CREATED)
                 .deposit(deposit)
+                .type(DepositOrderType.ORDER_PAYMENT)
+                .build();
+    }
+
+    public static DepositOrder createDepositPayment(String userId, BigDecimal amount) {
+        if (amount.compareTo(MIN_ORDER_AMOUNT) < 0) {
+            throw new IllegalArgumentException(
+                    String.format("주문 금액은 %s원 이상이어야 합니다. (요청 금액: %s원)", MIN_ORDER_AMOUNT.toPlainString(), amount.toPlainString())
+            );
+        }
+
+        return DepositOrder.builder()
+                .userId(userId)
+                .amount(amount)
+                .status(DepositOrderStatus.CREATED)
+                .deposit(BigDecimal.ZERO)
+                .type(DepositOrderType.DEPOSIT_CHARGE)
                 .build();
     }
 
@@ -108,6 +131,11 @@ public class DepositOrder {
 
     public boolean isPayableWithDeposit() {
         return this.status == DepositOrderStatus.PENDING;
+    }
+
+    public boolean isConfirmable() {
+        return List.of(DepositOrderStatus.PENDING, DepositOrderStatus.DEPOSIT_APPLIED)
+                .contains(this.status);
     }
 
     public void ChangeStatus(DepositOrderStatus status) {

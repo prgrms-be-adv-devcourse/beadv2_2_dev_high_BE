@@ -24,6 +24,17 @@ public class DepositOrderRequest {
         }
     }
 
+    public record createDepositPayment(
+            @Schema(description = "금액")
+            @NotNull(message = "금액은 필수입니다.")
+            @Positive(message = "주문 금액은 0보다 커야 합니다.")
+            BigDecimal amount
+    ) {
+        public DepositOrderDto.createDepositPaymentCommand toCommand(BigDecimal amount) {
+            return DepositOrderDto.createDepositPaymentCommand.of(amount);
+        }
+    }
+
     public record OrderPayWithDeposit(
             @Schema(description = "주문 ID")
             @NotBlank(message = "주문 ID는 필수 입니다.")

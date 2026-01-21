@@ -3,6 +3,7 @@ package com.dev_high.deposit.order.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.type.DepositOrderStatus;
+import com.dev_high.common.type.DepositOrderType;
 import com.dev_high.common.type.DepositType;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
@@ -38,12 +39,21 @@ public class DepositOrderService {
     private final RestTemplate restTemplate;
 
     @Transactional
-    public DepositOrderDto.Info createOrder(DepositOrderDto.CreateCommand command) {
+    public DepositOrderDto.Info createPaymentOrder(DepositOrderDto.CreateCommand command) {
         String userId = UserContext.get().userId();
-        DepositOrder order = orderRepository.save(DepositOrder.create(userId, command.amount(), command.deposit()));
+        DepositOrder order = orderRepository.save(DepositOrder.createOrder(userId, command.amount(), command.deposit()));
         if (order.isPayment()) {
             paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));
         }
+        order.ChangeStatus(DepositOrderStatus.PENDING);
+        return DepositOrderDto.Info.from(order);
+    }
+
+    @Transactional
+    public DepositOrderDto.Info createDepositPaymentOrder(DepositOrderDto.createDepositPaymentCommand command) {
+        String userId = UserContext.get().userId();
+        DepositOrder order = orderRepository.save(DepositOrder.createDepositPayment(userId, command.amount()));
+        paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));
         order.ChangeStatus(DepositOrderStatus.PENDING);
         return DepositOrderDto.Info.from(order);
     }
@@ -72,9 +82,12 @@ public class DepositOrderService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void confirmOrder(DepositOrderDto.ConfirmCommand command) {
         DepositOrder order = loadOrder(command.id());
-        order.ChangeStatus(command.status());
+        validateConfirmableOrder(order);
+        updateOrderStatusAfterPayment(order);
         orderRepository.save(order);
-        applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), DepositType.CHARGE, order.getAmount()));
+        if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
+            applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), DepositType.CHARGE, order.getAmount()));
+        }
     }
 
     @Transactional
@@ -127,4 +140,17 @@ public class DepositOrderService {
         }
     }
 
+    private void validateConfirmableOrder(DepositOrder order) {
+        if (!order.isConfirmable()) {
+            throw new IllegalArgumentException("결제승인처리를 진행할 수 없는 주문 상태입니다: " + order.getStatus());
+        }
+    }
+
+    private void updateOrderStatusAfterPayment(DepositOrder order) {
+        if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
+            order.ChangeStatus(DepositOrderStatus.PAYMENT_CONFIRMED);
+        } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            order.ChangeStatus(DepositOrderStatus.COMPLETED);
+        }
+    }
 }
