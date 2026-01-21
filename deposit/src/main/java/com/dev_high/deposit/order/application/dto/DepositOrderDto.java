@@ -17,6 +17,14 @@ public class DepositOrderDto {
         }
     }
 
+    public record createDepositPaymentCommand(
+            BigDecimal amount
+    ) {
+        public static createDepositPaymentCommand of(BigDecimal amount) {
+            return new createDepositPaymentCommand(amount);
+        }
+    }
+
     public record OrderPayWithDepositCommand(
             String id
     ) {
@@ -37,13 +45,10 @@ public class DepositOrderDto {
     }
 
     public record ConfirmCommand(
-            String id,
-            String userId,
-            BigDecimal amount,
-            DepositOrderStatus status
+            String id
     ) {
-        public static ConfirmCommand of(String id, String userId, BigDecimal amount, DepositOrderStatus status) {
-            return new ConfirmCommand(id, userId, amount, status);
+        public static ConfirmCommand of(String id) {
+            return new ConfirmCommand(id);
         }
     }
 

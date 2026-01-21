@@ -32,7 +32,9 @@ public class DepositHistoryService {
                 command.nowBalance()
         );
         depositHistoryRepository.save(history);
-        applicationEventPublisher.publishEvent(DepositEvent.DepositHistoryCreated.of(command.orderId(), command.type()));
+        if (command.type().equals(DepositType.CHARGE) || command.type().equals(DepositType.DEPOSIT)) {
+            applicationEventPublisher.publishEvent(DepositEvent.DepositHistoryCreated.of(command.orderId(), command.type()));
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

@@ -1,12 +1,10 @@
 package com.dev_high.deposit.payment.application;
 
 import com.dev_high.common.context.UserContext;
-import com.dev_high.common.type.DepositOrderStatus;
 import com.dev_high.common.type.DepositPaymentStatus;
-import com.dev_high.deposit.order.application.DepositOrderService;
-import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentFailureDto;
+import com.dev_high.deposit.payment.application.event.PaymentEvent;
 import com.dev_high.deposit.payment.infrastructure.client.TossPaymentClient;
 import com.dev_high.deposit.payment.infrastructure.client.dto.TossErrorResponse;
 import com.dev_high.deposit.payment.infrastructure.client.dto.TossPaymentResponse;
@@ -24,7 +22,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
@@ -36,7 +33,6 @@ import java.util.NoSuchElementException;
 @Service
 @RequiredArgsConstructor
 public class DepositPaymentService {
-    private final DepositOrderService orderService;
     private final DepositPaymentFailureHistoryService failureHistoryService;
     private final DepositPaymentRepository depositPaymentRepository;
     private final DepositOrderRepository depositOrderRepository;
@@ -65,6 +61,7 @@ public class DepositPaymentService {
     @Transactional
     public DepositPaymentDto.Info confirmPayment(DepositPaymentDto.ConfirmCommand command) {
         DepositPayment payment = loadPayment(command.orderId());
+        validatePayablePayment(payment);
         compareAmount(payment.getAmount(), command.amount());
         TossPaymentResponse tossPayment = tossPaymentConfirm(command, payment.getUserId());
 
@@ -73,16 +70,9 @@ public class DepositPaymentService {
 
         payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
         DepositPayment savedPayment = depositPaymentRepository.save(payment);
-        orderService.confirmOrder(DepositOrderDto.ConfirmCommand.of(savedPayment.getOrderId(), savedPayment.getUserId(), savedPayment.getAmount(), DepositOrderStatus.PAYMENT_CONFIRMED));
+        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(savedPayment.getOrderId()));
         // TODO : 현재 충전이라는 방향으로 되어있는데, 추후 직접 결제가 있다면 변경이 필요하다.
         return DepositPaymentDto.Info.from(savedPayment);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void failPayment(DepositPaymentDto.failCommand command) {
-        DepositPayment payment = loadPayment(command.orderId());
-        payment.ChangeStatus(DepositPaymentStatus.CONFIRMED_FAILED);
-        depositPaymentRepository.save(payment);
     }
 
     private void validateOrder(String orderId) {
@@ -106,6 +96,12 @@ public class DepositPaymentService {
     private DepositPayment loadPayment(String orderId) {
         return depositPaymentRepository.findByDepositOrderId(orderId)
                 .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + orderId));
+    }
+
+    private void validatePayablePayment(DepositPayment payment) {
+        if (!payment.isPayable()) {
+            throw new IllegalArgumentException("결제를 진행할 수 없는 주문 상태입니다: " + payment.getStatus());
+        }
     }
 
     private void compareAmount(BigDecimal paymentAmount, BigDecimal commandAmount) {

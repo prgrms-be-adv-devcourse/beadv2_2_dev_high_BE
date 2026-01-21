@@ -23,11 +23,21 @@ public class DepositOrderController {
     private final DepositOrderService depositOrderService;
 
     @Operation(summary = "주문 생성", description = "주문을 생성하고 저장")
-    @PostMapping("/orders")
+    @PostMapping("/orders/order-payment")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositOrderResponse.Detail> createOrder(@RequestBody @Valid DepositOrderRequest.Create request) {
+    public ApiResponseDto<DepositOrderResponse.Detail> createPaymentOrder(@RequestBody @Valid DepositOrderRequest.Create request) {
         DepositOrderDto.CreateCommand command = request.toCommand(request.amount(), request.deposit());
-        DepositOrderDto.Info info = depositOrderService.createOrder(command);
+        DepositOrderDto.Info info = depositOrderService.createPaymentOrder(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        return ApiResponseDto.success(response);
+    }
+
+    @Operation(summary = "주문 생성", description = "주문을 생성하고 저장")
+    @PostMapping("/orders/deposit-charge")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponseDto<DepositOrderResponse.Detail> createDepositPaymentOrder(@RequestBody @Valid DepositOrderRequest.createDepositPayment request) {
+        DepositOrderDto.createDepositPaymentCommand command = request.toCommand(request.amount());
+        DepositOrderDto.Info info = depositOrderService.createDepositPaymentOrder(command);
         DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
         return ApiResponseDto.success(response);
     }

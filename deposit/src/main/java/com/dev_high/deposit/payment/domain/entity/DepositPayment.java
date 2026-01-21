@@ -102,6 +102,10 @@ public class DepositPayment {
                 .build();
     }
 
+    public boolean isPayable() {
+        return this.status == DepositPaymentStatus.READY;
+    }
+
     public void confirmPayment(String paymentKey, String method, OffsetDateTime approvedAt, OffsetDateTime requestedAt) {
         this.paymentKey = paymentKey;
         this.status = DepositPaymentStatus.CONFIRMED;
