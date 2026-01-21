@@ -110,6 +110,7 @@ public class PromptTemplateConfig {
 
             [핵심 원칙]
             - 출력은 반드시 JSON 한 개 객체만. JSON 이외의 텍스트는 절대 출력하지 마.
+            - JSON은 RFC 8259를 준수하고 trailing comma는 절대 사용하지 마.
             - items 배열 길이는 카테고리별 생성 개수 합계와 정확히 일치해야 해.
             - category.code는 후보 목록의 code(id)만 사용해.
             - category.name은 선택한 code에 해당하는 이름과 완전히 동일해야 해.
@@ -163,6 +164,7 @@ public class PromptTemplateConfig {
             - 실사 사진, 스튜디오 조명, 중립 배경
             - 텍스트/워터마크/로고/사람 없음
             - 제품이 한 개만 보이도록
+            - 폭력/무기/선정/미성년/브랜드 노출이 연상되는 표현 금지
             - 1~2문장
             """;
         return new PromptTemplate(template);

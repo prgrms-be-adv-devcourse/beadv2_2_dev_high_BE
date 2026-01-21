@@ -30,6 +30,7 @@ import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.ResponseFormat;
 import org.springframework.ai.openai.OpenAiImageOptions;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -82,60 +83,72 @@ public class ProductAdminAiService {
             "categoryOptions", categoryOptions,
             "categoryCounts", categoryCounts
         ));
-        String userText = "요청한 개수만큼 상품 정보를 생성해줘.";
-        OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
-            .temperature(0.8)
-            .build();
-
-        AiProductSpecList specList = chatClient.prompt()
-            .system(systemText)
-            .user(userText)
-            .options(chatOptions)
-            .tools(productAiTool)
-            .call()
-            .entity(AiProductSpecList.class);
-
+        int expectedCount = request.categories().stream()
+            .mapToInt(AiProductGenerateRequest.CategoryCount::count)
+            .sum();
+        AiProductSpecList specList = null;
+        int maxAttempts = 2;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            specList = requestSpecList(systemText, expectedCount);
+            if (specList == null || specList.items() == null || specList.items().isEmpty()) {
+                continue;
+            }
+            boolean valid = true;
+            for (AiProductSpec spec : specList.items()) {
+                try {
+                    validateSpec(spec, categoryMap);
+                } catch (CustomException e) {
+                    log.warn("AI 상품 스펙 검증 실패. attempt={}, reason={}", attempt, e.getMessage());
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                break;
+            }
+        }
         if (specList == null || specList.items() == null || specList.items().isEmpty()) {
             throw new CustomException("AI 상품 생성 결과가 비어 있습니다.");
         }
 
         List<ProductInfo> created = new ArrayList<>();
         for (AiProductSpec spec : specList.items()) {
-            validateSpec(spec, categoryMap);
-
-            String description = buildAiDescription(spec);
-            String fileGroupId = null;
-            String fileUrl = null;
             try {
-                String imagePrompt = generateImagePrompt(spec.title(), description);
-                byte[] imageBytes = generateImageBytes(imagePrompt);
-                String fileName = "generated-" + UUID.randomUUID() + ".png";
-                MultipartFile file = new ByteArrayMultipartFile(
-                    "files",
-                    fileName,
-                    "image/png",
-                    imageBytes
-                );
-                var fileGroup = fileService.upload(List.of(file)).getData();
-                if (fileGroup != null) {
-                    fileGroupId = fileGroup.fileGroupId();
-                    fileUrl = (fileGroup.files() == null || fileGroup.files().isEmpty())
-                        ? null
-                        : fileGroup.files().get(0).filePath();
+                String description = buildAiDescription(spec);
+                String fileGroupId = null;
+                String fileUrl = null;
+                try {
+                    String imagePrompt = generateImagePrompt(spec.title(), description);
+                    byte[] imageBytes = generateImageBytes(imagePrompt);
+                    String fileName = "generated-" + UUID.randomUUID() + ".png";
+                    MultipartFile file = new ByteArrayMultipartFile(
+                        "files",
+                        fileName,
+                        "image/png",
+                        imageBytes
+                    );
+                    var fileGroup = fileService.upload(List.of(file)).getData();
+                    if (fileGroup != null) {
+                        fileGroupId = fileGroup.fileGroupId();
+                        fileUrl = (fileGroup.files() == null || fileGroup.files().isEmpty())
+                            ? null
+                            : fileGroup.files().get(0).filePath();
+                    }
+                } catch (Exception e) {
+                    log.warn("AI 이미지 생성/업로드 실패. title={}, reason={}", spec.title(), e.getMessage());
                 }
+
+                ProductCommand command = new ProductCommand(
+                    spec.title(),
+                    description,
+                    List.of(spec.category().code()),
+                    fileGroupId,
+                    fileUrl
+                );
+                created.add(productService.createProduct(command));
             } catch (Exception e) {
-                log.warn("AI 이미지 생성/업로드 실패. title={}, reason={}", spec.title(), e.getMessage());
+                log.warn("AI 상품 생성 실패. title={}, reason={}", spec.title(), e.getMessage());
             }
-
-            ProductCommand command = new ProductCommand(
-                spec.title(),
-                description,
-                List.of(spec.category().code()),
-                fileGroupId,
-                fileUrl
-            );
-
-            created.add(productService.createProduct(command));
         }
 
         return created;
@@ -161,6 +174,7 @@ public class ProductAdminAiService {
         ));
         OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
             .temperature(0.8)
+            .toolChoice(buildToolChoice("product_image_prompt"))
             .build();
         ImagePromptResponse response = chatClient.prompt()
             .system(systemText)
@@ -203,6 +217,142 @@ public class ProductAdminAiService {
         return "Photorealistic product photo. "
             + prompt
             + " Studio lighting, neutral background, no text, no watermark, no people.";
+    }
+
+    private AiProductSpecList requestSpecList(String systemText, int expectedCount) {
+        OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
+            .temperature(0.8)
+            .toolChoice(buildToolChoice("product_spec_list"))
+            .responseFormat(buildSpecListResponseFormat(expectedCount))
+            .build();
+        String userText = "요청한 개수만큼 상품 정보를 생성해줘.";
+        AiProductSpecList lastSpecList = null;
+        int maxAttempts = 2;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            String attemptUserText = attempt == 1
+                ? userText
+                : "이전 응답이 형식/개수 오류였습니다. 동일 조건으로 다시 생성해줘.";
+            try {
+                AiProductSpecList specList = chatClient.prompt()
+                    .system(systemText)
+                    .user(attemptUserText)
+                    .options(chatOptions)
+                    .tools(productAiTool)
+                    .call()
+                    .entity(AiProductSpecList.class);
+                Integer actualCount = specList == null || specList.items() == null
+                    ? null
+                    : specList.items().size();
+                if (specList != null && specList.items() != null && !specList.items().isEmpty()) {
+                    lastSpecList = specList;
+                }
+                if (actualCount != null && actualCount == expectedCount) {
+                    return specList;
+                }
+                log.warn(
+                    "AI 상품 생성 결과 개수 불일치. expected={}, actual={}, attempt={}",
+                    expectedCount,
+                    actualCount,
+                    attempt
+                );
+            } catch (Exception e) {
+                log.warn("AI 상품 생성 결과 파싱 실패. attempt={}, reason={}", attempt, e.getMessage());
+            }
+        }
+        if (lastSpecList != null) {
+            return lastSpecList;
+        }
+        throw new CustomException("AI 상품 생성 결과가 유효하지 않습니다.");
+    }
+
+    private static ResponseFormat buildSpecListResponseFormat(int expectedCount) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("type", "object");
+        schema.put("additionalProperties", false);
+        schema.put("required", List.of("items"));
+
+        Map<String, Object> itemSchema = new HashMap<>();
+        itemSchema.put("type", "object");
+        itemSchema.put("additionalProperties", false);
+        itemSchema.put(
+            "required",
+            List.of(
+                "category",
+                "title",
+                "summary",
+                "condition",
+                "features",
+                "specs",
+                "includedItems",
+                "defects",
+                "recommendedFor",
+                "searchKeywords"
+            )
+        );
+
+        Map<String, Object> categorySchema = Map.of(
+            "type", "object",
+            "additionalProperties", false,
+            "required", List.of("code", "name"),
+            "properties", Map.of(
+                "code", Map.of("type", "string"),
+                "name", Map.of("type", "string")
+            )
+        );
+        Map<String, Object> conditionSchema = Map.of(
+            "type", "object",
+            "additionalProperties", false,
+            "required", List.of("overall", "details"),
+            "properties", Map.of(
+                "overall", Map.of("type", "string"),
+                "details", Map.of(
+                    "type", "array",
+                    "items", Map.of("type", "string")
+                )
+            )
+        );
+        Map<String, Object> stringArraySchema = Map.of(
+            "type", "array",
+            "items", Map.of("type", "string")
+        );
+
+        Map<String, Object> itemProperties = new HashMap<>();
+        itemProperties.put("category", categorySchema);
+        itemProperties.put("title", Map.of("type", "string"));
+        itemProperties.put("summary", Map.of("type", "string"));
+        itemProperties.put("condition", conditionSchema);
+        itemProperties.put("features", stringArraySchema);
+        itemProperties.put("specs", stringArraySchema);
+        itemProperties.put("includedItems", stringArraySchema);
+        itemProperties.put("defects", stringArraySchema);
+        itemProperties.put("recommendedFor", stringArraySchema);
+        itemProperties.put("searchKeywords", stringArraySchema);
+        itemSchema.put("properties", itemProperties);
+
+        Map<String, Object> itemsSchema = new HashMap<>();
+        itemsSchema.put("type", "array");
+        itemsSchema.put("minItems", expectedCount);
+        itemsSchema.put("maxItems", expectedCount);
+        itemsSchema.put("items", itemSchema);
+
+        schema.put("properties", Map.of("items", itemsSchema));
+
+        ResponseFormat.JsonSchema jsonSchema = ResponseFormat.JsonSchema.builder()
+            .name("AiProductSpecList")
+            .schema(schema)
+            .strict(true)
+            .build();
+        return ResponseFormat.builder()
+            .type(ResponseFormat.Type.JSON_SCHEMA)
+            .jsonSchema(jsonSchema)
+            .build();
+    }
+
+    private static Map<String, Object> buildToolChoice(String toolName) {
+        return Map.of(
+            "type", "function",
+            "function", Map.of("name", toolName)
+        );
     }
 
     private static String buildAiDescription(AiProductSpec draft) {
