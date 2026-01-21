@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class DepositHistoryRepositoryAdapter implements DepositHistoryRepository {
@@ -25,6 +27,7 @@ public class DepositHistoryRepositoryAdapter implements DepositHistoryRepository
 
     @Override
     public Page<DepositHistory> findByUserIdAndType(String userId, DepositType type, Pageable pageable) {
-        return repository.findByUserIdAndTypeOrderByCreatedAtDesc(userId,type,pageable);
+        List<DepositType> targetTypes = type.getRelatedTypes();
+        return repository.findByUserIdAndTypeInOrderByCreatedAtDesc(userId, targetTypes, pageable);
     }
 }
