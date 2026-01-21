@@ -8,20 +8,20 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositOrderDto {
-    public record CreateCommand(
+    public record CreatePaymentCommand(
             BigDecimal amount,
             BigDecimal deposit
     ) {
-        public static CreateCommand of(BigDecimal amount, BigDecimal deposit) {
-            return new CreateCommand(amount, deposit);
+        public static CreatePaymentCommand of(BigDecimal amount, BigDecimal deposit) {
+            return new CreatePaymentCommand(amount, deposit);
         }
     }
 
-    public record createDepositPaymentCommand(
+    public record CreateDepositPaymentCommand(
             BigDecimal amount
     ) {
-        public static createDepositPaymentCommand of(BigDecimal amount) {
-            return new createDepositPaymentCommand(amount);
+        public static CreateDepositPaymentCommand of(BigDecimal amount) {
+            return new CreateDepositPaymentCommand(amount);
         }
     }
 
