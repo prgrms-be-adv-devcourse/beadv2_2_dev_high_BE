@@ -39,7 +39,7 @@ public class DepositOrderService {
     private final RestTemplate restTemplate;
 
     @Transactional
-    public DepositOrderDto.Info createPaymentOrder(DepositOrderDto.CreateCommand command) {
+    public DepositOrderDto.Info createPaymentOrder(DepositOrderDto.CreatePaymentCommand command) {
         String userId = UserContext.get().userId();
         DepositOrder order = orderRepository.save(DepositOrder.createOrder(userId, command.amount(), command.deposit()));
         if (order.isPayment()) {
@@ -50,7 +50,7 @@ public class DepositOrderService {
     }
 
     @Transactional
-    public DepositOrderDto.Info createDepositPaymentOrder(DepositOrderDto.createDepositPaymentCommand command) {
+    public DepositOrderDto.Info createDepositPaymentOrder(DepositOrderDto.CreateDepositPaymentCommand command) {
         String userId = UserContext.get().userId();
         DepositOrder order = orderRepository.save(DepositOrder.createDepositPayment(userId, command.amount()));
         paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));

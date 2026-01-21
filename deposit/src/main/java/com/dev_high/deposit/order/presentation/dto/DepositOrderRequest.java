@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public class DepositOrderRequest {
-    public record Create(
+    public record CreatePayment(
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Positive(message = "주문 금액은 0보다 커야 합니다.")
@@ -19,19 +19,19 @@ public class DepositOrderRequest {
             @Schema(description = "예치금")
             BigDecimal deposit
     ) {
-        public DepositOrderDto.CreateCommand toCommand(BigDecimal amount, BigDecimal deposit) {
-            return DepositOrderDto.CreateCommand.of(amount, deposit);
+        public DepositOrderDto.CreatePaymentCommand toCommand(BigDecimal amount, BigDecimal deposit) {
+            return DepositOrderDto.CreatePaymentCommand.of(amount, deposit);
         }
     }
 
-    public record createDepositPayment(
+    public record CreateDepositPayment(
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Positive(message = "주문 금액은 0보다 커야 합니다.")
             BigDecimal amount
     ) {
-        public DepositOrderDto.createDepositPaymentCommand toCommand(BigDecimal amount) {
-            return DepositOrderDto.createDepositPaymentCommand.of(amount);
+        public DepositOrderDto.CreateDepositPaymentCommand toCommand(BigDecimal amount) {
+            return DepositOrderDto.CreateDepositPaymentCommand.of(amount);
         }
     }
 
