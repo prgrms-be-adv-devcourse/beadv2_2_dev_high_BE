@@ -38,7 +38,7 @@ public class DepositPaymentController {
     @Operation(summary = "토스 결제 승인", description = "토스 결제 완료 후 paymentKey,orderId,amount를 전달받아 결제를 승인한다.")
     @PostMapping("/confirm")
     public ApiResponseDto<DepositPaymentResponse.Detail> confirmPayment(@RequestBody DepositPaymentRequest.Confirm request) {
-        DepositPaymentDto.ConfirmCommand command = request.toCommand(request.paymentKey(), request.orderId(), request.amount());
+        DepositPaymentDto.ConfirmCommand command = request.toCommand(request.paymentKey(), request.orderId(), request.amount(), request.winningOrderId());
         DepositPaymentDto.Info info =  paymentService.confirmPayment(command);
         DepositPaymentResponse.Detail response = DepositPaymentResponse.Detail.from(info);
         return ApiResponseDto.success(response);

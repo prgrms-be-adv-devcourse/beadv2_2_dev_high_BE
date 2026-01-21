@@ -40,10 +40,13 @@ public class DepositPaymentRequest {
             @Schema(description = "금액")
             @NotNull(message = "금액은 필수입니다.")
             @Positive(message = "주문 금액은 0보다 커야 합니다.")
-            BigDecimal amount
+            BigDecimal amount,
+
+            @Schema(description = "낙찰 ID")
+            String winningOrderId
     ) {
-        public DepositPaymentDto.ConfirmCommand toCommand(String paymentKey, String orderId, BigDecimal amount) {
-            return DepositPaymentDto.ConfirmCommand.of(paymentKey, orderId, amount);
+        public DepositPaymentDto.ConfirmCommand toCommand(String paymentKey, String orderId, BigDecimal amount, String winningOrderId) {
+            return DepositPaymentDto.ConfirmCommand.of(paymentKey, orderId, amount, winningOrderId);
         }
     }
 }

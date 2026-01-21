@@ -16,6 +16,6 @@ public class PaymentEventHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentConfirmed(PaymentEvent.PaymentConfirmed event) {
-        depositOrderService.confirmOrder(DepositOrderDto.ConfirmCommand.of(event.id()));
+        depositOrderService.confirmOrder(DepositOrderDto.ConfirmCommand.of(event.id(), event.winningOrderId()));
     }
 }

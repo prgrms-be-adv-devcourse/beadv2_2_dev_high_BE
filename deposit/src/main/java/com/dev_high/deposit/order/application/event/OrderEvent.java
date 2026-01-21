@@ -15,4 +15,12 @@ public class OrderEvent {
             return new OrderConfirmed(orderId, userId, type, amount);
         }
     }
+
+    public record OrderCompleted(
+            String winningOrderId
+    ) {
+        public static OrderCompleted of(String winningOrderId) {
+            return new OrderCompleted(winningOrderId);
+        }
+    }
 }

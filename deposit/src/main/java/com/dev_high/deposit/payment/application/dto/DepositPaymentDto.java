@@ -20,10 +20,11 @@ public class DepositPaymentDto {
     public record ConfirmCommand(
             String paymentKey,
             String orderId,
-            BigDecimal amount
+            BigDecimal amount,
+            String winningOrderId
     ) {
-        public static ConfirmCommand of(String paymentKey, String orderId, BigDecimal amount) {
-            return new ConfirmCommand(paymentKey, orderId, amount);
+        public static ConfirmCommand of(String paymentKey, String orderId, BigDecimal amount, String winningOrderId) {
+            return new ConfirmCommand(paymentKey, orderId, amount, winningOrderId);
         }
     }
 
