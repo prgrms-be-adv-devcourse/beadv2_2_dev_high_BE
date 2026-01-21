@@ -70,7 +70,7 @@ public class DepositPaymentService {
 
         payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
         DepositPayment savedPayment = depositPaymentRepository.save(payment);
-        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(savedPayment.getOrderId()));
+        applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(savedPayment.getOrderId(), command.winningOrderId()));
         // TODO : 현재 충전이라는 방향으로 되어있는데, 추후 직접 결제가 있다면 변경이 필요하다.
         return DepositPaymentDto.Info.from(savedPayment);
     }

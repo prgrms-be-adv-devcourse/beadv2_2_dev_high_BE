@@ -87,6 +87,8 @@ public class DepositOrderService {
         orderRepository.save(order);
         if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
             applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), DepositType.CHARGE, order.getAmount()));
+        } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId()));
         }
     }
 

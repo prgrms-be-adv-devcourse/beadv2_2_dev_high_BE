@@ -45,10 +45,11 @@ public class DepositOrderDto {
     }
 
     public record ConfirmCommand(
-            String id
+            String id,
+            String winningOrderId
     ) {
-        public static ConfirmCommand of(String id) {
-            return new ConfirmCommand(id);
+        public static ConfirmCommand of(String id, String winningOrderId) {
+            return new ConfirmCommand(id, winningOrderId);
         }
     }
 
