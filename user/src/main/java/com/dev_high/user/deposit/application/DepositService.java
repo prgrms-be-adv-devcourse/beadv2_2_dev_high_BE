@@ -60,7 +60,7 @@ public class DepositService {
     @Transactional
     public void eventPublishByDepositType(DepositDto.PublishCommand command) {
         switch (command.type()) {
-            case DEPOSIT -> applicationEventPublisher.publishEvent(DepositEvent.DepositPaid.of(command.depositOrderId(), command.type()));
+            case PAYMENT -> applicationEventPublisher.publishEvent(DepositEvent.DepositPaid.of(command.depositOrderId(), command.type()));
             case CHARGE -> applicationEventPublisher.publishEvent(DepositEvent.DepositCharged.of(command.depositOrderId()));
             default -> throw new IllegalArgumentException("지원하지 않는 유형입니다. :" + command.type());
         }
