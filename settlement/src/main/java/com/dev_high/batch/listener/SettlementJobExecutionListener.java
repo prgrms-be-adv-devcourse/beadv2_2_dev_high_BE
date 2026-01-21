@@ -95,7 +95,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
               new NotificationRequestEvent(
                   List.of(sellerId),
                   formattedAmount + "원 정산이 완료되었습니다.",
-                  "/mypage",
+                  "/mypage?tab=6",
                   NotificationCategory.Type.SETTLEMENT_SUCCESS
               )
           );

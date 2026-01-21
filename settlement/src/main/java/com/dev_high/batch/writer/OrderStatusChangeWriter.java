@@ -32,12 +32,9 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
                 continue;
             }
 
-            List<String> buyerIds = updatedOrders.stream()
-                    .map(UpdateOrderProjection::getBuyerId)
-                    .distinct()
-                    .toList();
 
-            notifyBuyers(buyerIds, result.request().message(), result.request().redirect(), result.request().newStatus());
+
+            notifyBuyers(updatedOrders, result.request().message(), result.request().redirect(), result.request().newStatus());
 
             if (result.request().newStatus() == OrderStatus.UNPAID_CANCEL) {
                 List<String> auctionIds = updatedOrders.stream()
@@ -51,8 +48,8 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
         }
     }
 
-    private void notifyBuyers(List<String> buyer, String message, String redirect, OrderStatus orderStatus) {
-        if (buyer.isEmpty() || message == null) {
+    private void notifyBuyers(List<UpdateOrderProjection> orders, String message, String redirect, OrderStatus orderStatus) {
+        if (orders.isEmpty() || message == null) {
             return;
         }
         NotificationCategory.Type type = switch (orderStatus) {
@@ -62,11 +59,17 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
             default -> NotificationCategory.Type.GENERAL;
         };
 
-        try {
-            publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-                    new NotificationRequestEvent(buyer, message, redirect, type));
-        } catch (Exception e) {
-            log.error("알림 이벤트 실패: {}", e.getMessage());
+
+        for(UpdateOrderProjection order : orders){
+            String buyer = order.getBuyerId();
+            String orderId = order.getId();
+            try {
+                publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
+                        new NotificationRequestEvent(List.of(buyer), message, redirect+"/"+orderId, type));
+            } catch (Exception e) {
+                log.error("알림 이벤트 실패: {}", e.getMessage());
+            }
         }
+
     }
 }

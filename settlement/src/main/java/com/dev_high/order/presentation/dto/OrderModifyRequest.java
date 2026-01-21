@@ -7,6 +7,11 @@ import java.time.OffsetDateTime;
 public record OrderModifyRequest(
         String id,
         OrderStatus status,
-        OffsetDateTime payLimitDate
+        OffsetDateTime payLimitDate,
+        String addressId
 ) {
+    public OrderModifyRequest(String id ,OrderStatus status , OffsetDateTime payLimitDate)
+        {
+           this(id,status,payLimitDate,null);
+        }
 }

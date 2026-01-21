@@ -1,4 +1,8 @@
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
   servlet:
     multipart:
       max-file-size: 20MB     # 파일 하나의 최대 용량
@@ -9,15 +13,18 @@ spring:
         schema-name: product
         table-name: product_embed
         dimensions: 1536
+        id-type: TEXT
         initialize-schema: false
     openai:
       api-key: ${GPT_API_KEY}
       base-url: https://api.openai.com/
+      image:
+        options:
+          model: gpt-image-1-mini
       chat:
         options:
           model: gpt-4o-mini
           temperature: 0.2
-          max_completion_tokens: 768
 
 
 aws:

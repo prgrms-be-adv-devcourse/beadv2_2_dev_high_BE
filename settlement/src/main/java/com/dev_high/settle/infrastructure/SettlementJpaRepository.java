@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Set;
 
 public interface SettlementJpaRepository extends JpaRepository<Settlement, String> {
 
@@ -21,7 +22,7 @@ public interface SettlementJpaRepository extends JpaRepository<Settlement, Strin
     List<Settlement> findAllByIdIn(List<String> ids);
 
 
-    Page<Settlement> findByStatus(SettlementStatus status,
-                                                  Pageable pageable);
+    Page<Settlement> findByStatusIn(Set<SettlementStatus> status,
+                                    Pageable pageable);
 
 }
