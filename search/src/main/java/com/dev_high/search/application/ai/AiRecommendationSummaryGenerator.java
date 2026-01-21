@@ -12,7 +12,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -20,21 +19,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AiRecommendationSummaryGenerator {
 
-    private static final int MAX_ITEMS = 10;
+    private static final int MAX_ITEMS = 5;
 
     private final ChatClient chatClient;
+    private final PromptTemplate recommendationTextTemplate;
 
-    private final  PromptTemplate recommendationTextTemplate;
+    public String summarize(List<ProductRecommendResponse> recommended, String fallbackSummary) {
 
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
-
-    public String summarize(List<ProductRecommendResponse> recommended) {
-        if (chatClient == null || apiKey == null || apiKey.isBlank()) {
-            return defaultSummary();
+        if (chatClient == null) {
+            return fallbackSummary;
         }
+
         if (recommended == null || recommended.isEmpty()) {
-            return defaultSummary();
+            return fallbackSummary;
         }
 
         List<ProductRecommendResponse> safe = recommended.stream()
@@ -43,58 +40,62 @@ public class AiRecommendationSummaryGenerator {
                 .toList();
 
         if (safe.isEmpty()) {
-            return defaultSummary();
+            return fallbackSummary;
         }
 
         String itemsJson = toItemsJson(safe);
+        log.info("itemsJson: {}", itemsJson);
 
         try {
-            Prompt prompt = recommendationTextTemplate.create(Map.ofEntries(
-                    Map.entry("itemsJson", itemsJson)
-            ));
+            Prompt prompt = recommendationTextTemplate.create(
+                    Map.of("itemsJson", itemsJson)
+            );
 
             ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+            if (chatResponse == null) {
+                return fallbackSummary;
+            }
+
             Generation generation = chatResponse.getResult();
 
             String content = generation.getOutput().getText();
-
-            log.info("원문 응답: {}", content);
+            if (content == null || content.isBlank()) {
+                return fallbackSummary;
+            }
 
             String oneLine = extractOneLine(content);
 
             if (oneLine == null || oneLine.isBlank()) {
-                return fallbackSummary();
-            }
-            oneLine = normalizeLength(oneLine, 30, 60);
-            if (oneLine == null) {
-                return fallbackSummary();
+                return fallbackSummary;
             }
 
             return oneLine;
 
         } catch (Exception e) {
-            log.warn("요약 생성 실패: {}", e.getMessage(), e);
-            return fallbackSummary();
+            log.warn("추천 요약 생성 실패", e);
+            return fallbackSummary;
         }
     }
 
     private static String toItemsJson(List<ProductRecommendResponse> items) {
         return items.stream()
                 .map(r -> {
-                    String productName = escape(trimSafe(r.productName(), 60));
-                    String categories = toJsonArray(r.categories(), 6);
-                    String description = escape(trimSafe(r.description(), 160));
-                    double score = (r.score() == null) ? 0.0 : r.score();
+                    String productName = escape(r.productName());
+                    String categories = toJsonArray(r.categories());
+                    String description = escape(r.description());
+                    double score = r.score() == null ? 0.0 : r.score();
 
                     return """
-                            {"productName":"%s","categories":%s,"description":"%s","score":%.4f}
-                            """.formatted(productName, categories, description, score).trim();
+                        {"productName":"%s","categories":%s,"description":"%s","score":%.4f}
+                        """.formatted(productName, categories, description, score).trim();
                 })
                 .collect(Collectors.joining(",", "[", "]"));
     }
 
     private static String extractOneLine(String content) {
-        if (content == null) return null;
+        if (content == null) {
+            return null;
+        }
 
         String line = content.lines()
                 .map(String::trim)
@@ -102,12 +103,12 @@ public class AiRecommendationSummaryGenerator {
                 .findFirst()
                 .orElse(null);
 
-        if (line == null) return null;
+        if (line == null) {
+            return null;
+        }
 
         if (line.startsWith("```")) {
-            String trimmed = content.trim();
-
-            line = trimmed.lines()
+            line = content.lines()
                     .map(String::trim)
                     .filter(s -> !s.isBlank() && !s.startsWith("```"))
                     .findFirst()
@@ -121,46 +122,23 @@ public class AiRecommendationSummaryGenerator {
         return line.replace("\n", " ").replace("\r", " ").trim();
     }
 
-    private static String normalizeLength(String line, int min, int max) {
-        if (line == null) return null;
-        String s = line.trim();
-        if (s.length() < min) {
-            return null;
+    private static String toJsonArray(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return "[]";
         }
-        if (s.length() > max) {
-            s = s.substring(0, max).trim();
-            s = s.replaceAll("[\\s\\-_,]+$", "");
-        }
-        return s;
-    }
-
-    private static String defaultSummary() {
-        return null;
-    }
-
-    private static String fallbackSummary() {
-        return "찜한 상품 설명과 유사한 특징을 가진 경매 상품을 추천했어요.";
-    }
-
-    private static String trimSafe(String s, int max) {
-        if (s == null) return "";
-        String t = s.trim();
-        return t.length() <= max ? t : t.substring(0, max);
-    }
-
-    private static String toJsonArray(List<String> list, int max) {
-        if (list == null || list.isEmpty()) return "[]";
 
         return list.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
-                .limit(max)
                 .map(s -> "\"" + escape(s) + "\"")
                 .collect(Collectors.joining(",", "[", "]"));
     }
 
     private static String escape(String s) {
+        if (s == null) {
+            return "";
+        }
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

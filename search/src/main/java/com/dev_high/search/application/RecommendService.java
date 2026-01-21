@@ -11,16 +11,20 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.search.application.ai.AiRecommendationSummaryGenerator;
 import com.dev_high.search.application.dto.ProductRecommendResponse;
 import com.dev_high.search.application.dto.ProductRecommendSummaryResponse;
+import com.dev_high.search.application.dto.RecommendationConfidence;
 import com.dev_high.search.application.mapper.ProductRecommendMapper;
 import com.dev_high.search.util.VectorUtils;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.CRC32;
 
 @Slf4j
 @Service
@@ -29,16 +33,18 @@ public class RecommendService {
 
     private static final String INDEX = "product";
     private static final int EMBEDDING_DIMS = 1536;
-    private static final int LIMIT = 10;
-    private static final int NUM_CANDIDATES_FACTOR = 20;
+
+    private static final int LIMIT = 5;
+    private static final int NUM_CANDIDATES_FACTOR = 200;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ElasticsearchClient elasticsearchClient;
     private final AiRecommendationSummaryGenerator summaryGenerator;
 
     public List<ProductRecommendResponse> recommendByWishlist(List<String> wishlistProductIds) {
         String userId = UserContext.get().userId();
-        
-        if (wishlistProductIds == null || wishlistProductIds.isEmpty()) {
+
+        if (wishlistProductIds.isEmpty()) {
             return fallback(wishlistProductIds, userId);
         }
 
@@ -50,22 +56,66 @@ public class RecommendService {
         float[] userVector = VectorUtils.meanVector(vectors);
         VectorUtils.l2NormalizeInPlace(userVector);
 
-        List<ProductRecommendResponse> candidates =
-                searchCandidatesByKnn(userVector, wishlistProductIds, userId);
-
-        if (!candidates.isEmpty()) {
-            return candidates;
+        List<ProductRecommendResponse> candidates = searchCandidatesByKnn(userVector, wishlistProductIds, userId);
+        if (candidates.isEmpty()) {
+            return fallback(wishlistProductIds, userId);
         }
 
-        return fallback(wishlistProductIds, userId);
+        return candidates;
     }
 
     public ApiResponseDto<ProductRecommendSummaryResponse> recommendByWishlistWithSummary(List<String> wishlistProductIds) {
-        List<ProductRecommendResponse> items = recommendByWishlist(wishlistProductIds);
+        List<String> wishlistIds = (wishlistProductIds == null) ? List.of() : wishlistProductIds;
 
-        String summary = summaryGenerator.summarize(items);
+        List<ProductRecommendResponse> items = recommendByWishlist(wishlistIds);
+        RecommendationConfidence confidence = calculateConfidence(wishlistIds, items);
 
-        return ApiResponseDto.success(new ProductRecommendSummaryResponse(summary, items));
+        String summary;
+        switch (confidence) {
+            case MID -> summary = midConfidenceSummary();
+            case HIGH -> summary = summaryGenerator.summarize(items, midConfidenceSummary());
+            default -> summary = baseRecommendationSummary();
+        }
+
+        return ApiResponseDto.success(
+                new ProductRecommendSummaryResponse(summary, items)
+        );
+    }
+
+    private RecommendationConfidence calculateConfidence(
+            List<String> wishlistIds,
+            List<ProductRecommendResponse> results
+    ) {
+        if (wishlistIds.isEmpty() || results == null || results.isEmpty()) {
+            return RecommendationConfidence.LOW;
+        }
+
+        double avgScore = results.stream()
+                .map(ProductRecommendResponse::score)
+                .filter(Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        log.info("result size: {}", results.size());
+        log.info("Average score: {}", avgScore);
+
+        if (avgScore < 0.91) {
+            return RecommendationConfidence.LOW;
+        }
+        if (avgScore < 0.95) {
+            return RecommendationConfidence.MID;
+        }
+        return RecommendationConfidence.HIGH;
+    }
+
+
+    private String baseRecommendationSummary() {
+        return "오늘의 추천 경매 상품을 모아봤어요.";
+    }
+
+    private String midConfidenceSummary() {
+        return "찜한 상품과 일부 비슷한 흐름의 상품을 추천했어요.";
     }
 
     private List<ProductRecommendResponse> searchCandidatesByKnn(
@@ -74,7 +124,7 @@ public class RecommendService {
             String userId
     ) {
         int k = LIMIT;
-        int numCandidates = Math.min(1000, Math.max(200, k * NUM_CANDIDATES_FACTOR));
+        int numCandidates = Math.max(200, k * NUM_CANDIDATES_FACTOR);
 
         try {
             SearchRequest req = SearchRequest.of(s -> s
@@ -88,9 +138,6 @@ public class RecommendService {
                     )
                     .query(q -> q.bool(b -> {
                         b.filter(f -> f.exists(e -> e.field("embedding")));
-                        return b;
-                    }))
-                    .postFilter(pf -> pf.bool(b -> {
                         applyRecommendFilters(b, wishlistIds, userId);
                         return b;
                     }))
@@ -104,52 +151,48 @@ public class RecommendService {
                     .toList();
 
         } catch (Exception e) {
-            throw new RuntimeException("kNN 추천 검색 실패", e);
-        }
-    }
-
-    private List<ProductRecommendResponse> fallback (
-            List<String> wishlistIds,
-            String userId
-    ) {
-        return fallbackEsOnly(wishlistIds, userId);
-    }
-
-    private List<ProductRecommendResponse> fallbackEsOnly (
-            List<String> wishlistIds,
-            String userId
-    ) {
-        int k = LIMIT;
-
-        try {
-            SearchRequest req = SearchRequest.of(s -> s
-                    .index(INDEX)
-                    .size(k)
-                    .query(q -> q.bool(b -> {
-                        b.must(m -> m.matchAll(ma -> ma));
-                        applyRecommendFilters(b, wishlistIds, userId);
-                        return b;
-                    }))
-            );
-
-            var resp = elasticsearchClient.search(req, JsonNode.class);
-
-            return resp.hits().hits().stream()
-                    .map(ProductRecommendMapper::from)
-                    .filter(Objects::nonNull)
-                    .toList();
-
-        } catch (Exception e) {
-            log.warn("기본 검색(fallback) 수행 중 오류 발생", e);
+            log.error("kNN 추천 검색 실패", e);
             return List.of();
         }
     }
 
-    /**
-     * - wishlist 원본 productId 제외
-     * - sellerId == userId 제외
-     * - status == COMPLETED 제외
-     */
+    private List<ProductRecommendResponse> fallback(
+            List<String> wishlistIds,
+            String userId
+    ) {
+        try {
+            long seed = dailySeed(userId);
+
+            SearchRequest req = SearchRequest.of(s -> s
+                    .index(INDEX)
+                    .size(LIMIT)
+                    .query(q -> q.functionScore(fs -> fs
+                            .query(qq -> qq.bool(b -> {
+                                b.must(m -> m.matchAll(ma -> ma));
+                                applyRecommendFilters(b, wishlistIds, userId);
+                                return b;
+                            }))
+                            .functions(f -> f.randomScore(rs -> rs
+                                    .seed(String.valueOf(seed))
+                                    .field("_seq_no")
+                            ))
+                            .boostMode(co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode.Replace)
+                    ))
+            );
+
+            var resp = elasticsearchClient.search(req, JsonNode.class);
+
+            return resp.hits().hits().stream()
+                    .map(ProductRecommendMapper::from)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+        } catch (Exception e) {
+            log.warn("기본 추천(fallback) 수행 중 오류 발생", e);
+            return List.of();
+        }
+    }
+
     private void applyRecommendFilters(
             BoolQuery.Builder b,
             List<String> excludeProductIds,
@@ -191,15 +234,15 @@ public class RecommendService {
                     continue;
                 }
 
-                ArrayNode arr = (ArrayNode) emb;
-                if (arr.size() != EMBEDDING_DIMS) {
+                if (emb.size() != EMBEDDING_DIMS) {
                     continue;
                 }
 
                 float[] vec = new float[EMBEDDING_DIMS];
                 for (int i = 0; i < EMBEDDING_DIMS; i++) {
-                    vec[i] = (float) arr.get(i).asDouble();
+                    vec[i] = (float) emb.get(i).asDouble();
                 }
+
                 vectors.add(vec);
             }
 
@@ -207,7 +250,16 @@ public class RecommendService {
 
         } catch (Exception e) {
             log.error("embedding 정보 조회 실패", e);
-            throw new RuntimeException("embedding 정보 조회 실패", e);
+            return List.of();
         }
+    }
+
+    private long dailySeed(String userId) {
+        String day = LocalDate.now(KST).toString();
+        String key = (userId == null ? "anonymous" : userId) + "|" + day;
+
+        CRC32 crc = new CRC32();
+        crc.update(key.getBytes(StandardCharsets.UTF_8));
+        return crc.getValue();
     }
 }

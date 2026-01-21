@@ -28,7 +28,7 @@ public class SearchEventListener {
         log.info("확인");
         ProductCreateSearchRequestEvent request = JsonUtil.fromPayload(envelope.payload(), ProductCreateSearchRequestEvent.class);
         try {
-            searchService.indexProduct(request);
+            searchService.createProduct(request);
         } catch (TransientDataAccessException | NetworkException e) {
             log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
             throw e;
