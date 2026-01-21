@@ -3,23 +3,19 @@ package com.dev_high.product.admin;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.product.application.dto.DashboardCategoryCountItem;
 import com.dev_high.product.application.dto.ProductInfo;
+import com.dev_high.product.admin.dto.AiProductGenerateRequest;
 import com.dev_high.product.presentation.dto.ProductRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -30,6 +26,7 @@ import java.util.List;
 public class ProductAdminController {
 
     private final ProductAdminService productAdminService;
+    private final ProductAdminAiService productAdminAiService;
 
     @PostMapping
     public ApiResponseDto<ProductInfo> createProduct(
@@ -78,6 +75,36 @@ public class ProductAdminController {
         @RequestParam(required = false) String timezone
     ) {
         return ApiResponseDto.success(productAdminService.getCategoryProductCounts(from, to, limit, timezone));
+    }
+
+    @PostMapping(value = "/ai/generate/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter generateAiProductsStream(
+        @RequestBody AiProductGenerateRequest request
+    ) {
+        SseEmitter emitter = new SseEmitter(0L);
+        var userInfo = com.dev_high.common.context.UserContext.get();
+        emitter.onCompletion(() -> {});
+        emitter.onTimeout(() -> {});
+        emitter.onError(ex -> {});
+        productAdminAiService.generateAiProductsAsync(request, userInfo)
+            .whenComplete((products, ex) -> {
+                try {
+                    if (ex != null) {
+                        emitter.send(SseEmitter.event()
+                            .name("failed")
+                            .data(Map.of("status", "failed", "error", ex.getMessage())));
+                    } else {
+                        emitter.send(SseEmitter.event()
+                            .name("completed")
+                            .data(Map.of("status", "completed", "products", products)));
+                    }
+                    emitter.complete();
+                } catch (IOException sendError) {
+                    emitter.complete();
+                }
+            });
+
+        return emitter;
     }
 
 

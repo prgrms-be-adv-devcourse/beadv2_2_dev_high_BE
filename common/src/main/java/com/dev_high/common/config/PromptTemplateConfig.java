@@ -96,6 +96,79 @@ public class PromptTemplateConfig {
     }
 
     @Bean
+    public PromptTemplate aiProductGenerateTemplate() {
+        String template = """
+            너는 중고 경매 플랫폼의 상품 등록을 돕는 생성형 도우미야.
+            입력된 카테고리별 생성 개수에 맞춰, 실제로 팔릴 법한 상품 정보를 만들어줘.
+            tool `product_spec_list`를 반드시 호출해.
+
+            [카테고리 후보 목록(여기서만 선택)]
+            {categoryOptions}
+
+            [카테고리별 생성 개수]
+            {categoryCounts}
+
+            [핵심 원칙]
+            - 출력은 반드시 JSON 한 개 객체만. JSON 이외의 텍스트는 절대 출력하지 마.
+            - items 배열 길이는 카테고리별 생성 개수 합계와 정확히 일치해야 해.
+            - category.code는 후보 목록의 code(id)만 사용해.
+            - category.name은 선택한 code에 해당하는 이름과 완전히 동일해야 해.
+            - 상품은 서로 중복되지 않게 하고, 제목/스펙/키워드를 다양하게 구성해.
+            - 너무 평범한 조합만 반복하지 말고, 실제로 팔릴 법한 선에서 적당히 창의적으로 만들어.
+            - title은 35자 이내.
+            - summary는 실제 중고 판매글 톤으로 1~2문장.
+            - condition.overall은 상/중/하 중 하나.
+            - condition.details는 1~3개.
+            - features/specs/includedItems/recommendedFor/searchKeywords는 1~5개.
+            - defects는 0~3개, 없으면 [].
+
+            [필수 출력 JSON 스키마]
+            {{
+              "items": [
+                {{
+                  "category": {{"code": "", "name": ""}},
+                  "title": "",
+                  "summary": "",
+                  "condition": {{
+                    "overall": "",
+                    "details": ["", ""]
+                  }},
+                  "features": ["", ""],
+                  "specs": ["", ""],
+                  "includedItems": ["", ""],
+                  "defects": [],
+                  "recommendedFor": ["", ""],
+                  "searchKeywords": ["", ""]
+                }}
+              ]
+            }}
+            """;
+        return new PromptTemplate(template);
+    }
+
+    @Bean
+    public PromptTemplate aiProductImagePromptTemplate() {
+        String template = """
+            너는 이미지 생성 프롬프트를 만드는 도우미야.
+            아래 상품 제목과 설명을 기반으로 실사에 가까운 제품 단독 촬영용 프롬프트를 작성하고
+            tool `product_image_prompt`를 반드시 호출해.
+
+            [상품 제목]
+            {title}
+
+            [상품 설명]
+            {description}
+
+            [프롬프트 지침]
+            - 실사 사진, 스튜디오 조명, 중립 배경
+            - 텍스트/워터마크/로고/사람 없음
+            - 제품이 한 개만 보이도록
+            - 1~2문장
+            """;
+        return new PromptTemplate(template);
+    }
+
+    @Bean
     public PromptTemplate auctionRecommendationTemplate() {
         String template = """
 			너는 경매 시작가 추천을 돕는 도우미야. 아래 값을 참고해서 tool `auction_recommendation`을 반드시 호출해.
