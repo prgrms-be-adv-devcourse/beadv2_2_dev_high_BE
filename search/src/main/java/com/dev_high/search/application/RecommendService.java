@@ -97,9 +97,6 @@ public class RecommendService {
                 .average()
                 .orElse(0.0);
 
-        log.info("result size: {}", results.size());
-        log.info("Average score: {}", avgScore);
-
         if (avgScore < 0.91) {
             return RecommendationConfidence.LOW;
         }

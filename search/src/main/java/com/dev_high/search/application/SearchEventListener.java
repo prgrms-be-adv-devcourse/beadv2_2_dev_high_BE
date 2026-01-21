@@ -25,7 +25,6 @@ public class SearchEventListener {
 
     @KafkaListener(topics = KafkaTopics.PRODUCT_SEARCH_CREATED_REQUESTED)
     public void indexProduct(KafkaEventEnvelope<ProductCreateSearchRequestEvent> envelope, ConsumerRecord<?, ?> record) {
-        log.info("확인");
         ProductCreateSearchRequestEvent request = JsonUtil.fromPayload(envelope.payload(), ProductCreateSearchRequestEvent.class);
         try {
             searchService.createProduct(request);
