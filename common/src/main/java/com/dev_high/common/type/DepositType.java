@@ -11,6 +11,8 @@ package com.dev_high.common.type;
 
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 public enum DepositType {
     CHARGE,
@@ -18,4 +20,17 @@ public enum DepositType {
     PAYMENT,
     DEPOSIT,
     REFUND;
+
+    private static final List<DepositType> INCOME_GROUP = List.of(CHARGE, REFUND);
+    private static final List<DepositType> OUTCOME_GROUP = List.of(USAGE, PAYMENT, DEPOSIT);
+
+    public List<DepositType> getRelatedTypes() {
+        if (INCOME_GROUP.contains(this)) {
+            return INCOME_GROUP;
+        }
+        if (OUTCOME_GROUP.contains(this)) {
+            return OUTCOME_GROUP;
+        }
+        return List.of(this);
+    }
 }
