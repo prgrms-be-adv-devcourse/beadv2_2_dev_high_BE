@@ -5,10 +5,16 @@ metadata:
   labels:
     app: config
 spec:
-  replicas: 1
+  replicas: 1 
+  revisionHistoryLimit: 1
   selector:
     matchLabels:
       app: config
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 신규 Pod 동시에 추가하지 않음 → 최초 배포 1개만
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -43,24 +49,31 @@ spec:
 
             - name: JAVA_TOOL_OPTIONS
               value: >
-                -Xms128m
-                -Xmx256m
                 -Duser.timezone=Asia/Seoul
+                -Xmx96m           
+                -XX:MaxMetaspaceSize=64m
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8888
-            initialDelaySeconds: 200
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 12
+            initialDelaySeconds: 80
+            periodSeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 2
 
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8888
-            initialDelaySeconds: 210
-            periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 6
-          resources: {}
+            initialDelaySeconds: 100
+            periodSeconds: 120
+            timeoutSeconds: 5
+            failureThreshold: 1
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

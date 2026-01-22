@@ -11,8 +11,6 @@ springdoc:
         url: /swagger/notification-service
       - name: Deposit
         url: /swagger/deposit-service
-      - name: Order
-        url: /swagger/order-service
       - name: Product
         url: /swagger/product-service
       - name: Search

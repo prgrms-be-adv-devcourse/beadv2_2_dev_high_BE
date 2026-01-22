@@ -1,10 +1,15 @@
 package com.dev_high.settlement.batch.config;
 
 import com.dev_high.settlement.batch.listener.SettlementJobExecutionListener;
+import com.dev_high.settlement.batch.listener.SettlementRegistrationStepListener;
+import com.dev_high.settlement.batch.processor.OrderToSettlementProcessor;
 import com.dev_high.settlement.batch.processor.SettlementProcessor;
 import com.dev_high.settlement.batch.reader.SettlementReader;
+import com.dev_high.settlement.batch.reader.OrderSettlementReader;
 import com.dev_high.settlement.batch.writer.SettlementWriter;
-import com.dev_high.settlement.domain.Settlement;
+import com.dev_high.settlement.batch.writer.SettlementRegistrationWriter;
+import com.dev_high.settlement.domain.order.WinningOrder;
+import com.dev_high.settlement.domain.settle.Settlement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +25,8 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
@@ -32,6 +39,10 @@ public class SettlementJobConfig {
   private final SettlementReader settlementReader;
   private final SettlementProcessor settlementProcessor;
   private final SettlementWriter settlementWriter;
+  private final OrderSettlementReader orderSettlementReader;
+  private final OrderToSettlementProcessor orderToSettlementProcessor;
+  private final SettlementRegistrationWriter settlementRegistrationWriter;
+  private final SettlementRegistrationStepListener settlementRegistrationStepListener;
   private final SettlementJobExecutionListener settlementJobExecutionListener;
 
   @Bean
@@ -48,15 +59,33 @@ public class SettlementJobConfig {
 
   @Bean
   public Job settlementJob() {
+    // WAITING 정산 시: 주문→정산 등록 스텝 후 정산 처리 스텝 실행
     return new JobBuilder("settlementJob", jobRepository)
         .incrementer(new RunIdIncrementer())
-        .start(settlementStep())
+        .start(registrationStep())
+        .next(settlementStep())
         .listener(settlementJobExecutionListener)
         .build();
   }
 
   @Bean
+  public Step registrationStep() {
+    // CONFIRM_BUY 주문을 정산 엔티티로 적재하는 스텝
+    return new StepBuilder("settlementRegistrationStep", jobRepository)
+        .<WinningOrder, Settlement>chunk(50, transactionManager)
+        .reader(orderSettlementReader)
+        .processor(orderToSettlementProcessor)
+        .writer(settlementRegistrationWriter)
+        .listener(settlementRegistrationStepListener)
+        .faultTolerant()
+        .retry(CannotAcquireLockException.class)
+        .retryLimit(5)
+        .build();
+  }
+
+  @Bean
   public Step settlementStep() {
+    // 정산 수행(결제/입금 호출 및 상태 업데이트)
     return new StepBuilder("settlementStep", jobRepository)
         .<Settlement, Settlement>chunk(50, transactionManager)
         .reader(settlementReader)
@@ -68,5 +97,11 @@ public class SettlementJobConfig {
         .build();
   }
 
-
+    @Bean(name = "settleScheduler")
+    public TaskScheduler settleScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1); //
+        scheduler.setThreadNamePrefix("settlement-scheduler-");
+        return scheduler;
+    }
 }

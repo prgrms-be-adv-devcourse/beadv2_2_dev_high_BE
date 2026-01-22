@@ -1,22 +1,14 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.common.util.HttpUtil;
-import com.dev_high.settlement.domain.Settlement;
-import com.dev_high.settlement.domain.SettlementStatus;
+import com.dev_high.settlement.domain.settle.Settlement;
+import com.dev_high.settlement.domain.settle.SettlementStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @Slf4j
@@ -25,57 +17,32 @@ public class SettlementProcessor implements ItemProcessor<Settlement, Settlement
 
     private final List<Settlement> successSettlements;
     private final List<Settlement> failedSettlements;
-    private final RestTemplate restTemplate;
-
-    private void callSettlement(Settlement settlement) {
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("userId", settlement.getSellerId());
-        map.put("type", "CHARGE");
-        map.put("depositOrderId", settlement.getId());
-        map.put("amount", settlement.getFinalAmount());
-
-        HttpEntity<Map<String, Object>> entity = HttpUtil.createDirectEntity(map);
-
-        String url = "http://DEPOSIT-SERVICE/api/v1/deposit/usages";
-
-        ResponseEntity<ApiResponseDto<?>> response;
-        response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<ApiResponseDto<?>>() {
-                }
-        );
-
-        if (response.getBody() == null) {
-            throw new RuntimeException("Deposit API response is null");
-        }
-        log.info("settle success >>>{}", response.getBody().getData());
-    }
 
     @Override
     public Settlement process(Settlement settlement) {
 
+        // 수수료/최종금액 계산 및 시도 횟수 증가
         settlement.ready();
 
         try {
 
-            // TODO: 외부 결제/예치금 API 호출 결과
+            // 임시: 90% 성공, 10% 실패
+            boolean success = ThreadLocalRandom.current().nextInt(100) < 90;
+            if (!success) {
+                throw new RuntimeException("Random settlement failure");
+            }
 
-            // 실패 TEST
-            callSettlement(settlement);
-
+            // 성공 시 상태 완료 처리
             settlement.updateStatus(SettlementStatus.COMPLETED);
             successSettlements.add(settlement);
 
         } catch (Exception e) {
             log.error("Settlement failed for id={}", settlement.getId(), e);
             settlement.setHistoryMessage(e.getMessage());
+            // 실패 시 재시도 대상으로 전환
             settlement.updateStatus(SettlementStatus.FAILED);
             failedSettlements.add(settlement);
         }
         return settlement;
     }
 }
-

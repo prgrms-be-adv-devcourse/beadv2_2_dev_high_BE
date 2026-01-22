@@ -1,62 +1,49 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.domain.Settlement;
-import com.dev_high.settlement.presentation.dto.SettlementRegisterRequest;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.HashSet;
-import java.util.Set;
-import lombok.NonNull;
+import com.dev_high.settlement.domain.order.WinningOrder;
+import com.dev_high.settlement.domain.settle.Settlement;
+import com.dev_high.settlement.domain.settle.SettlementRepository;
+import com.dev_high.settlement.domain.settle.SettlementStatus;
+import com.dev_high.settlement.batch.listener.SettlementRegistrationStepListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.scope.context.StepSynchronizationManager;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OrderToSettlementProcessor implements
-    ItemProcessor<SettlementRegisterRequest, Settlement> {
+public class OrderToSettlementProcessor implements ItemProcessor<WinningOrder, Settlement> {
+
+  private final SettlementRepository settlementRepository;
 
   @Override
-  public Settlement process(@NonNull SettlementRegisterRequest order) {
-
-    StepContext stepContext = StepSynchronizationManager.getContext();
-    if (stepContext == null) {
-      return toSettlement(order);
-    }
-
-    ExecutionContext ec = stepContext.getStepExecution().getExecutionContext();
-
-    Set<String> existingOrderIds = getOrInitExistingOrderIds(ec);
-
-    if (existingOrderIds.contains(order.id())) {
+  public Settlement process(WinningOrder order) {
+    // 이미 등록된 주문은 스킵
+    if (settlementRepository.existsByOrderId(order.getId())) {
+      incrementCount(SettlementRegistrationStepListener.EXISTING_COUNT_KEY);
       return null;
     }
 
-    existingOrderIds.add(order.id());
-    return toSettlement(order);
-  }
-
-  private Set<String> getOrInitExistingOrderIds(ExecutionContext ec) {
-    Object value = ec.get("existingOrderIds");
-
-    if (value instanceof Set<?> set) {
-      @SuppressWarnings("unchecked")
-      Set<String> ids = (Set<String>) set;
-      return ids;
-    }
-
-    Set<String> ids = new HashSet<>();
-    ec.put("existingOrderIds", ids);
-    return ids;
-  }
-
-  private Settlement toSettlement(SettlementRegisterRequest order) {
+    // 주문 → 정산 엔티티로 변환
     return new Settlement(
-        order,
-        LocalDate.now().plusMonths(1).withDayOfMonth(15).atStartOfDay().atOffset(ZoneOffset.ofHours(9))
+        order.getId(),
+        order.getSellerId(),
+        order.getBuyerId(),
+        order.getAuctionId(),
+        order.getWinningAmount(),
+        SettlementStatus.WAITING,
+        0L
     );
+  }
+
+  private void incrementCount(String key) {
+    StepContext stepContext = StepSynchronizationManager.getContext();
+    if (stepContext == null) {
+      return;
+    }
+    ExecutionContext ec = stepContext.getStepExecution().getExecutionContext();
+    ec.putInt(key, ec.getInt(key, 0) + 1);
   }
 }
