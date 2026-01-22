@@ -31,11 +31,21 @@ public interface OrderRepository {
                                                                       OrderStatus newStatus,
                                                                       OffsetDateTime targetDate);
 
+    List<UpdateOrderProjection> updateStatusByPaymentLimitDateAndReturnBuyer(OrderStatus oldStatus,
+                                                                             OrderStatus newStatus,
+                                                                             OffsetDateTime targetDate);
+
     Long getStatusCount(String buyerId, OrderStatus status);
 
     Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable);
 
     Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
+
+    List<WinningOrder> findWinningOrdersForRecommendation(
+        List<String> productIds,
+        OffsetDateTime winningDate,
+        Pageable pageable
+    );
 
 
 }

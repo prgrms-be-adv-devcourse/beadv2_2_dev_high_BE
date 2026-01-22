@@ -9,20 +9,21 @@ import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.search.application.dto.ProductSearchResponse;
+import com.dev_high.common.dto.SimilarProductResponse;
 import com.dev_high.search.domain.ProductDocument;
 import com.dev_high.search.domain.SearchRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.*;
 import org.springframework.data.elasticsearch.core.*;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.ai.embedding.EmbeddingModel;
 
@@ -34,6 +35,7 @@ public class SearchService {
     private final ElasticsearchOperations elasticsearchOperations;
     private final SearchRepository searchRepository;
     private final EmbeddingModel embeddingModel;
+    private final ElasticsearchClient elasticsearchClient;
 
     public void indexProduct(ProductCreateSearchRequestEvent request) {
         ProductDocument document = new ProductDocument(request);
@@ -72,8 +74,8 @@ public class SearchService {
             String status,
             BigDecimal minStartPrice,
             BigDecimal maxStartPrice,
-            String startFrom,
-            String startTo,
+            OffsetDateTime startFrom,
+            OffsetDateTime startTo,
             Pageable pageable) {
 
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
@@ -130,14 +132,11 @@ public class SearchService {
         }
 
         if (startFrom != null || startTo != null) {
-            Instant startFromInstant = parseKstToUtc(startFrom);
-            Instant startToInstant = parseKstToUtc(startTo);
-
             boolQuery.filter(f -> f.bool(b -> {
                 b.should(s -> s.range(r -> r.date(d -> {
                     d.field("auctionStartAt");
-                    if (startFrom != null) d.gte(startFromInstant.toString());
-                    if (startTo != null) d.lte(startToInstant.toString());
+                    if (startFrom != null) d.gte(startFrom.toString());
+                    if (startTo != null) d.lte(startTo.toString());
                     return d;
                 })));
                 b.should(s -> s.bool(bb -> bb.mustNot(mn -> mn.exists(e -> e.field("auctionStartAt")))));
@@ -162,13 +161,57 @@ public class SearchService {
         return ApiResponseDto.success(searchPage.map(hit -> ProductSearchResponse.from(hit.getContent())));
     }
 
-    private Instant parseKstToUtc(String dateTimeStr) {
-        if (dateTimeStr == null || dateTimeStr.isBlank()) return null;
+    public List<SimilarProductResponse> findSimilarProducts(String productId, int limit) {
+        if (productId == null || productId.isBlank() || limit <= 0) {
+            return List.of();
+        }
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-        LocalDateTime localDateTime = LocalDateTime.parse(dateTimeStr, formatter);
+        ProductDocument base = searchRepository.findByProductId(productId)
+            .orElse(null);
+        if (base == null) {
+            return List.of();
+        }
 
-        return localDateTime.atZone(ZoneId.of("Asia/Seoul")).toInstant();
+        float[] embedding = base.getEmbedding();
+        if (embedding == null || embedding.length == 0) {
+            String text = buildEmbeddingText(base);
+            embedding = embeddingModel.embed(text);
+        }
+
+        List<Float> queryVector = new ArrayList<>(embedding.length);
+        for (float v : embedding) {
+            queryVector.add(v);
+        }
+
+        int k = limit + 1;
+        int numCandidates = Math.max(100, k * 5);
+
+        SearchResponse<ProductDocument> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("product")
+                    .knn(kq -> kq
+                            .field("embedding")
+                            .queryVector(queryVector)
+                            .k(k)
+                            .numCandidates(numCandidates)
+                    )
+                    .source(src -> src.filter(f -> f.includes("productId")))
+            , ProductDocument.class);
+        } catch (Exception e) {
+            log.warn("similar search failed: {}", e.getMessage());
+            return List.of();
+        }
+
+        return response.hits().hits().stream()
+            .filter(hit -> hit.source() != null)
+            .filter(hit -> !productId.equals(hit.source().getProductId()))
+            .limit(limit)
+            .map(hit -> new SimilarProductResponse(
+                hit.source().getProductId(),
+                hit.score() == null ? 0.0 : hit.score()
+            ))
+            .toList();
     }
 
     private String buildEmbeddingText(ProductDocument document) {
@@ -183,4 +226,51 @@ public class SearchService {
                 categories
         );
     }
+
+    public void backfillEmbeddingsForAllProducts() {
+        final int BATCH_SIZE = 200;
+        int page = 0;
+        long updated = 0L;
+
+        while (true) {
+
+            NativeQuery query = NativeQuery.builder()
+                    .withQuery(q -> q.matchAll(m -> m))
+                    .withPageable(org.springframework.data.domain.PageRequest.of(page, BATCH_SIZE))
+                    .build();
+
+            SearchHits<ProductDocument> hits =
+                    elasticsearchOperations.search(query, ProductDocument.class);
+
+            if (hits.isEmpty()) {
+                break;
+            }
+
+            List<ProductDocument> docs = hits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .toList();
+
+            for (ProductDocument doc : docs) {
+                String text = buildEmbeddingText(doc);
+
+                if (text.isBlank()) {
+                    continue;
+                }
+
+                float[] embedding = embeddingModel.embed(text);
+                doc.setEmbedding(embedding);
+            }
+
+            searchRepository.saveAll(docs);
+            updated += docs.size();
+
+            log.info(
+                    "[EMBEDDING BACKFILL] page={}, batchSize={}, totalUpdated={}",
+                    page, docs.size(), updated
+            );
+
+            page++;
+        }
+    }
+
 }

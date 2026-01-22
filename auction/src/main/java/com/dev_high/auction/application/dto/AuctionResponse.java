@@ -7,7 +7,7 @@ import com.dev_high.auction.domain.AuctionStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public record AuctionResponse(String id, String productId, AuctionStatus status,
+public record AuctionResponse(String id, String productId, String productName,AuctionStatus status,
                               BigDecimal startBid,
                               BigDecimal currentBid,
                               String highestUserId,
@@ -23,7 +23,7 @@ public record AuctionResponse(String id, String productId, AuctionStatus status,
         boolean delYn = "Y".equals(auction.getDeletedYn());
 
 
-        return new AuctionResponse(auction.getId(), auction.getProductId(), auction.getStatus(),
+        return new AuctionResponse(auction.getId(), auction.getProductId(), auction.getProductName(), auction.getStatus(),
                 auction.getStartBid(), current, highestUserId, auction.getAuctionStartAt(),
                 auction.getAuctionEndAt(), auction.getDepositAmount(), delYn);
     }

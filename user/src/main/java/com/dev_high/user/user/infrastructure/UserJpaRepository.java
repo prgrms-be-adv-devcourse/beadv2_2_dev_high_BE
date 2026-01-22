@@ -4,6 +4,7 @@ import com.dev_high.user.user.domain.OAuthProvider;
 import com.dev_high.user.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserJpaRepository extends JpaRepository<User, String> {
@@ -15,4 +16,5 @@ public interface UserJpaRepository extends JpaRepository<User, String> {
             String userId,
             String deletedYn
     );
+    List<User> findByIdIn(List<String> userIds);
 }

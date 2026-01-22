@@ -61,6 +61,19 @@ public class OrderRepositoryAdapter implements OrderRepository {
     }
 
     @Override
+    public List<UpdateOrderProjection> updateStatusByPaymentLimitDateAndReturnBuyer(
+            OrderStatus oldStatus,
+            OrderStatus newStatus,
+            OffsetDateTime targetDate
+    ) {
+        return orderRepository.updateStatusByPaymentLimitDateAndReturnBuyer(
+                oldStatus.name(),
+                newStatus.name(),
+                targetDate
+        );
+    }
+
+    @Override
     public Long getStatusCount(String buyerId, OrderStatus status) {
 
         return orderRepository.countByBuyerIdAndStatus(buyerId, status);
@@ -74,6 +87,19 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override
     public Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable) {
         return orderRepository.findBySellerIdAndStatus(sellerId, status ,pageable);
+    }
+
+    @Override
+    public List<WinningOrder> findWinningOrdersForRecommendation(
+        List<String> productIds,
+        OffsetDateTime winningDate,
+        Pageable pageable
+    ) {
+        return orderRepository.findByProductIdInAndWinningDateAfter(
+            productIds,
+            winningDate,
+            pageable
+        );
     }
 
 

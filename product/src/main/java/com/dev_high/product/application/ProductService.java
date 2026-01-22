@@ -3,19 +3,24 @@ package com.dev_high.product.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.context.UserContext.UserInfo;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
+import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
+import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductInfo;
-import com.dev_high.product.application.dto.ProductUpdateCommand;
 import com.dev_high.product.domain.*;
 import com.dev_high.product.domain.Product.DeleteStatus;
 import com.dev_high.product.exception.CategoryNotFoundException;
 import com.dev_high.product.exception.ProductNotFoundException;
 import com.dev_high.product.exception.ProductUnauthorizedException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,15 +31,27 @@ public class ProductService {
     private final ProductCategoryRelRepository productCategoryRelRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRecommendService productRecommendService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 상품생성 + 상품-카테고리rel생성 + 상품 인덱싱 생성
     @Transactional
     public ProductInfo registerProduct(ProductCommand command) {
         Product saved = saveProduct(command);
         String sellerId = saved.getSellerId();
-        attachCategories(saved, command.categoryIds(), sellerId);
+        List<Category> categories = attachCategories(saved, command.categoryIds(), sellerId);
         productRepository.save(saved);
         productRecommendService.indexOne(saved); //상품 추천 인덱싱 추가
+
+        ProductCreateSearchRequestEvent event = new ProductCreateSearchRequestEvent(
+                saved.getId(),
+                saved.getName(),
+                toCategoryNames(categories),
+                saved.getDescription(),
+                command.fileURL(),
+                saved.getDeletedYn().name(),
+                saved.getSellerId()
+        );
+        eventPublisher.publishEvent(event);
         return ProductInfo.from(saved);
     }
 
@@ -69,7 +86,6 @@ public class ProductService {
         List<ProductCategoryRel> relations = categories.stream()
                 .map(category -> ProductCategoryRel.create(product, category, sellerId))
                 .toList();
-
         productCategoryRelRepository.saveAll(relations);
         return categories;
     }
@@ -77,7 +93,7 @@ public class ProductService {
 
     //상품수정
     @Transactional
-    public ProductInfo updateProduct(String productId, ProductUpdateCommand command) {
+    public ProductInfo updateProduct(String productId, ProductCommand command) {
 
         //셀러 및 상품생성자 일치 검증
         UserInfo userInfo = UserContext.get();
@@ -88,8 +104,17 @@ public class ProductService {
         }
 
         product.updateDetails(command.name(), command.description(), command.fileId(), userInfo.userId());
-        replaceCategories(product, command.categoryIds(), userInfo.userId());
+        List<Category> categories = replaceCategories(product, command.categoryIds(), userInfo.userId());
 //        productRecommendService.reindex(product); // 재인덱싱
+        ProductUpdateSearchRequestEvent event = new ProductUpdateSearchRequestEvent(
+                product.getId(),
+                product.getName(),
+                toCategoryNames(categories),
+                product.getDescription(),
+                command.fileURL(),
+                product.getSellerId()
+        );
+        eventPublisher.publishEvent(event);
         return ProductInfo.from(product);
     }
 
@@ -110,11 +135,11 @@ public class ProductService {
         return ProductInfo.from(product);
     }
 
+    //TODO: pagenation
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProducts(Pageable pageable) {
-        Page<Product> products;
-        products = productRepository.findAll(pageable);
-        return products.stream().map(ProductInfo::from).toList();
+    public Page<ProductInfo> getProducts(Pageable pageable) {
+        Page<Product> products=productRepository.findAll(pageable);;
+        return products.map(ProductInfo::from);
     }
 
 
@@ -126,10 +151,9 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductInfo> getProductsBySeller(String sellerId) {
-        return productRepository.findBySellerId(sellerId).stream()
-                .map(ProductInfo::from)
-                .toList();
+    public Page<ProductInfo> getProductsBySeller(String sellerId, Pageable pageable) {
+        Page<Product> products = productRepository.findBySellerId(sellerId, pageable);
+        return products.map(ProductInfo::from);
     }
 
     @Transactional(readOnly = true)
@@ -150,6 +174,7 @@ public class ProductService {
         }
 
         product.markDeleted(userInfo.userId());
+        eventPublisher.publishEvent(product.getId());
     }
 
     @Transactional
@@ -176,6 +201,16 @@ public class ProductService {
                         product.getId(),
                         product.getName()
                 ))
+                .toList();
+    }
+
+    private List<String> toCategoryNames(List<Category> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return List.of();
+        }
+        return categories.stream()
+                .map(Category::getCategoryName)
+                .filter(name -> name != null && !name.isBlank())
                 .toList();
     }
 }

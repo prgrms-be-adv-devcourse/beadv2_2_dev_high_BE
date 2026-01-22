@@ -29,7 +29,7 @@ public class GatewayConfig {
 
             // Deposit Service
             .route("deposit-service", r -> r
-                    .path("/api/v1/deposit/**")
+                    .path("/api/v1/payments/**")
                     .uri("lb://DEPOSIT-SERVICE"))
 
             // Product Service
@@ -54,7 +54,7 @@ public class GatewayConfig {
 
             // User Service
             .route("user-service", r -> r
-                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**")
+                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**", "/api/v1/deposit/**")
                     .uri("lb://USER-SERVICE"))
             .build();
   }

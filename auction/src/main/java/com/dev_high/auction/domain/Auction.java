@@ -29,6 +29,8 @@ public class Auction {
     @OneToOne(mappedBy = "auction", fetch = FetchType.LAZY)
     private AuctionLiveState liveState;
 
+    @Column(name = "product_name")
+    private String productName;
 
     @Column(name = "start_bid", nullable = false)
     private BigDecimal startBid;
@@ -79,10 +81,11 @@ public class Auction {
     }
 
     public Auction(BigDecimal startBid, OffsetDateTime auctionStartAt,
-                   OffsetDateTime auctionEndAt, String creatorId, String productId) {
+                   OffsetDateTime auctionEndAt, String creatorId, String productId,String productName) {
 
         this.status = AuctionStatus.READY;
         this.productId = productId;
+        this.productName = productName;
         this.startBid = startBid;
 
         this.depositAmount = depositMax(startBid);
@@ -104,13 +107,14 @@ public class Auction {
     }
 
     public void modify(BigDecimal startBid, OffsetDateTime auctionStartAt,
-                       OffsetDateTime auctionEndAt, String updatedBy) {
+                       OffsetDateTime auctionEndAt, String updatedBy ,String productName) {
 
         this.startBid = startBid;
         this.depositAmount = depositMax(startBid);
         this.auctionStartAt = auctionStartAt;
         this.auctionEndAt = auctionEndAt;
         this.updatedBy = updatedBy;
+        this.productName=productName;
 
     }
 

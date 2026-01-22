@@ -3,24 +3,19 @@ package com.dev_high.product.presentation;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.dto.client.product.WishlistProductResponse;
 
-import com.dev_high.product.ai.dto.ProductDetailDto;
-import com.dev_high.product.ai.infrastructure.SpringAiChatModel;
-import com.dev_high.product.application.CategoryService;
 import com.dev_high.product.application.ProductService;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.presentation.dto.ProductLatestAuctionUpdateRequest;
 import com.dev_high.product.presentation.dto.ProductRequest;
-import com.dev_high.product.presentation.dto.ProductUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -31,8 +26,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-    private  final CategoryService categoryService;
-    private final SpringAiChatModel chatModel;
+
     @Operation(summary = "상품 등록", description = "상품과 카테고리 정보를 등록합니다.")
     @PostMapping
     public ApiResponseDto<ProductInfo> createProduct(@Valid @RequestBody ProductRequest request) {
@@ -40,16 +34,18 @@ public class ProductController {
         return ApiResponseDto.success("상품이 등록되었습니다.", result);
     }
 
+    //TODO: pagenation
     @Operation(summary = "상품 목록 조회", description = "페이지네이션으로 상품 목록을 조회합니다.")
     @GetMapping
-    public ApiResponseDto<List<ProductInfo>> getProducts(Pageable pageable) {
+    public ApiResponseDto<Page<ProductInfo>> getProducts(Pageable pageable) {
         return ApiResponseDto.success(productService.getProducts(pageable));
     }
 
+    //TODO: pagenation
     @Operation(summary = "특정 판매자의 상품 목록 조회", description = "판매자 ID로 상품 목록을 조회합니다.")
     @GetMapping("/users/{sellerId}")
-    public ApiResponseDto<List<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ID", required = true) @PathVariable String sellerId) {
-        return ApiResponseDto.success(productService.getProductsBySeller(sellerId));
+    public ApiResponseDto<Page<ProductInfo>> getProductsBySeller(@Parameter(description = "판매자 ", required = true) @PathVariable String sellerId, Pageable pageable) {
+        return ApiResponseDto.success(productService.getProductsBySeller(sellerId, pageable));
     }
 
     @Operation(summary = "상품 단건 조회", description = "카테고리 정보를 포함한 상품 단건을 조회합니다.")
@@ -68,7 +64,7 @@ public class ProductController {
     @Operation(summary = "상품 수정", description = "판매자 본인이고 READY 상태일 때 상품 정보를 수정합니다.")
     @PutMapping("/{productId}")
     public ApiResponseDto<ProductInfo> updateProduct(@Parameter(description = "상품 ID", required = true) @PathVariable String productId,
-                                                             @Valid @RequestBody ProductUpdateRequest request) {
+                                                             @Valid @RequestBody ProductRequest request) {
         return ApiResponseDto.success(productService.updateProduct(productId, request.toCommand()));
     }
 
@@ -92,14 +88,5 @@ public class ProductController {
     @GetMapping("/internal")
     public List<WishlistProductResponse> getProductInfos(@RequestBody List<String> productIds) {
         return productService.getProductInfos(productIds);
-    }
-
-    @PostMapping(value = "/generate-detail-draft-from-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponseDto<ProductDetailDto> productDetail(
-            @RequestPart("file") MultipartFile[] files,
-            @RequestParam(value = "retryCount", defaultValue = "0") int retryCount
-    ) {
-        String categoryOptions = categoryService.categoryOptionsText();
-        return ApiResponseDto.success(chatModel.chatProductDetail(files,categoryOptions, retryCount));
     }
 }

@@ -111,7 +111,7 @@ public class AuthenticationFilter implements WebFilter {
 
         return candidates.stream()
                 .filter(r -> r.pattern().matches(pathContainer))
-                .max((a, b) -> PathPattern.SPECIFICITY_COMPARATOR.compare(a.pattern(), b.pattern()))
+                .min((a, b) -> PathPattern.SPECIFICITY_COMPARATOR.compare(a.pattern(), b.pattern()))
                 .orElse(null);
     }
 

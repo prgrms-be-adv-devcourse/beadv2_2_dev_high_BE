@@ -1,5 +1,7 @@
 package com.dev_high.order.application.dto;
 
+import java.math.BigDecimal;
+
 public interface UpdateOrderProjection {
 
   String getId();
@@ -10,6 +12,6 @@ public interface UpdateOrderProjection {
 
   String getAuctionId();
 
-  Long getWinningAmount();
+  BigDecimal getWinningAmount();
   
 }

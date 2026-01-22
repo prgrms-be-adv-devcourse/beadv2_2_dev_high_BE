@@ -18,6 +18,7 @@ repositories {
     mavenCentral()
 }
 
+
 dependencies {
     // 공통모듈 불러오기
     implementation project(':common')

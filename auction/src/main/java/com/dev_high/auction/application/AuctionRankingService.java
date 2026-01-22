@@ -2,15 +2,16 @@ package com.dev_high.auction.application;
 
 import com.dev_high.auction.application.dto.AuctionRankingResponse;
 import com.dev_high.auction.application.dto.AuctionResponse;
+import com.dev_high.auction.application.AuctionSummaryCacheService.AuctionSummary;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionRepository;
+import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,8 @@ public class AuctionRankingService {
 
   private final StringRedisTemplate stringRedisTemplate;
   private final AuctionRepository auctionRepository;
+  private final AuctionSummaryCacheService auctionSummaryCacheService;
+  private final AuctionLiveStateJpaRepository auctionLiveStateJpaRepository;
 
   @Value("${auction.ranking.view-window-minutes:5}")
   private long viewWindowMinutes;
@@ -58,14 +61,14 @@ public class AuctionRankingService {
     }
   }
 
-  public void incrementViewCount(String auctionId, String sessionId) {
-    if (auctionId == null || sessionId == null) {
+  public void incrementViewCount(String auctionId, String dedupKey) {
+    if (auctionId == null || dedupKey == null) {
       return;
     }
 
-    String dedupKey = viewDedupKey(auctionId, sessionId);
+    String viewDedupKey = viewDedupKey(auctionId, dedupKey);
     Boolean firstView = stringRedisTemplate.opsForValue().setIfAbsent(
-        dedupKey,
+        viewDedupKey,
         "1",
         Duration.ofMinutes(viewWindowMinutes)
     );
@@ -90,8 +93,7 @@ public class AuctionRankingService {
         .filter(Objects::nonNull)
         .toList();
 
-    Map<String, Auction> auctionMap = auctionRepository.findByIdIn(auctionIds).stream()
-        .collect(Collectors.toMap(Auction::getId, Function.identity()));
+    Map<String, AuctionSummary> summaryMap = loadSummaries(auctionIds);
 
     return topEntries.stream()
         .map(entry -> {
@@ -99,8 +101,8 @@ public class AuctionRankingService {
           if (auctionId == null) {
             return null;
           }
-          Auction auction = auctionMap.get(auctionId);
-          if (auction == null) {
+          AuctionSummary summary = summaryMap.get(auctionId);
+          if (summary == null) {
             return null;
           }
 
@@ -117,7 +119,7 @@ public class AuctionRankingService {
               viewCount,
               bidderCount,
               score,
-              AuctionResponse.fromEntity(auction)
+              buildAuctionResponse(summary)
           );
         })
         .filter(Objects::nonNull)
@@ -135,7 +137,7 @@ public class AuctionRankingService {
   }
 
   private String viewDedupKey(String auctionId, String sessionId) {
-    return VIEW_DEDUP_KEY_PREFIX + auctionId + ":" + sessionId;
+    return VIEW_DEDUP_KEY_PREFIX + auctionId + ":" + hashKey(sessionId);
   }
 
   private String bidderSetKey(String auctionId) {
@@ -158,5 +160,68 @@ public class AuctionRankingService {
     } catch (NumberFormatException e) {
       return 0L;
     }
+  }
+
+  private String hashKey(String value) {
+    try {
+      java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      StringBuilder sb = new StringBuilder(hash.length * 2);
+      for (byte b : hash) {
+        sb.append(String.format("%02x", b));
+      }
+      return sb.toString();
+    } catch (Exception e) {
+      return Integer.toHexString(value.hashCode());
+    }
+  }
+
+  private Map<String, AuctionSummary> loadSummaries(List<String> auctionIds) {
+    if (auctionIds == null || auctionIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, AuctionSummary> summaryMap = auctionIds.stream()
+        .filter(Objects::nonNull)
+        .map(id -> new Object[]{id, auctionSummaryCacheService.getSummary(id)})
+        .filter(pair -> pair[1] != null)
+        .collect(Collectors.toMap(
+            pair -> (String) pair[0],
+            pair -> (AuctionSummary) pair[1]
+        ));
+
+    List<String> missingIds = auctionIds.stream()
+        .filter(id -> !summaryMap.containsKey(id))
+        .toList();
+    if (missingIds.isEmpty()) {
+      return summaryMap;
+    }
+
+    List<Auction> auctions = auctionRepository.findByIdIn(missingIds);
+    for (Auction auction : auctions) {
+      var liveState = auctionLiveStateJpaRepository.findById(auction.getId()).orElse(null);
+      auctionSummaryCacheService.upsert(auction, liveState);
+      AuctionSummary summary = auctionSummaryCacheService.getSummary(auction.getId());
+      if (summary != null) {
+        summaryMap.put(auction.getId(), summary);
+      }
+    }
+    return summaryMap;
+  }
+
+  private AuctionResponse buildAuctionResponse(AuctionSummary summary) {
+    return new AuctionResponse(
+        summary.id(),
+        summary.productId(),
+        summary.productName(),
+        summary.status(),
+        summary.startBid(),
+        summary.currentBid(),
+        summary.highestUserId(),
+        summary.auctionStartAt(),
+        summary.auctionEndAt(),
+        summary.depositAmount(),
+        summary.deletedYn()
+    );
   }
 }

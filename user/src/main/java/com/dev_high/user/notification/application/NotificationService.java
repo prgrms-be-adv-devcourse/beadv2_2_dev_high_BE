@@ -60,6 +60,13 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
+    public Page<NotificationDto.Info> getUnreadNotifications(Pageable pageable) {
+        String userId = UserContext.get().userId();
+        return notificationRepository.findAllUnreadByUserIdAndExpiredAt(userId, OffsetDateTime.now(), pageable)
+                .map(NotificationDto.Info::from);
+    }
+
+    @Transactional(readOnly = true)
     public NotificationDto.Count getUnreadNotificationCount() {
         String userId = UserContext.get().userId();
         OffsetDateTime now = OffsetDateTime.now();
