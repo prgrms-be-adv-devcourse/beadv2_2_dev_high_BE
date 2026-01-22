@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.springframework.ai.embedding.EmbeddingModel;
+import com.dev_high.search.util.VectorUtils;
 
 @AllArgsConstructor
 @Service
@@ -187,10 +188,7 @@ public class SearchService {
             embedding = embeddingModel.embed(text);
         }
 
-        List<Float> queryVector = new ArrayList<>(embedding.length);
-        for (float v : embedding) {
-            queryVector.add(v);
-        }
+        List<Float> queryVector = VectorUtils.toFloatList(embedding);
 
         int k = limit + 1;
         int numCandidates = Math.max(100, k * 5);
@@ -287,6 +285,9 @@ public class SearchService {
         }
 
         float[] embedding = embeddingModel.embed(text);
+
+        VectorUtils.l2NormalizeInPlace(embedding);
+
         document.setEmbedding(embedding);
 
         return document;

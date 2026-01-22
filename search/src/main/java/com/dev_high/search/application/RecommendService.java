@@ -24,6 +24,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 @Slf4j
@@ -40,7 +42,7 @@ public class RecommendService {
     private final ElasticsearchClient elasticsearchClient;
     private final AiRecommendationSummaryGenerator summaryGenerator;
 
-    public List<ProductRecommendResponse> recommendByWishlist(List<String> wishlistProductIds) {
+    public List<ProductRecommendResponse> recommendByWishlist(Set<String> wishlistProductIds) {
         String userId = UserContext.get().userId();
 
         if (wishlistProductIds.isEmpty()) {
@@ -54,6 +56,8 @@ public class RecommendService {
 
         float[] userVector = VectorUtils.meanVector(vectors);
 
+        VectorUtils.l2NormalizeInPlace(userVector);
+
         List<ProductRecommendResponse> candidates = searchCandidatesByKnn(userVector, wishlistProductIds, userId);
 
         if (candidates.isEmpty()) {
@@ -64,7 +68,11 @@ public class RecommendService {
     }
 
     public ApiResponseDto<ProductRecommendSummaryResponse> recommendByWishlistWithSummary(List<String> wishlistProductIds) {
-        List<String> wishlistIds = (wishlistProductIds == null) ? List.of() : wishlistProductIds;
+        Set<String> wishlistIds = (wishlistProductIds == null)
+                ? Set.of()
+                : wishlistProductIds.stream()
+                .filter(id -> id != null && !id.isEmpty())
+                .collect(Collectors.toSet());
 
         List<ProductRecommendResponse> items = recommendByWishlist(wishlistIds);
         RecommendationConfidence confidence = calculateConfidence(wishlistIds, items);
@@ -82,7 +90,7 @@ public class RecommendService {
     }
 
     private RecommendationConfidence calculateConfidence(
-            List<String> wishlistIds,
+            Set<String> wishlistIds,
             List<ProductRecommendResponse> results
     ) {
         if (wishlistIds.isEmpty() || results == null || results.isEmpty()) {
@@ -99,7 +107,7 @@ public class RecommendService {
         if (avgScore < 0.88) {
             return RecommendationConfidence.LOW;
         }
-        if (avgScore < 0.93) {
+        if (avgScore < 0.92) {
             return RecommendationConfidence.MID;
         }
         return RecommendationConfidence.HIGH;
@@ -116,7 +124,7 @@ public class RecommendService {
 
     private List<ProductRecommendResponse> searchCandidatesByKnn(
             float[] userVector,
-            List<String> wishlistIds,
+            Set<String> wishlistIds,
             String userId
     ) {
         int k = LIMIT * LIMIT;
@@ -157,7 +165,7 @@ public class RecommendService {
     }
 
     private List<ProductRecommendResponse> fallback(
-            List<String> wishlistIds,
+            Set<String> wishlistIds,
             String userId
     ) {
         try {
@@ -195,7 +203,7 @@ public class RecommendService {
 
     private void applyRecommendFilters(
             BoolQuery.Builder b,
-            List<String> excludeProductIds,
+            Set<String> excludeProductIds,
             String userId
     ) {
         if (excludeProductIds != null && !excludeProductIds.isEmpty()) {
@@ -212,9 +220,9 @@ public class RecommendService {
         b.mustNot(mn -> mn.term(t -> t.field("status").value("COMPLETED")));
     }
 
-    private List<float[]> fetchEmbeddings(List<String> ids) {
+    private List<float[]> fetchEmbeddings(Set<String> ids) {
         try {
-            MgetRequest mget = MgetRequest.of(m -> m.index(INDEX).ids(ids));
+            MgetRequest mget = MgetRequest.of(m -> m.index(INDEX).ids(new ArrayList<>(ids)));
             var resp = elasticsearchClient.mget(mget, JsonNode.class);
 
             List<float[]> vectors = new ArrayList<>();
