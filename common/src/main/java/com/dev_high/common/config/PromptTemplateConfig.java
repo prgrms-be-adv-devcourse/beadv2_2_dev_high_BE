@@ -163,6 +163,7 @@ public class PromptTemplateConfig {
             - 실사 사진, 스튜디오 조명, 중립 배경
             - 텍스트/워터마크/로고/사람 없음
             - 제품이 한 개만 보이도록
+            - 폭력/무기/선정/미성년/브랜드 노출이 연상되는 표현 금지
             - 1~2문장
             """;
         return new PromptTemplate(template);
@@ -205,26 +206,32 @@ public class PromptTemplateConfig {
 	@Bean
 	public PromptTemplate recommendationTextTemplate() {
 		String template = """
-            너는 중고 경매 서비스의 추천 결과를 "한 줄"로 요약하는 역할이다.
-            아래 추천 목록은 이미 유사도 기반으로 선택된 결과다.
-            상품명, 카테고리, 설명(description), 유사도 점수를 근거로
-            이 추천 결과 전체를 대표하는 요약 문장을 한국어로 1문장 작성하라.
-
-            규칙:
-            - 반드시 한 문장 (줄바꿈 금지)
-            - 30~60자 내외
-            - 과장 금지(확정 표현 금지). 예: "비슷해요", "유사해요" 정도만
-            - 'AI'라는 단어 사용 금지
-            - 설명(description)에 나타난 공통 특징이 있으면 반영
-            - 추천 결과를 다시 판단하지 말고 "이유"만 설명
-            - 출력은 요약 문장만. 따옴표/코드블록/머리말/접두어 금지
-
-            추천 목록(JSON):
-            {itemsJson}
-            """;
+			너는 중고 경매 서비스의 추천 결과를 "한 줄"로 요약한다.
+			아래 추천 목록은 이미 유사도 기반으로 선택된 결과지만,
+			추천 상품 간 공통점이 약하거나 명확하지 않을 수도 있다.
+	
+			상품명, 카테고리, 설명(description), 유사도 점수를 참고하되
+			억지로 공통점을 만들어내지 말고,
+			자연스럽게 설명 가능한 수준에서만 추천 이유를 작성하라.
+	
+			출력 규칙(매우 중요):
+			- 출력은 오직 한 문장만 (줄바꿈 금지)
+			- 30~60자
+			- 따옴표/코드블록/머리말(예: "요약:") 금지
+			- 과장 금지(확정 표현 금지): "딱 맞는", "완벽한", "확실한" 등 금지
+			- 개인화가 불명확하면 보편적인 추천 표현 사용:
+			  "함께 살펴볼 만한", "관심을 가질 수 있는" 등
+			- 'AI' 단어 사용 금지
+			- description에 공통 특징이 명확할 때만 반영
+			- 추천 결과를 재평가/판단하지 말고, 왜 함께 추천되었는지 이유만 작성
+	
+			추천 목록(JSON):
+			{itemsJson}
+			
+			이제 규칙을 만족하는 한 문장만 출력하라.
+			""";
 		return new PromptTemplate(template);
 	}
-
 
 	@Bean
 	public PromptTemplate userIntentTemplate() {
@@ -357,6 +364,25 @@ public class PromptTemplateConfig {
 				- 짧고 중립적으로 응답한다
 				- 한국어로 1문장으로 응답한다
 				""";
+		return new PromptTemplate(template);
+	}
+
+	@Bean
+	public PromptTemplate extractKeywordsPromptTemplate() {
+		String template = """
+			너는 전자상거래 상품 설명에서 "검색/임베딩"에 사용할 핵심 키워드를 추출하는 엔진이다.
+			
+			규칙:
+			- 출력은 반드시 JSON만 반환한다.
+			- 문장 생성 금지. 조사/어미/형용사 문장(예: 추천, 최고, 가성비, 함께 즐길) 금지.
+			- 키워드는 명사/상품속성/규격/재질/브랜드/모델/용도/대상/구성품 위주로 뽑는다.
+			- 의미가 거의 같은 단어는 하나로 통합한다.
+			- 일반 상투어(중고, 판매, 정리, 상태좋음, 추천, 인기, 가성비, 최상, 득템 등)는 제외한다.
+			- 키워드는 최대 {limit}개
+
+			상품 설명:
+			{description}
+		""";
 		return new PromptTemplate(template);
 	}
 }

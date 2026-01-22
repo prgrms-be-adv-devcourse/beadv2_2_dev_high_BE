@@ -83,30 +83,53 @@ public class ProductAdminAiService {
             "categoryCounts", categoryCounts
         ));
         String userText = "요청한 개수만큼 상품 정보를 생성해줘.";
+        int expectedCount = request.categories().stream()
+            .mapToInt(AiProductGenerateRequest.CategoryCount::count)
+            .sum();
         OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
             .temperature(0.8)
             .build();
 
-        AiProductSpecList specList = chatClient.prompt()
-            .system(systemText)
-            .user(userText)
-            .options(chatOptions)
-            .tools(productAiTool)
-            .call()
-            .entity(AiProductSpecList.class);
+        log.info("AI 상품 생성 시작. expectedCount={}", expectedCount);
+        AiProductSpecList specList;
+        long startedAt = System.currentTimeMillis();
+        try {
+            log.info("AI 상품 스펙 호출");
+            specList = chatClient.prompt()
+                .system(systemText)
+                .user(userText)
+                .options(chatOptions)
+                .tools(productAiTool)
+                .call()
+                .entity(AiProductSpecList.class);
+            log.info("AI 상품 스펙 응답 수신. elapsedMs={}", System.currentTimeMillis() - startedAt);
+        } catch (Exception e) {
+            log.warn("AI 상품 스펙 파싱 실패. reason={}", e.getMessage());
+            throw new CustomException("AI 상품 생성 결과 파싱에 실패했습니다.");
+        }
 
         if (specList == null || specList.items() == null || specList.items().isEmpty()) {
             throw new CustomException("AI 상품 생성 결과가 비어 있습니다.");
         }
+        int actualCount = specList.items().size();
+        if (actualCount != expectedCount) {
+            log.warn("AI 상품 생성 결과 개수 불일치. expected={}, actual={}", expectedCount, actualCount);
+        }
 
         List<ProductInfo> created = new ArrayList<>();
         for (AiProductSpec spec : specList.items()) {
-            validateSpec(spec, categoryMap);
+            try {
+                validateSpec(spec, categoryMap);
+            } catch (CustomException e) {
+                log.warn("AI 상품 스펙 검증 실패. title={}, reason={}", spec == null ? null : spec.title(), e.getMessage());
+                continue;
+            }
 
             String description = buildAiDescription(spec);
             String fileGroupId = null;
             String fileUrl = null;
             try {
+                log.info("AI 이미지 생성 시도. title={}", spec.title());
                 String imagePrompt = generateImagePrompt(spec.title(), description);
                 byte[] imageBytes = generateImageBytes(imagePrompt);
                 String fileName = "generated-" + UUID.randomUUID() + ".png";
@@ -136,8 +159,13 @@ public class ProductAdminAiService {
             );
 
             created.add(productService.createProduct(command));
+            log.info("AI 상품 생성 완료. title={}", spec.title());
         }
 
+        if (created.isEmpty()) {
+            throw new CustomException("AI 상품 생성 결과가 유효하지 않습니다.");
+        }
+        log.info("AI 상품 생성 종료. createdCount={}", created.size());
         return created;
     }
 

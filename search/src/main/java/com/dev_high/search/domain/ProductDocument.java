@@ -3,6 +3,7 @@ package com.dev_high.search.domain;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -14,6 +15,7 @@ import java.util.List;
 @Setter
 @Getter
 @Document(indexName = "product", createIndex = false)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProductDocument {
 
     @Id
