@@ -22,8 +22,10 @@ public class DepositHistoryService {
     private final DepositHistoryRepository depositHistoryRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void createHistory(DepositHistoryDto.CreateCommand command) {
+        log.info("[DepositHistory] createHistory start userId={}, orderId={}, type={}, amount={}, nowBalance={}",
+                command.userId(), command.orderId(), command.type(), command.amount(), command.nowBalance());
         DepositHistory history = DepositHistory.create(
                 command.userId(),
                 command.orderId(),
@@ -32,7 +34,10 @@ public class DepositHistoryService {
                 command.nowBalance()
         );
         depositHistoryRepository.save(history);
+        log.info("[DepositHistory] createHistory success userId={}, orderId={}, type={}, amount={}, nowBalance={}", history.getUserId(), history.getOrderId(), history.getType(), history.getAmount(), history.getBalance());
         if (command.type().equals(DepositType.CHARGE) || command.type().equals(DepositType.PAYMENT)) {
+            log.info("[DepositHistory] publish DepositHistoryCreated event requested orderId={}, type={}",
+                    command.orderId(), command.type());
             applicationEventPublisher.publishEvent(DepositEvent.DepositHistoryCreated.of(command.orderId(), command.type()));
         }
     }
