@@ -25,6 +25,6 @@ public class OrderEventHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlerDepositPaid(OrderEvent.OrderCompleted event) {
-        kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE, DepositOrderCompletedEvent.of(event.winningOrderId(), "PAID"));
+        kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE, DepositOrderCompletedEvent.of(event.winningOrderId(), event.orderId(), "PAID"));
     }
 }
