@@ -1,0 +1,11 @@
+package com.dev_high.batch.processor;
+
+import com.dev_high.order.application.dto.UpdateOrderProjection;
+import java.util.List;
+
+public record OrderStatusChangeResult(
+    OrderStatusChangeRequest request,
+    List<UpdateOrderProjection> updatedOrders
+) {
+  // 상태 변경 결과와 변경된 주문 목록
+}

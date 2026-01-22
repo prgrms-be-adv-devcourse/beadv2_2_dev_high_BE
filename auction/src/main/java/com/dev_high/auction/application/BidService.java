@@ -9,12 +9,12 @@ import com.dev_high.auction.domain.AuctionParticipation;
 import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.BidType;
 import com.dev_high.auction.domain.idclass.AuctionParticipationId;
-import com.dev_high.auction.exception.AlreadyWithdrawnException;
-import com.dev_high.auction.exception.AuctionNotFoundException;
-import com.dev_high.auction.exception.AuctionParticipationNotFoundException;
-import com.dev_high.auction.exception.AuctionTimeOutOfRangeException;
-import com.dev_high.auction.exception.BidPriceTooLowException;
-import com.dev_high.auction.exception.OptimisticLockBidException;
+import com.dev_high.exception.AlreadyWithdrawnException;
+import com.dev_high.exception.AuctionNotFoundException;
+import com.dev_high.exception.AuctionParticipationNotFoundException;
+import com.dev_high.exception.AuctionTimeOutOfRangeException;
+import com.dev_high.exception.BidPriceTooLowException;
+import com.dev_high.exception.OptimisticLockBidException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
 import com.dev_high.common.context.UserContext;
@@ -36,6 +36,7 @@ public class BidService {
   private final AuctionParticipationJpaRepository auctionParticipationJpaRepository;
   private final BidRecordService bidRecordService;
   private final AuctionWebSocketService auctionWebSocketService;
+  private final AuctionRankingService auctionRankingService;
 
   private static final int MAX_ATTEMPTS = 2;
 
@@ -81,10 +82,12 @@ public class BidService {
     // 웹소켓 전파
     try {
       if (history != null) {
+        auctionRankingService.registerBidder(auctionId, userId);
+        auctionRankingService.incrementBidCount(auctionId);
         broadcastBid(history);
       }
     } catch (Exception e) {
-      log.warn("WebSocket broadcast failed: {}", e.getMessage());
+      log.warn("Post-bid handling failed: {}", e.getMessage());
     }
 
     return AuctionParticipationResponse.isParticipated(participation);
@@ -147,4 +150,3 @@ public class BidService {
     auctionWebSocketService.broadcastBidSuccess(AuctionBidMessage.fromEntity(history));
   }
 }
-

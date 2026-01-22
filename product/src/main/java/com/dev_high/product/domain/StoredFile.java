@@ -1,0 +1,74 @@
+package com.dev_high.product.domain;
+
+import com.dev_high.common.annotation.CustomGeneratedId;
+import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Entity
+@Table(name = "file", schema = "file")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class StoredFile {
+
+    @Id
+    @Column(length = 20)
+    @CustomGeneratedId(method = "file")
+    private String id;
+
+    @Column(name = "file_path", length = 255, nullable = false)
+    private String filePath;
+
+    @Column(name = "file_type")
+    private String fileType;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "file_Group_id", length = 20)
+    private String fileGroupId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_Group_id", insertable = false, updatable = false)
+    private FileGroup fileGroup;
+
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @Builder
+    private StoredFile(String filePath, String fileType, String fileName, String createdBy, String fileGroupId) {
+        this.filePath = filePath;
+        this.fileType = fileType;
+        this.fileName = fileName;
+        this.createdBy = createdBy;
+        this.updatedBy = createdBy;
+        this.fileGroupId = fileGroupId;
+    }
+
+    @PrePersist
+    void onCreate() {
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    public void updateAudit(String updaterId) {
+        this.updatedBy = updaterId;
+    }
+}

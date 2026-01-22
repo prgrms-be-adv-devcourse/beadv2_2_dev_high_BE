@@ -4,7 +4,7 @@ import com.dev_high.auction.domain.AuctionRepository;
 import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
+import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
@@ -75,7 +75,7 @@ public class AuctionEventListener {
             }
         } catch (TransientDataAccessException | NetworkException e) {
             // 일시적 오류: 재시도
-            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            log.warn("일시적 오류 발생: {}, 메시지: {}", e, envelope.payload());
             throw e;
         } catch (Exception e) {
             //재시도 없이 DLQ
@@ -100,7 +100,7 @@ public class AuctionEventListener {
                     (AuctionStatus.valueOf(val.status())));
         } catch (TransientDataAccessException | NetworkException e) {
             // 일시적 오류: 재시도
-            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            log.warn("일시적 오류 발생: {}, 메시지: {}", e, envelope.payload());
             throw e;
         } catch (Exception e) {
             //재시도 없이 DLQ
@@ -112,18 +112,8 @@ public class AuctionEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(AuctionCreateSearchRequestEvent event) {
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_CREATED_REQUESTED, event);
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(AuctionUpdateSearchRequestEvent event) {
         eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_UPDATED_REQUESTED, event);
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(String event) {
-        eventPublisher.publish(KafkaTopics.AUCTION_SEARCH_DELETED_REQUESTED, event);
     }
 
 

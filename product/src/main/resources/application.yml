@@ -15,21 +15,6 @@ spring:
     import:
       - optional:configserver:http://localhost:8888
       - optional:file:.env[.properties]
-  ai:
-    vectorstore:
-      pgvector:
-        schema-name: product
-        table-name: product_embed
-        dimensions: 1536
-        initialize-schema: false
-    openai:
-      api-key: ${GPT_API_KEY}
-      base-url: https://api.openai.com/
-      chat:
-        options:
-          model: gpt-4o-mini
-          temperature: 0.2
-          max_completion_tokens: 768
 
 ---
 spring:

@@ -143,6 +143,18 @@ spec:
                   name: product-secret
                   key: TOSS_SECRET_KEY
 
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: file-service-secret
+                  key: AWS_ACCESS_KEY_ID
+
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: file-service-secret
+                  key: AWS_SECRET_ACCESS_KEY
+
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul           

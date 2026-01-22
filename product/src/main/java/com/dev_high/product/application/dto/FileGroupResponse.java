@@ -4,7 +4,7 @@ import java.util.List;
 
 public record FileGroupResponse(
         String fileGroupId,
-        List<FileInfoResponse> files
+        List<FileInfo> files
 ) {
 }
 

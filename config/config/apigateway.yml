@@ -23,5 +23,3 @@ springdoc:
         url: /swagger/settlement-service
       - name: User
         url: /swagger/user-service
-      - name: File
-        url: /swagger/file-service
