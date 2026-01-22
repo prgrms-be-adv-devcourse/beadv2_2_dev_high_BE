@@ -21,18 +21,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class DepositEventHandler {
     private final DepositService depositService;
-    private final DepositHistoryService depositHistoryService;
     private final KafkaEventPublisher kafkaEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlerDepositUpdated(DepositEvent.DepositUpdated event) {
-        try {
-            depositHistoryService.createHistory(DepositHistoryDto.CreateCommand.of(event.userId(), event.depositOrderId(), event.type(), event.amount(), event.nowBalance()));
-        } catch (Exception e) {
-            applicationEventPublisher.publishEvent(DepositEvent.DepositHistoryFailed.of(event.userId(), event.depositOrderId(), event.type(), event.amount()));
-        }
-    }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlerDepositPaid(DepositEvent.DepositPaid event) {
@@ -46,6 +36,8 @@ public class DepositEventHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlerDepositHistoryCreated(DepositEvent.DepositHistoryCreated event) {
+        log.info("[DepositEventListener] DepositHistoryCreated received orderId={}, type={}",
+                event.depositOrderId(), event.type());
         depositService.eventPublishByDepositType(DepositDto.PublishCommand.of(event.depositOrderId(), event.type()));
     }
 
