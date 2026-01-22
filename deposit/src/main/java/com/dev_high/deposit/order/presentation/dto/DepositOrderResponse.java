@@ -12,9 +12,6 @@ public class DepositOrderResponse {
             @Schema(description = "예치금 주문 ID")
             String id,
 
-            @Schema(description = "사용자 ID")
-            String userId,
-
             @Schema(description = "금액")
             BigDecimal amount,
 
@@ -34,7 +31,6 @@ public class DepositOrderResponse {
         public static Detail from(DepositOrderDto.Info info) {
             return new Detail(
                     info.id(),
-                    info.userId(),
                     info.amount(),
                     info.status(),
                     info.createdAt(),

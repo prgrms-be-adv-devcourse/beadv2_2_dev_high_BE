@@ -42,18 +42,16 @@ public class DepositPaymentService {
 
     @Transactional
     public DepositPaymentDto.Info createInitialPayment(DepositPaymentDto.CreateCommand command) {
+        log.info("[Payment] createInitialPayment start orderId={}, userId={}, amount={}", command.orderId(), command.userId(), command.amount());
         validateOrder(command.orderId());
-        try {
-            return DepositPaymentDto.Info.from(savePayment(command.orderId(), command.userId(), command.amount()));
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("이미 결제가 생성된 주문입니다: " + command.orderId(), e);
-        }
+        DepositPayment payment = savePayment(command.orderId(), command.userId(), command.amount());
+        log.info("Initial createInitialPayment success. paymentId={}, orderId={}, userId={}, amount={}", payment.getId(), payment.getOrderId(), payment.getUserId(), command.amount());
+        return DepositPaymentDto.Info.from(payment);
     }
 
     @Transactional(readOnly = true)
     public Page<DepositPaymentDto.Info> findPaymentsByUserId(Pageable pageable) {
         String userId = UserContext.get().userId();
-
         return depositPaymentRepository.findByUserId(userId, pageable)
                 .map(DepositPaymentDto.Info::from);
     }
@@ -76,19 +74,24 @@ public class DepositPaymentService {
     }
 
     private void validateOrder(String orderId) {
+        log.info("[Payment] validateOrder start orderId={}", orderId);
         DepositOrder order = depositOrderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "결제하려는 주문이 존재하지 않습니다: " + orderId
-                ));
+                .orElseThrow(() -> {
+                    log.warn("[Payment] Deposit order not found. orderId={}", orderId);
+                    return new NoSuchElementException("결제하려는 주문이 존재하지 않습니다: " + orderId);
+                });
         if (!order.isCreatablePayment()) {
+            log.warn("[Payment] Deposit order is not eligible for payment creation. orderId={}, status={}", orderId, order.getStatus());
             throw new IllegalArgumentException("결제를 생성할 수 없는 주문 상태입니다, 주문 상태: " + order.getStatus());
         }
+        log.info("[Payment] validateOrder success orderId={}, status={}", orderId, order.getStatus());
     }
 
     private DepositPayment savePayment(String orderId, String userId, BigDecimal amount) {
         try {
             return depositPaymentRepository.save(DepositPayment.create(orderId, userId, amount));
         } catch (DataIntegrityViolationException e) {
+            log.warn("[Payment] Duplicate payment creation attempt detected. orderId={}", orderId);
             throw new IllegalStateException("이미 결제가 생성된 주문입니다: " + orderId, e);
         }
     }
