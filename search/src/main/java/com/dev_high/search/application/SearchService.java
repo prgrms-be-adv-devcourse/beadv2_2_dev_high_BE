@@ -9,6 +9,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
+import com.dev_high.search.application.ai.AiKeywordsExtractor;
 import com.dev_high.search.application.dto.ProductAutocompleteResponse;
 import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
@@ -40,32 +41,25 @@ public class SearchService {
     private final SearchRepository searchRepository;
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchClient elasticsearchClient;
+    private final AiKeywordsExtractor aiKeywordsExtractor;
 
-    public void indexProduct(ProductCreateSearchRequestEvent request) {
+    public ProductDocument createProduct(ProductCreateSearchRequestEvent request) {
         ProductDocument document = new ProductDocument(request);
-
-        String text = buildEmbeddingText(document);
-        float[] embedding = embeddingModel.embed(text);
-        document.setEmbedding(embedding);
-
-        searchRepository.save(document);
+        embedding(document);
+        return searchRepository.save(document);
     }
 
-    public void updateByProduct(ProductUpdateSearchRequestEvent request) {
+    public ProductDocument updateByProduct(ProductUpdateSearchRequestEvent request) {
         ProductDocument document = searchRepository.findByProductId(request.productId()).orElseThrow(RuntimeException::new);
         document.updateByProduct(request);
-
-        String text = buildEmbeddingText(document);
-        float[] embedding = embeddingModel.embed(text);
-        document.setEmbedding(embedding);
-
-        searchRepository.save(document);
+        embedding(document);
+        return searchRepository.save(document);
     }
 
-    public void updateByAuction(AuctionUpdateSearchRequestEvent request) {
+    public ProductDocument updateByAuction(AuctionUpdateSearchRequestEvent request) {
         ProductDocument document = searchRepository.findByProductId(request.productId()).orElseThrow(RuntimeException::new);
         document.updateByAuction(request);
-        searchRepository.save(document);
+        return searchRepository.save(document);
     }
 
     public void deleteByProduct(String productId) {
@@ -287,61 +281,31 @@ public class SearchService {
         }
     }
 
+    public ProductDocument embedding(ProductDocument document) {
+        String text = buildEmbeddingText(document);
+
+        if (text.isBlank()) {
+            return null;
+        }
+
+        float[] embedding = embeddingModel.embed(text);
+        document.setEmbedding(embedding);
+
+        return document;
+    }
+
     private String buildEmbeddingText(ProductDocument document) {
         String categories = document.getCategories() != null
                 ? String.join(", ", document.getCategories())
                 : "";
 
-        return "%s %s %s".formatted(
+        List<String> keywords = aiKeywordsExtractor.extractKeywords(document.getDescription(), 8);
+
+        return "%s | %s | %s".formatted(
                 document.getProductName(),
-                document.getDescription() != null ? document.getDescription() : "",
+                String.join(" ", keywords),
                 categories
         );
-    }
 
-    public void backfillEmbeddingsForAllProducts() {
-        final int BATCH_SIZE = 200;
-        int page = 0;
-        long updated = 0L;
-
-        while (true) {
-
-            NativeQuery query = NativeQuery.builder()
-                    .withQuery(q -> q.matchAll(m -> m))
-                    .withPageable(org.springframework.data.domain.PageRequest.of(page, BATCH_SIZE))
-                    .build();
-
-            SearchHits<ProductDocument> hits =
-                    elasticsearchOperations.search(query, ProductDocument.class);
-
-            if (hits.isEmpty()) {
-                break;
-            }
-
-            List<ProductDocument> docs = hits.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .toList();
-
-            for (ProductDocument doc : docs) {
-                String text = buildEmbeddingText(doc);
-
-                if (text.isBlank()) {
-                    continue;
-                }
-
-                float[] embedding = embeddingModel.embed(text);
-                doc.setEmbedding(embedding);
-            }
-
-            searchRepository.saveAll(docs);
-            updated += docs.size();
-
-            log.info(
-                    "[EMBEDDING BACKFILL] page={}, batchSize={}, totalUpdated={}",
-                    page, docs.size(), updated
-            );
-
-            page++;
-        }
     }
 }

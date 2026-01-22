@@ -39,7 +39,7 @@ public class GatewayConfig {
 
             // Search Service
             .route("search-service", r -> r
-                    .path("/api/v1/search/**")
+                    .path("/api/v1/search/**", "/api/v1/admin/search/**")
                     .uri("lb://SEARCH-SERVICE"))
 
             // Settlement Service
