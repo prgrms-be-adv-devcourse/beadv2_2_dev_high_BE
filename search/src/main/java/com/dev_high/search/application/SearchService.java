@@ -9,7 +9,6 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
-import com.dev_high.search.application.ai.AiKeywordsExtractor;
 import com.dev_high.search.application.dto.ProductAutocompleteResponse;
 import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
@@ -31,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.springframework.ai.embedding.EmbeddingModel;
+import com.dev_high.search.util.VectorUtils;
 
 @AllArgsConstructor
 @Service
@@ -41,7 +41,6 @@ public class SearchService {
     private final SearchRepository searchRepository;
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchClient elasticsearchClient;
-    private final AiKeywordsExtractor aiKeywordsExtractor;
 
     public ProductDocument createProduct(ProductCreateSearchRequestEvent request) {
         ProductDocument document = new ProductDocument(request);
@@ -189,10 +188,7 @@ public class SearchService {
             embedding = embeddingModel.embed(text);
         }
 
-        List<Float> queryVector = new ArrayList<>(embedding.length);
-        for (float v : embedding) {
-            queryVector.add(v);
-        }
+        List<Float> queryVector = VectorUtils.toFloatList(embedding);
 
         int k = limit + 1;
         int numCandidates = Math.max(100, k * 5);
@@ -289,6 +285,9 @@ public class SearchService {
         }
 
         float[] embedding = embeddingModel.embed(text);
+
+        VectorUtils.l2NormalizeInPlace(embedding);
+
         document.setEmbedding(embedding);
 
         return document;
@@ -299,11 +298,9 @@ public class SearchService {
                 ? String.join(", ", document.getCategories())
                 : "";
 
-        List<String> keywords = aiKeywordsExtractor.extractKeywords(document.getDescription(), 8);
-
         return "%s | %s | %s".formatted(
                 document.getProductName(),
-                String.join(" ", keywords),
+                document.getDescription() != null ? document.getDescription() : "",
                 categories
         );
 

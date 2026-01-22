@@ -41,6 +41,7 @@ public final class VectorUtils {
         }
     }
 
+
     public static List<Float> toFloatList(float[] arr) {
         List<Float> list = new ArrayList<>(arr.length);
         for (float f : arr) {

@@ -44,7 +44,6 @@ public class AiRecommendationSummaryGenerator {
         }
 
         String itemsJson = toItemsJson(safe);
-        log.info("itemsJson: {}", itemsJson);
 
         try {
             Prompt prompt = recommendationTextTemplate.create(

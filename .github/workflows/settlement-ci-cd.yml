@@ -20,6 +20,7 @@ on:
 #      - '.dockerignore'
   workflow_dispatch:
     
+    
 
 env:
   REGISTRY: ghcr.io
@@ -38,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -78,7 +79,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4

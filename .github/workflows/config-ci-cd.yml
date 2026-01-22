@@ -21,6 +21,7 @@ on:
 #      - '.dockerignore'
   workflow_dispatch:
     
+    
 
 env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
   REGISTRY: ghcr.io
@@ -57,7 +58,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -97,7 +98,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
