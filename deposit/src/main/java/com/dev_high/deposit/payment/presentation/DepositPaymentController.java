@@ -13,11 +13,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
@@ -30,8 +32,10 @@ public class DepositPaymentController {
     @Operation(summary = "로그인한 사용자 ID의 예치금 결제 조회", description = "예치금 결제 내역을 사용자 ID로 조회")
     @GetMapping("/me")
     public ApiResponseDto<Page<DepositPaymentResponse.Detail>> findByUserId(Pageable pageable) {
+        log.info("[Payment API] PATH : /me request received. page={}, size={}, sort={}", pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
         Page<DepositPaymentDto.Info> infos =  paymentService.findPaymentsByUserId(pageable);
         Page<DepositPaymentResponse.Detail> response = infos.map(DepositPaymentResponse.Detail::from);
+        log.info("[Payment API] PATH : /me success. totalElements={}, totalPages={}", response.getTotalElements(), response.getTotalPages());
         return ApiResponseDto.success(response);
     }
 

@@ -41,8 +41,4 @@ public class KafkaTopics {
   public static final String DEPOSIT_PAYMENT_FAIL_RESPONSE =  "deposit-payment-fail-response";
 
   public static final String ORDER_AUCTION_UPDATE = "order_auction_update"; // 주문상태(기한매 미구매로 주문 취소될시 경매쪽에 알림)
-
-  // payment
-  public static final String PAYMENT_DEPOSIT_CONFIRM_REQUESTED = "payment-deposit-confirm-requested"; // 결제 승인이 완료되면, deposit 서비스에게 알림
-
 }

@@ -38,10 +38,13 @@ public class DepositOrderRequest {
     public record OrderPayWithDeposit(
             @Schema(description = "주문 ID")
             @NotBlank(message = "주문 ID는 필수 입니다.")
-            String id
+            String id,
+
+            @Schema(description = "주문 ID")
+            String winningOrderId
     ) {
-        public DepositOrderDto.OrderPayWithDepositCommand toCommand(String id) {
-            return DepositOrderDto.OrderPayWithDepositCommand.of(id);
+        public DepositOrderDto.OrderPayWithDepositCommand toCommand(String id, String winningOrderId) {
+            return DepositOrderDto.OrderPayWithDepositCommand.of(id, winningOrderId);
         }
     }
 
