@@ -89,10 +89,12 @@ public class DepositService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void compensateBalance(DepositDto.CompensateCommand command) {
+        log.info("[Deposit] compensateBalance start. userId={}, orderId={}, type={}, amount={}", command.userId(), command.depositOrderId(), command.type(), command.amount());
         Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
         deposit.compensate(command.type(), command.amount());
         depositRepository.save(deposit);
         applicationEventPublisher.publishEvent(DepositEvent.DepositCompensated.of(command.depositOrderId()));
+        log.info("[Deposit] compensateBalance success. userId={}, orderId={}", command.userId(), command.depositOrderId());
     }
 }

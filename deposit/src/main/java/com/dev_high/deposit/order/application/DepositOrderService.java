@@ -18,7 +18,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -41,54 +40,82 @@ public class DepositOrderService {
     @Transactional
     public DepositOrderDto.Info createPaymentOrder(DepositOrderDto.CreatePaymentCommand command) {
         String userId = UserContext.get().userId();
+        log.info("[PaymentOrder] createPaymentOrder start. userId={}, amount={}, deposit={}", userId, command.amount(), command.deposit());
         DepositOrder order = orderRepository.save(DepositOrder.createOrder(userId, command.amount(), command.deposit()));
         if (order.isPayment()) {
+            log.info("[PaymentOrder] payment required. orderId={}, userId={}, paidAmount={}", order.getId(), order.getUserId(), order.getPaidAmount());
             paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));
         }
         order.ChangeStatus(DepositOrderStatus.PENDING);
+        log.info("[PaymentOrder] createPaymentOrder success. orderId={}, amount={}, deposit={}, paidAmount={}, status={}", order.getId(), order.getAmount(), order.getDeposit(), order.getPaidAmount(), order.getStatus());
         return DepositOrderDto.Info.from(order);
     }
 
     @Transactional
     public DepositOrderDto.Info createDepositPaymentOrder(DepositOrderDto.CreateDepositPaymentCommand command) {
         String userId = UserContext.get().userId();
+        log.info("[PaymentOrder] createDepositPaymentOrder start. userId={}, amount={}", userId, command.amount());
         DepositOrder order = orderRepository.save(DepositOrder.createDepositPayment(userId, command.amount()));
         paymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(order.getId(), userId, order.getPaidAmount()));
         order.ChangeStatus(DepositOrderStatus.PENDING);
+        log.info("[PaymentOrder] createDepositPaymentOrder success. orderId={}, amount={}, paidAmount={}, status={}", order.getId(), order.getAmount(), order.getPaidAmount(), order.getStatus());
         return DepositOrderDto.Info.from(order);
     }
 
     @Transactional(readOnly = true)
     public Page<DepositOrderDto.Info> findByUserId(Pageable pageable) {
         String userId = UserContext.get().userId();
-        return orderRepository.findByUserId(userId, pageable)
+        log.info("[PaymentOrder] findByUserId start. userId={}, page={}, size={}, sort={}", userId, pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+        Page<DepositOrderDto.Info> result = orderRepository
+                .findByUserId(userId, pageable)
                 .map(DepositOrderDto.Info::from);
+        log.info("[PaymentOrder] findByUserId success. userId={}, totalElements={}, totalPages={}", userId, result.getTotalElements(), result.getTotalPages());
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public DepositOrderDto.Info findById(String id) {
+        String userId = UserContext.get().userId();
+        log.info("[PaymentOrder] findById start. userId={}, id={}", userId, id);
+        DepositOrder order = loadOrder(id);
+        log.info("[PaymentOrder] findById success. userId={}, id={}", userId, id);
+        return DepositOrderDto.Info.from(order);
     }
 
     @Transactional
     public DepositOrderDto.Info payOrderByDeposit(DepositOrderDto.OrderPayWithDepositCommand command) {
+        log.info("[PaymentOrder] payOrderByDeposit start. orderId={}", command.id());
         DepositOrder order = loadOrder(command.id());
         validatePayableOrder(order);
 
         if (!order.isDeposit()) {
+            log.info("[PaymentOrder] no deposit required. orderId={}, deposit={}, status={}", order.getId(), order.getDeposit(), order.getStatus());
             return DepositOrderDto.Info.from(order);
         }
 
-        ApiResponseDto<?> result = useDeposit(order);
-        updateOrderStatusAfterUseDeposit(order, result);
-        return DepositOrderDto.Info.from(orderRepository.save(order));
+        try {
+            applyDepositTransaction(order, DepositType.USAGE);
+            applySuccessStatus(order, command.winningOrderId());
+            DepositOrder savedOrder = orderRepository.save(order);
+            log.info("[PaymentOrder] payOrderByDeposit success. orderId={}, deposit={}, status={}", savedOrder.getId(), savedOrder.getDeposit(), savedOrder.getStatus());
+            return DepositOrderDto.Info.from(savedOrder);
+        } catch (Exception e) {
+            log.error("[PaymentOrder] payOrderByDeposit failed. orderId={}, reason={}", order.getId(), e.getMessage(), e);
+            updateDepositApplyError(order.getId());
+            throw e;
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void confirmOrder(DepositOrderDto.ConfirmCommand command) {
         DepositOrder order = loadOrder(command.id());
-        validateConfirmableOrder(order);
+        order.applyConfirmedStatus();
         updateOrderStatusAfterPayment(order);
         orderRepository.save(order);
         if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
-            applicationEventPublisher.publishEvent(OrderEvent.OrderConfirmed.of(order.getId(), order.getUserId(), DepositType.CHARGE, order.getAmount()));
+            applyDepositTransaction(order, DepositType.CHARGE);
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
-            applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId()));
+            applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId(), order.getId()));
         }
     }
 
@@ -100,51 +127,84 @@ public class DepositOrderService {
         return DepositOrderDto.Info.from(order);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void confirmFailedOrder(DepositOrderDto.ConfirmFailedCommand command) {
+        DepositOrder order = loadOrder(command.id());
+        log.info("[PaymentOrder] Applying PAYMENT_CONFIRMED_ERROR status. orderId={}, currentStatus={}", order.getId(), order.getStatus());
+        try {
+            applyDepositTransaction(order, DepositType.REFUND);
+            order.applyConfirmFailedStatus();
+            orderRepository.save(order);
+            paymentService.confirmFailedPayment(order.getId());
+            log.info("[PaymentOrder] Order status updated to PAYMENT_CONFIRMED_ERROR. orderId={}", order.getId());
+        } catch (IllegalStateException e) {
+            log.warn("[PaymentOrder] Cannot apply PAYMENT_CONFIRMED_ERROR. orderId={}, currentStatus={}", order.getId(), order.getStatus());
+            throw e;
+        } catch (Exception e) {
+            log.error("[PaymentOrder] Unexpected error while confirming failed order. orderId={}", order.getId(), e);
+            throw e;
+        }
+    }
+
     private DepositOrder loadOrder(String orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + orderId));
+                .orElseThrow(() -> {
+                    log.warn("[PaymentOrder] Deposit order not found. orderId={}", orderId);
+                    return new NoSuchElementException("주문 정보를 찾을 수 없습니다: " + orderId);
+                });
     }
 
     private void validatePayableOrder(DepositOrder order) {
         if (!order.isPayableWithDeposit()) {
+            log.warn("[PaymentOrder] order is not payable with deposit. orderId={}, status={}", order.getId(), order.getStatus());
             throw new IllegalArgumentException("결제를 진행할 수 없는 주문 상태입니다: " + order.getStatus());
         }
     }
 
-    private ApiResponseDto<?> useDeposit(DepositOrder order) {
-        DepositOrderDto.useDepositCommand command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), DepositType.USAGE, order.getDeposit());
-        HttpEntity<DepositOrderDto.useDepositCommand> entity = HttpUtil.createGatewayEntity(command);
+    private void applyDepositTransaction(DepositOrder order, DepositType type) {
+        DepositOrderDto.useDepositCommand command =
+        switch (type) {
+            case USAGE,REFUND -> command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), type, order.getDeposit());
+            case CHARGE -> command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), type, order.getPaidAmount());
+            default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
+        };
+        log.info("[PaymentOrder] requesting deposit usage. orderId={}, userId={}, amount={}", order.getId(), order.getUserId(), order.getDeposit());
         try {
             ResponseEntity<ApiResponseDto<?>> response = restTemplate.exchange(
                     "http://USER-SERVICE/api/v1/deposit/usages",
                     HttpMethod.POST,
-                    entity,
-                    new ParameterizedTypeReference<ApiResponseDto<?>>() {
-                    }
+                    HttpUtil.createGatewayEntity(command),
+                    new ParameterizedTypeReference<ApiResponseDto<?>>() {}
             );
-            return ApiResponseDto.success(response.getBody());
+            handleUseDepositResponse(response);
+            log.info("[PaymentOrder] deposit usage success. orderId={}, userId={}, amount={}", order.getId(), order.getUserId(), order.getDeposit());
         } catch (RestClientException e) {
-            log.error("예치금 사용에 실패하였습니다", e);
-            return null;
+            log.error("[PaymentOrder] deposit service communication failed. orderId={}", order.getId(), e);
+            throw new IllegalStateException("예치금 서비스 통신 실패", e);
         }
     }
 
-    private void updateOrderStatusAfterUseDeposit(DepositOrder order, ApiResponseDto<?> result) {
-        if(result == null) {
-            order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED_ERROR);
-            return;
+    private void handleUseDepositResponse(ResponseEntity<ApiResponseDto<?>> response) {
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null || "FAIL".equals(response.getBody().getCode())) {
+            String errorMessage = response.getBody() != null ? response.getBody().getMessage() : "관리자에게 문의해주세요.";
+            log.warn("[PaymentOrder] deposit usage failed. reason={}", errorMessage);
+            throw new IllegalStateException("예치금 사용에 실패하였습니다: " + errorMessage);
         }
+    }
 
+    private void updateDepositApplyError(String orderId) {
+        log.info("[PaymentOrder] updating order status to DEPOSIT_APPLIED_ERROR. orderId={}", orderId);
+        DepositOrder order = loadOrder(orderId);
+        order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED_ERROR);
+        orderRepository.save(order);
+    }
+
+    private void applySuccessStatus(DepositOrder order, String winningOrderId) {
         if (order.isPayment()) {
             order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED);
         } else {
             order.ChangeStatus(DepositOrderStatus.COMPLETED);
-        }
-    }
-
-    private void validateConfirmableOrder(DepositOrder order) {
-        if (!order.isConfirmable()) {
-            throw new IllegalArgumentException("결제승인처리를 진행할 수 없는 주문 상태입니다: " + order.getStatus());
+            applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(winningOrderId, order.getId()));
         }
     }
 

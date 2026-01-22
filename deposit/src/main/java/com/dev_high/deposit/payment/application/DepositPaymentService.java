@@ -22,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 
@@ -42,76 +43,90 @@ public class DepositPaymentService {
 
     @Transactional
     public DepositPaymentDto.Info createInitialPayment(DepositPaymentDto.CreateCommand command) {
+        log.info("[Payment] createInitialPayment start orderId={}, userId={}, amount={}", command.orderId(), command.userId(), command.amount());
         validateOrder(command.orderId());
-        try {
-            return DepositPaymentDto.Info.from(savePayment(command.orderId(), command.userId(), command.amount()));
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("이미 결제가 생성된 주문입니다: " + command.orderId(), e);
-        }
+        DepositPayment payment = savePayment(command.orderId(), command.userId(), command.amount());
+        log.info("Initial createInitialPayment success. paymentId={}, orderId={}, userId={}, amount={}", payment.getId(), payment.getOrderId(), payment.getUserId(), command.amount());
+        return DepositPaymentDto.Info.from(payment);
     }
 
     @Transactional(readOnly = true)
     public Page<DepositPaymentDto.Info> findPaymentsByUserId(Pageable pageable) {
         String userId = UserContext.get().userId();
-
-        return depositPaymentRepository.findByUserId(userId, pageable)
+        log.info("[Payment] findPaymentsByUserId start. userId={}, page={}, size={}, sort={}", userId, pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+        Page<DepositPaymentDto.Info> result = depositPaymentRepository
+                .findByUserId(userId, pageable)
                 .map(DepositPaymentDto.Info::from);
+        log.info("[Payment] findPaymentsByUserId success. userId={}, totalElements={}, totalPages={}", userId, result.getTotalElements(), result.getTotalPages());
+        return result;
     }
 
     @Transactional
     public DepositPaymentDto.Info confirmPayment(DepositPaymentDto.ConfirmCommand command) {
+        log.info("[Payment] confirmPayment start. paymentKey={}, orderId={}, amount={}, winningOrderId={}", command.paymentKey(), command.orderId(), command.amount(), command.winningOrderId());
         DepositPayment payment = loadPayment(command.orderId());
         validatePayablePayment(payment);
         compareAmount(payment.getAmount(), command.amount());
         TossPaymentResponse tossPayment = tossPaymentConfirm(command, payment.getUserId());
 
-        OffsetDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt() : null;
-        OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt() : null;
+        OffsetDateTime approvedAt = (tossPayment.approvedAt() != null) ? tossPayment.approvedAt() : OffsetDateTime.now();
+        OffsetDateTime requestedAt = (tossPayment.requestedAt() != null) ? tossPayment.requestedAt() : OffsetDateTime.now();
 
         payment.confirmPayment(tossPayment.paymentKey(), tossPayment.method(), approvedAt, requestedAt);
         DepositPayment savedPayment = depositPaymentRepository.save(payment);
         applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmed.of(savedPayment.getOrderId(), command.winningOrderId()));
-        // TODO : 현재 충전이라는 방향으로 되어있는데, 추후 직접 결제가 있다면 변경이 필요하다.
+        log.info("[Payment] confirmPayment success. paymentId={}, orderId={}, method={}, amount={}, status={}", savedPayment.getId(), savedPayment.getOrderId(), savedPayment.getMethod(), savedPayment.getAmount(), savedPayment.getStatus());
         return DepositPaymentDto.Info.from(savedPayment);
     }
 
     private void validateOrder(String orderId) {
+        log.info("[Payment] validateOrder start orderId={}", orderId);
         DepositOrder order = depositOrderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "결제하려는 주문이 존재하지 않습니다: " + orderId
-                ));
+                .orElseThrow(() -> {
+                    log.warn("[Payment] Deposit order not found. orderId={}", orderId);
+                    return new NoSuchElementException("결제하려는 주문이 존재하지 않습니다: " + orderId);
+                });
         if (!order.isCreatablePayment()) {
+            log.warn("[Payment] Deposit order is not eligible for payment creation. orderId={}, status={}", orderId, order.getStatus());
             throw new IllegalArgumentException("결제를 생성할 수 없는 주문 상태입니다, 주문 상태: " + order.getStatus());
         }
+        log.info("[Payment] validateOrder success orderId={}, status={}", orderId, order.getStatus());
     }
 
     private DepositPayment savePayment(String orderId, String userId, BigDecimal amount) {
         try {
             return depositPaymentRepository.save(DepositPayment.create(orderId, userId, amount));
         } catch (DataIntegrityViolationException e) {
+            log.warn("[Payment] Duplicate payment creation attempt detected. orderId={}", orderId);
             throw new IllegalStateException("이미 결제가 생성된 주문입니다: " + orderId, e);
         }
     }
 
     private DepositPayment loadPayment(String orderId) {
         return depositPaymentRepository.findByDepositOrderId(orderId)
-                .orElseThrow(() -> new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + orderId));
+                .orElseThrow(() -> {
+                    log.warn("[Payment] payment not found. orderId={}", orderId);
+                    return new NoSuchElementException("결제 정보를 찾을 수 없습니다: " + orderId);
+                });
     }
 
     private void validatePayablePayment(DepositPayment payment) {
         if (!payment.isPayable()) {
+            log.warn("[Payment] payment is not payable. paymentId={}, status={}", payment.getId(), payment.getStatus());
             throw new IllegalArgumentException("결제를 진행할 수 없는 주문 상태입니다: " + payment.getStatus());
         }
     }
 
     private void compareAmount(BigDecimal paymentAmount, BigDecimal commandAmount) {
         if (paymentAmount.compareTo(commandAmount) != 0) {
+            log.warn("[Payment] payment amount mismatch. paymentAmount={}, commandAmount={}", paymentAmount, commandAmount);
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
         }
     }
 
     private TossPaymentResponse tossPaymentConfirm (DepositPaymentDto.ConfirmCommand command, String userId) {
         try {
+            log.info("[Payment] requesting Toss payment confirmation. userId={}, paymentKey={}, orderId={}, amount={}, winningOrderId={}", userId, command.paymentKey(), command.orderId(), command.amount(), command.winningOrderId());
             return tossPaymentClient.confirm(command);
         } catch (HttpStatusCodeException e) {
             return handleConfirmHttpException(e, command, userId);
@@ -119,20 +134,20 @@ public class DepositPaymentService {
     }
 
     private TossPaymentResponse handleConfirmHttpException(HttpStatusCodeException e, DepositPaymentDto.ConfirmCommand command, String userId) {
-        log.error("Toss payment confirmation failed. Error", e);
         String responseBody = e.getResponseBodyAsString();
+        log.warn("[Payment] Toss payment confirmation failed. orderId={}, httpStatus={}", command.orderId(), e.getStatusCode(), e);
         try {
             TossErrorResponse errorResponse = parseTossError(responseBody);
             String code = errorResponse.error().code();
             String message = errorResponse.traceId() + " | " + errorResponse.error().message();
-            log.error("Toss payment confirmation failed. Code: {}, Message: {}", code, message);
+            log.warn("[Payment] Toss error response received. orderId={} Code: {}, Message: {}", command.orderId(), code, message);
             handlePaymentFailure(command.orderId(), userId, command.amount(),  code, message);
             throw new IllegalStateException("토스 결제 승인에 실패했습니다: [" + code + "] " + message, e);
         } catch (Exception jsonEx) {
             String code = "UNKNOWN";
             String message = "토스 결제 승인 실패 및 오류 응답 파싱 불가";
+            log.warn("[Payment] Failed to parse Toss error response. orderId={}, body={}", command.orderId(), responseBody, jsonEx);
             handlePaymentFailure(command.orderId(), userId, command.amount(), code, message);
-            log.error("Failed to parse Toss error response: {}", responseBody, jsonEx);
             throw new IllegalStateException("토스 결제 승인 실패 및 오류 응답 파싱 불가: " + responseBody, e);
         }
     }
@@ -143,9 +158,22 @@ public class DepositPaymentService {
     }
 
     private void handlePaymentFailure(String orderId, String userId, BigDecimal amount, String code, String message) {
+        log.warn("[Payment] Start handling payment failure. orderId={}, userId={}, code={}, message={}", orderId, userId, code, message);
+        try {
+            failureHistoryService.createHistory(DepositPaymentFailureDto.CreateCommand.of(orderId, userId, amount, code, message));
+            applicationEventPublisher.publishEvent(PaymentEvent.PaymentConfirmFailed.of(orderId));
+            log.warn("[Payment] Payment failure handling completed. orderId={}", orderId);
+        } catch (Exception e) {
+            log.error("[Payment] Critical error while handling payment failure. orderId={}", orderId, e);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void confirmFailedPayment(String orderId) {
+        log.warn("[Payment] confirmFailedPayment start. orderId={}", orderId);
         DepositPayment payment = loadPayment(orderId);
         payment.ChangeStatus(DepositPaymentStatus.CONFIRMED_FAILED);
         depositPaymentRepository.save(payment);
-        failureHistoryService.createHistory(DepositPaymentFailureDto.CreateCommand.of(orderId, userId, amount, code, message));
+        log.warn("[Payment] confirmFailedPayment success. orderId={}", orderId);
     }
 }

@@ -45,7 +45,7 @@ public class UserController {
         return userService.delete();
     }
 
-    @PostMapping("")
+    @PostMapping
     public ApiResponseDto<List<UserNicknameEmailResponse>> getUserNicknameAndEmail(@RequestBody UserNicknameEmailRequest request) {
         return userService.getUserNicknameAndEmail(request.toCommand());
     }

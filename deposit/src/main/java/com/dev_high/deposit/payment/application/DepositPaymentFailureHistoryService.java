@@ -1,13 +1,12 @@
 package com.dev_high.deposit.payment.application;
 
 import com.dev_high.deposit.payment.application.dto.DepositPaymentFailureDto;
-import com.dev_high.deposit.order.domain.entity.DepositOrder;
-import com.dev_high.deposit.payment.domain.entity.DepositPayment;
 import com.dev_high.deposit.payment.domain.entity.DepositPaymentFailureHistory;
 import com.dev_high.deposit.order.domain.repository.DepositOrderRepository;
 import com.dev_high.deposit.payment.domain.repository.DepositPaymentFailureHistoryRepository;
 import com.dev_high.deposit.payment.domain.repository.DepositPaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,23 +16,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.NoSuchElementException;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepositPaymentFailureHistoryService {
     private final DepositPaymentFailureHistoryRepository historyRepository;
-    private final DepositOrderRepository depositOrderRepository;
-    private final DepositPaymentRepository depositPaymentRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DepositPaymentFailureDto.Info createHistory(DepositPaymentFailureDto.CreateCommand command) {
-        DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(
-                command.paymentId(),
-                command.userId(),
-                command.amount(),
-                command.code(),
-                command.message()
-        );
-        return DepositPaymentFailureDto.Info.from(historyRepository.save(history));
+        log.info("[PaymentFailureHistory] createHistory start. paymentId={}, userId={}, amount={}, code={}, message={}", command.paymentId(), command.userId(), command.amount(), command.code(), command.message());
+        DepositPaymentFailureHistory history = DepositPaymentFailureHistory.create(command.paymentId(), command.userId(), command.amount(), command.code(), command.message());
+        DepositPaymentFailureHistory savedHistory = historyRepository.save(history);
+        log.info("[PaymentFailureHistory] createHistory start. Id={}, paymentId={}, userId={}, amount={}, code={}, message={}", savedHistory.getId(), savedHistory.getPaymentId(), savedHistory.getUserId(), command.amount(), command.code(), command.message());
+        return DepositPaymentFailureDto.Info.from(savedHistory);
     }
 
     @Transactional(readOnly = true)

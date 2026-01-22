@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 
 public record OrderResponse(
         String id,
+        String purchaseOrderId,
         String sellerId,
         String buyerId,
         String auctionId,
@@ -29,6 +30,7 @@ public record OrderResponse(
     public static OrderResponse fromEntity(WinningOrder order) {
         return new OrderResponse(
                 order.getId(),
+                order.getPurchaseOrderId(),
                 order.getSellerId(),
                 order.getBuyerId(),
                 order.getAuctionId(),

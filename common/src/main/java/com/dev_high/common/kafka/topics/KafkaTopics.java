@@ -18,6 +18,7 @@ public class KafkaTopics {
   public static final String AUCTION_ORDER_CREATED_REQUESTED = "auction-order-create-requested"; // 경매 종료 후 주문 생성 이벤트 + 낙찰자에게 결제 안내 알림 ,sub-order , sub-alarm;
   public static final String AUCTION_SEARCH_UPDATED_REQUESTED = "auction-search-update-requested";
   public static final String AUCTION_START_EVENT = "auction-start-event";
+  public static final String AUCTION_CREATE_REQUESTED = "auction-create-requested";
 
   /**
    * 중도포기 시 deposit을 즉시 처리 ,경매 종료시에는 kafka로 이벤트 발송 구독대상: deposit
@@ -41,8 +42,4 @@ public class KafkaTopics {
   public static final String DEPOSIT_PAYMENT_FAIL_RESPONSE =  "deposit-payment-fail-response";
 
   public static final String ORDER_AUCTION_UPDATE = "order_auction_update"; // 주문상태(기한매 미구매로 주문 취소될시 경매쪽에 알림)
-
-  // payment
-  public static final String PAYMENT_DEPOSIT_CONFIRM_REQUESTED = "payment-deposit-confirm-requested"; // 결제 승인이 완료되면, deposit 서비스에게 알림
-
 }

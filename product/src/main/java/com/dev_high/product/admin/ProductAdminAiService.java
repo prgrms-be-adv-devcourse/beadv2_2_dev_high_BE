@@ -2,6 +2,9 @@ package com.dev_high.product.admin;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.auction.AuctionCreateRequestEvent;
+import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.product.admin.dto.AiProductGenerateRequest;
 import com.dev_high.product.admin.dto.AiProductSpec;
 import com.dev_high.product.admin.dto.AiProductSpecList;
@@ -13,6 +16,7 @@ import com.dev_high.product.application.dto.ProductCommand;
 import com.dev_high.product.application.dto.ProductInfo;
 import com.dev_high.product.domain.Category;
 import com.dev_high.product.domain.CategoryRepository;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -50,6 +54,7 @@ public class ProductAdminAiService {
     private final ProductAiTool productAiTool;
     private final FileService fileService;
     private final ProductAdminService productService;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     @Async
     public CompletableFuture<List<ProductInfo>> generateAiProductsAsync(
@@ -68,6 +73,7 @@ public class ProductAdminAiService {
         if (request == null || request.categories() == null || request.categories().isEmpty()) {
             throw new CustomException("카테고리와 생성 개수가 필요합니다.");
         }
+        boolean generateImage = request.generateImage() == null || request.generateImage();
 
         Map<String, String> categoryMap = categoryRepository.findAll().stream()
             .sorted(Comparator.comparing(Category::getId))
@@ -128,26 +134,28 @@ public class ProductAdminAiService {
             String description = buildAiDescription(spec);
             String fileGroupId = null;
             String fileUrl = null;
-            try {
-                log.info("AI 이미지 생성 시도. title={}", spec.title());
-                String imagePrompt = generateImagePrompt(spec.title(), description);
-                byte[] imageBytes = generateImageBytes(imagePrompt);
-                String fileName = "generated-" + UUID.randomUUID() + ".png";
-                MultipartFile file = new ByteArrayMultipartFile(
-                    "files",
-                    fileName,
-                    "image/png",
-                    imageBytes
-                );
-                var fileGroup = fileService.upload(List.of(file)).getData();
-                if (fileGroup != null) {
-                    fileGroupId = fileGroup.fileGroupId();
-                    fileUrl = (fileGroup.files() == null || fileGroup.files().isEmpty())
-                        ? null
-                        : fileGroup.files().get(0).filePath();
+            if (generateImage) {
+                try {
+                    log.info("AI 이미지 생성 시도. title={}", spec.title());
+                    String imagePrompt = generateImagePrompt(spec.title(), description);
+                    byte[] imageBytes = generateImageBytes(imagePrompt);
+                    String fileName = "generated-" + UUID.randomUUID() + ".png";
+                    MultipartFile file = new ByteArrayMultipartFile(
+                        "files",
+                        fileName,
+                        "image/png",
+                        imageBytes
+                    );
+                    var fileGroup = fileService.upload(List.of(file)).getData();
+                    if (fileGroup != null) {
+                        fileGroupId = fileGroup.fileGroupId();
+                        fileUrl = (fileGroup.files() == null || fileGroup.files().isEmpty())
+                            ? null
+                            : fileGroup.files().get(0).filePath();
+                    }
+                } catch (Exception e) {
+                    log.warn("AI 이미지 생성/업로드 실패. title={}, reason={}", spec.title(), e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("AI 이미지 생성/업로드 실패. title={}, reason={}", spec.title(), e.getMessage());
             }
 
             ProductCommand command = new ProductCommand(
@@ -158,7 +166,9 @@ public class ProductAdminAiService {
                 fileUrl
             );
 
-            created.add(productService.createProduct(command));
+            ProductInfo productInfo = productService.createProduct(command);
+            created.add(productInfo);
+            publishAuctionCreateRequest(productInfo, spec);
             log.info("AI 상품 생성 완료. title={}", spec.title());
         }
 
@@ -179,6 +189,14 @@ public class ProductAdminAiService {
         }
         if (spec.title() == null || spec.title().isBlank()) {
             throw new CustomException("AI 상품 제목이 비어 있습니다.");
+        }
+        if (spec.recommendedStartBid() == null || spec.recommendedStartBid() <= 0) {
+            throw new CustomException("추천 시작가가 유효하지 않습니다.");
+        }
+        if (spec.auctionDurationHours() == null
+            || spec.auctionDurationHours() < 1
+            || spec.auctionDurationHours() > 72) {
+            throw new CustomException("추천 경매 시간이 유효하지 않습니다.");
         }
     }
 
@@ -254,6 +272,28 @@ public class ProductAdminAiService {
         pushList(blocks, "검색 키워드", safeList(draft.searchKeywords()));
 
         return String.join("\n", blocks).trim();
+    }
+
+    private void publishAuctionCreateRequest(ProductInfo productInfo, AiProductSpec spec) {
+        if (productInfo == null || spec == null) {
+            return;
+        }
+        Long startBid = spec.recommendedStartBid();
+        Integer durationHours = spec.auctionDurationHours();
+        if (startBid == null || startBid <= 0 || durationHours == null
+            || durationHours < 1 || durationHours > 72) {
+            log.warn("AI 경매 생성 요청 스킵. productId={}, startBid={}, durationHours={}",
+                productInfo.id(), startBid, durationHours);
+            return;
+        }
+        AuctionCreateRequestEvent event = new AuctionCreateRequestEvent(
+            productInfo.id(),
+            productInfo.name(),
+            productInfo.sellerId(),
+            BigDecimal.valueOf(startBid),
+            durationHours
+        );
+        kafkaEventPublisher.publish(KafkaTopics.AUCTION_CREATE_REQUESTED, event);
     }
 
     private static void pushList(List<String> blocks, String title, List<String> items) {
