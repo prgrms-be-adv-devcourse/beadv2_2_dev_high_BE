@@ -7,4 +7,6 @@ public interface DepositHistoryRepository {
     DepositHistory save(DepositHistory history);
 
     Page<DepositHistory> findByUserId(String userId, Pageable pageable);
+
+    Page<DepositHistory> findByUserIdAndType(String userId, DepositType type, Pageable pageable);
 }

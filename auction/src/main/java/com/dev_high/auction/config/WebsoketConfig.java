@@ -14,7 +14,7 @@ public class WebsoketConfig implements WebSocketMessageBrokerConfigurer {
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/ws-auction")       // 클라이언트 연결 엔드포인트
         .setAllowedOriginPatterns("*")    // CORS 허용
-        .withSockJS();                     // SockJS fallback
+        .withSockJS().setSuppressCors(true);                     // SockJS fallback
   }
 
   @Override

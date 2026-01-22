@@ -1,7 +1,7 @@
 package com.dev_high.user.notification.presentation.dto;
 
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.user.notification.application.dto.NotificationDto;
-import com.dev_high.user.notification.domain.model.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.OffsetDateTime;
@@ -10,8 +10,10 @@ public class NotificationResponse {
     public record Detail(
             @Schema(description = "알림 ID")
             String id,
+            @Schema(description = "알림 카테고리")
+            NotificationCategory category,
             @Schema(description = "알림 타입")
-            NotificationType type,
+            NotificationCategory.Type type,
             @Schema(description = "제목")
             String title,
             @Schema(description = "내용")
@@ -28,6 +30,7 @@ public class NotificationResponse {
         public static Detail from(NotificationDto.Info info) {
             return new Detail(
                     info.id(),
+                    info.category(),
                     info.type(),
                     info.title(),
                     info.content(),

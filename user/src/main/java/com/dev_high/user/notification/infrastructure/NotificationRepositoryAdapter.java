@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @Repository
@@ -25,8 +26,18 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     @Override
-    public Long countUnreadByUserId(String userId) {
-        return repository.countByUserIdAndReadYn(userId, false);
+    public Page<Notification> findAllByUserIdAndExpiredAt(String userId, OffsetDateTime now, Pageable pageable) {
+        return repository.findAllByUserIdAndExpiredAtAfterOrderByCreatedAtDesc(userId, now, pageable);
+    }
+
+    @Override
+    public Long countUnreadByUserId(String userId, OffsetDateTime now) {
+        return repository.countByUserIdAndReadYnAndExpiredAtAfter(userId, false, now);
+    }
+
+    @Override
+    public int markAllUnreadActiveAsRead(String userId, OffsetDateTime now) {
+        return repository.markAllUnreadActiveAsRead(userId, now);
     }
 
     @Override

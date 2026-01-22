@@ -5,6 +5,7 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.settlement.settle.domain.settle.Settlement;
 import com.dev_high.settlement.settle.domain.settle.SettlementStatus;
@@ -66,8 +67,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
                     List.of(sellerId),
                     formattedAmount + "원 정산이 완료되었습니다.",
                     "/mypage",
-                    "SETTLEMENT_SUCCESS",
-                    ""
+                    NotificationCategory.Type.SETTLEMENT_SUCCESS
             )
         );
       }
@@ -83,8 +83,7 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
                     List.of("SYSTEM"), // 어드민 아이디 example
                     String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(), settlement.getTryCnt()),
                     "/settlement/" + settlement.getId(),
-                    "SETTLEMENT_FAILED",
-                    ""
+                    NotificationCategory.Type.SETTLEMENT_FAILED
             )
         );
       }

@@ -57,11 +57,6 @@ public class AuthorizationManager implements ReactiveAuthorizationManager<Author
     private boolean isAllowed(Set<String> allowedRoles, Set<String> userRoles) {
         if (allowedRoles == null || allowedRoles.isEmpty()) return false;
 
-        // SELLER가 아닌 USER만 허용
-        if (allowedRoles.size() == 1 && allowedRoles.contains("USER")) {
-            return userRoles.size() == 1 && userRoles.contains("USER");
-        }
-
         for (String role : allowedRoles) {
             if (role != null && userRoles.contains(role)) {
                 return true;

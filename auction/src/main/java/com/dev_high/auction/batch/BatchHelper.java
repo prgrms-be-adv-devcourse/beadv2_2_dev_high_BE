@@ -9,6 +9,7 @@ import com.dev_high.common.kafka.event.auction.AuctionCreateOrderRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionDepositRefundRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionStartEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.type.NotificationCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -183,8 +184,7 @@ public class BatchHelper {
                                 List.of(sellerId),
                                 "경매가 유찰되었습니다.",
                                 "/auctions/" + auction.getId(),
-                                "AUCTION_NO_BID",
-                                ""));
+                                NotificationCategory.Type.AUCTION_NO_BID));
             } catch (Exception e) {
                 log.error("kafka send failed :{}", e);
             }
@@ -207,8 +207,7 @@ public class BatchHelper {
                                     userIds,
                                     " 경매가 종료되었습니다.",
                                     "/auctions/" + auction.getId(),
-                                    "AUCTION_CLOSED",
-                                    ""));
+                                    NotificationCategory.Type.AUCTION_CLOSED));
 
                 } catch (Exception e) {
                     log.error("경매 종료 알림 실패: auctionId={}", targetId, e);

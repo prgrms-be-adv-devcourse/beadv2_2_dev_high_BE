@@ -19,15 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class DepositController {
     private final DepositService depositService;
 
-    @Operation(summary = "예치금 계좌 생성", description = "예치금 계좌를 생성하고 저장")
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositResponse.Detail> createDepositAccount(@RequestBody @Valid DepositRequest.Create request) {
-        DepositDto.CreateCommand command = request.toCommand(request.userId());
-        DepositDto.Info info = depositService.createDepositAccount(command);
-        DepositResponse.Detail response = DepositResponse.Detail.from(info);
-        return ApiResponseDto.success(response);
-    }
+
 
     @Operation(summary = "로그인한 사용자 ID의 예치금 계좌 조회", description = "예치금 계좌ID로 예치금 계좌를 조회")
     @GetMapping("/me")
