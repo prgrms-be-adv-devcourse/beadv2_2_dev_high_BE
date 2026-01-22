@@ -9,4 +9,12 @@ public class PaymentEvent {
             return new PaymentConfirmed(id, winningOrderId);
         }
     }
+
+    public record PaymentConfirmFailed(
+        String id
+    ) {
+        public static PaymentConfirmFailed of(String id) {
+            return new PaymentConfirmFailed(id);
+        }
+    }
 }

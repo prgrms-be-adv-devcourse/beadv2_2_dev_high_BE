@@ -5,10 +5,8 @@ import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositPaymentCompletedEvent;
 import com.dev_high.common.kafka.event.deposit.DepositPaymentfailedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.user.deposit.application.DepositHistoryService;
 import com.dev_high.user.deposit.application.DepositService;
 import com.dev_high.user.deposit.application.dto.DepositDto;
-import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,15 +37,6 @@ public class DepositEventHandler {
         log.info("[DepositEventListener] DepositHistoryCreated received orderId={}, type={}",
                 event.depositOrderId(), event.type());
         depositService.eventPublishByDepositType(DepositDto.PublishCommand.of(event.depositOrderId(), event.type()));
-    }
-
-    @TransactionalEventListener
-    public void handlerDepositHistoryFailed(DepositEvent.DepositHistoryFailed event) {
-        try {
-            depositService.compensateBalance(DepositDto.CompensateCommand.of(event.userId(), event.depositOrderId(), event.type(), event.amount()));
-        } catch (Exception e) {
-            log.error("예치금 보상 트랜잭션 실패!! : 관리자 문의 필요.", e);
-        }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

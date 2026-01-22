@@ -18,4 +18,9 @@ public class PaymentEventHandler {
     public void handlePaymentConfirmed(PaymentEvent.PaymentConfirmed event) {
         depositOrderService.confirmOrder(DepositOrderDto.ConfirmCommand.of(event.id(), event.winningOrderId()));
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePaymentConfirmFailed(PaymentEvent.PaymentConfirmFailed event) {
+        depositOrderService.confirmFailedOrder(DepositOrderDto.ConfirmFailedCommand.of(event.id()));
+    }
 }

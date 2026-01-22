@@ -3,7 +3,6 @@ package com.dev_high.user.deposit.infrastructure.kafka;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
-import com.dev_high.common.kafka.event.deposit.DepositPaymentfailedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.deposit.application.DepositService;
 import com.dev_high.user.deposit.application.dto.DepositDto;
@@ -90,35 +89,5 @@ public class DepositEventListener {
             log.error("보증금 환불 실패. userIds: {}, Offset : {}", userIds, record.offset(), e);
             throw e;
         }
-    }
-
-    @KafkaListener(topics = KafkaTopics.PAYMENT_DEPOSIT_CONFIRM_REQUESTED)
-    public void handleDepositConfirm(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
-        Map<String, Object> payload = envelope.payload();
-        String userId = payload.get("userId").toString();
-        String orderId = payload.get("orderId").toString();
-        DepositType type = Optional.ofNullable(payload.get("type"))
-                .map(val -> {
-                    try {
-                        return objectMapper.convertValue(val, DepositType.class);
-                    } catch (IllegalArgumentException e) {
-                        return null;
-                    }
-                })
-                .orElse(null);
-        BigDecimal amount = Optional.ofNullable(payload.get("amount"))
-                .map(Object::toString)
-                .filter(s -> !s.isBlank())
-                .map(BigDecimal::new)
-                .orElse(BigDecimal.ZERO);
-
-        if (userId == null || userId.isBlank() || orderId == null || orderId.isBlank() || type == null) {
-            log.warn("필수 파라미터 누락 - userId: {}, orderId: {}, type: {}, amount: {}, Offset: {}",
-                    userId, orderId, type, amount, record.offset());
-            return;
-        }
-
-        DepositDto.UsageCommand command = DepositDto.UsageCommand.of(userId, orderId, type, amount);
-        depositService.updateBalance(command);
     }
 }

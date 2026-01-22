@@ -57,10 +57,20 @@ public class DepositOrderController {
         return ApiResponseDto.success(response);
     }
 
+    @Operation(summary = "로그인한 사용자 ID의 예치금 주문ID로 조회", description = "예치금 주문ID로 예치금 주문을 조회")
+    @GetMapping("/orders/{orderId}")
+    public ApiResponseDto<DepositOrderResponse.Detail> findByUserId(@PathVariable String orderId) {
+        log.info("[PaymentOrder API] PATH : /orders/{orderId} request received. orderId={}", orderId);
+        DepositOrderDto.Info info = depositOrderService.findById(orderId);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        log.info("[PaymentOrder API] PATH : /orders/{orderId}} success. orderId={}", orderId);
+        return ApiResponseDto.success(response);
+    }
+
     @Operation(summary = "주문 ID의 예치금 사용 처리", description = "주문 ID의 예치금 사용 처리")
     @PostMapping("/orders/pay-by-deposit")
     public ApiResponseDto<?> payOrderByDeposit(@RequestBody @Valid DepositOrderRequest.OrderPayWithDeposit request) {
-        DepositOrderDto.OrderPayWithDepositCommand command = request.toCommand(request.id());
+        DepositOrderDto.OrderPayWithDepositCommand command = request.toCommand(request.id(), request.winningOrderId());
         try {
             DepositOrderDto.Info info = depositOrderService.payOrderByDeposit(command);
             return ApiResponseDto.success(DepositOrderResponse.Detail.from(info));

@@ -2,8 +2,6 @@ package com.dev_high.user.deposit.application.event;
 
 import com.dev_high.common.type.DepositType;
 
-import java.math.BigDecimal;
-
 public class DepositEvent {
     public record DepositPaid(
             String depositOrderId
@@ -27,17 +25,6 @@ public class DepositEvent {
     ) {
         public static DepositHistoryCreated of(String depositOrderId, DepositType type) {
             return new DepositHistoryCreated(depositOrderId, type);
-        }
-    }
-
-    public record DepositHistoryFailed(
-            String userId,
-            String depositOrderId,
-            DepositType type,
-            BigDecimal amount
-    ) {
-        public static DepositHistoryFailed of(String userId, String depositOrderId, DepositType type, BigDecimal amount) {
-            return new DepositHistoryFailed(userId, depositOrderId, type, amount);
         }
     }
 

@@ -26,10 +26,11 @@ public class DepositOrderDto {
     }
 
     public record OrderPayWithDepositCommand(
-            String id
+            String id,
+            String winningOrderId
     ) {
-        public static OrderPayWithDepositCommand of(String id) {
-            return new OrderPayWithDepositCommand(id);
+        public static OrderPayWithDepositCommand of(String id, String winningOrderId) {
+            return new OrderPayWithDepositCommand(id, winningOrderId);
         }
     }
 
@@ -59,6 +60,14 @@ public class DepositOrderDto {
     ) {
         public static ChangeOrderStatusCommand of(String id, DepositOrderStatus status) {
             return new ChangeOrderStatusCommand(id, status);
+        }
+    }
+
+    public record ConfirmFailedCommand(
+            String id
+    ) {
+        public static ConfirmFailedCommand of(String id) {
+            return new ConfirmFailedCommand(id);
         }
     }
 
