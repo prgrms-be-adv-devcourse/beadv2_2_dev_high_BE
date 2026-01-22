@@ -19,11 +19,7 @@ on:
 #      - 'settings.gradle'
 #      - '.dockerignore'
   workflow_dispatch:
-    inputs:
-      deploy_ref:
-        description: "Deploy ref (branch/tag/sha)"
-        required: false
-        default: "main"
+    
     
 
 env:
@@ -43,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -83,7 +79,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.deploy_ref }}
+          ref: ${{ inputs.deploy_ref || 'main' }}
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
