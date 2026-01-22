@@ -24,28 +24,23 @@ public class WishlistRepositoryAdapter implements WishlistRepository {
     }
 
     @Override
-    public void delete(Wishlist wishlist) {
-        wishlistJpaRepository.delete(wishlist);
-    }
-
-    @Override
-    public boolean existsByUserIdAndProductId(String userId, String productId) {
-        return wishlistJpaRepository.existsByUserIdAndProductId(userId, productId);
-    }
-
-    @Override
     public Optional<Wishlist> findByUserIdAndProductId(String userId, String productId) {
         return wishlistJpaRepository.findByUserIdAndProductId(userId, productId);
     }
 
     @Override
-    public Page<Wishlist> findByUserId(String userId, Pageable pageable) {
-        return wishlistJpaRepository.findByUserId(userId, pageable);
+    public Optional<Wishlist> findByUserIdAndProductIdAndDeletedYn(String userId, String productId, String deletedYn) {
+        return wishlistJpaRepository.findByUserIdAndProductIdAndDeletedYn(userId, productId, deletedYn);
     }
 
     @Override
-    public List<String> findUserIdByProductId(String productId) {
-        return wishlistJpaRepository.findUserIdByProductId(productId);
+    public Page<Wishlist> findByUserIdAndDeletedYn(String userId, String deletedYn, Pageable pageable){
+        return wishlistJpaRepository.findByUserIdAndDeletedYn(userId, deletedYn, pageable);
+    }
+
+    @Override
+    public List<String> findUserIdByProductIdAndDeletedYn(String productId, String deletedYn) {
+        return wishlistJpaRepository.findUserIdByProductIdAndDeletedYn(productId, deletedYn);
     }
 
 }

@@ -27,4 +27,9 @@ public class FileController {
     public ApiResponseDto<FileGroupResponse> findByFileGroup(@PathVariable String fileGroupId) {
         return fileService.findByFileGroupId(fileGroupId);
     }
+
+    @GetMapping("/groups/{fileGroupId}/many")
+    public ApiResponseDto<List<FileGroupResponse>> findByFileGroup(@PathVariable List<String> fileGroupId) {
+        return fileService.findByFileGroupIds(fileGroupId);
+    }
 }

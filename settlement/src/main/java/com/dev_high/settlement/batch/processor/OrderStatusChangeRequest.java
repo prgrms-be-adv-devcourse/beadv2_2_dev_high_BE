@@ -1,6 +1,6 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.domain.order.OrderStatus;
+import com.dev_high.settlement.order.domain.OrderStatus;
 import java.time.Duration;
 
 public record OrderStatusChangeRequest(
@@ -8,7 +8,9 @@ public record OrderStatusChangeRequest(
     OrderStatus newStatus,
     Duration duration,
     String message,
-    String redirect
+    String redirect,
+    String type,
+    String status
 ) {
   // 주문 상태 전환 단위 작업 정보
 }

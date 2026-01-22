@@ -1,7 +1,7 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.application.order.OrderService;
-import com.dev_high.settlement.application.order.dto.UpdateOrderProjection;
+import com.dev_high.settlement.order.application.OrderService;
+import com.dev_high.settlement.order.application.dto.UpdateOrderProjection;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

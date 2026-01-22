@@ -1,9 +1,7 @@
 package com.dev_high.auction.application;
 
-import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionResponse;
-import com.dev_high.auction.application.dto.FileDto;
 import com.dev_high.auction.domain.Auction;
 import com.dev_high.auction.domain.AuctionLiveState;
 import com.dev_high.auction.domain.AuctionRepository;
@@ -15,31 +13,19 @@ import com.dev_high.auction.exception.DuplicateAuctionException;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.context.UserContext;
-import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.exception.CustomException;
-import com.dev_high.common.kafka.event.auction.AuctionCreateSearchRequestEvent;
 import com.dev_high.common.util.DateUtil;
-import com.dev_high.common.util.HttpUtil;
-import com.dev_high.product.domain.Product;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -49,81 +35,26 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final AuctionLiveStateJpaRepository auctionLiveStateRepository;
-    private final RestTemplate restTemplate;
-    private static final String GATEWAY_URL = "http://APIGATEWAY/api/v1";
+
     private final ApplicationEventPublisher publisher;
-    private final ObjectMapper objectMapper;
 
-
-    public List<FileDto> getFile(String fileGroupId) {
-        try {
-
-            HttpEntity<Void> entity = HttpUtil.createGatewayEntity(null);
-
-            ResponseEntity<ApiResponseDto<Map<String, Object>>> response;
-            response = restTemplate.exchange(
-                    GATEWAY_URL + "/files/groups/" + fileGroupId,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<>() {
-                    }
-            );
-            if (response.getBody() != null) {
-
-                Object filesObj = response.getBody().getData().get("files");
-                if (filesObj == null) {
-                    return List.of();
-                }
-
-                return objectMapper.convertValue(
-                        filesObj,
-                        new TypeReference<List<FileDto>>() {
-                        }
-                );
-
-
-            }
-        } catch (Exception e) {
-            log.error("실패: {}", e);
-
-        }
-        return List.of();
-
-    }
 
     public Page<AuctionResponse> getAuctionList(AuctionRequest request, Pageable pageable) {
 
         AuctionFilterCondition filter = AuctionFilterCondition.fromRequest(request, pageable);
         Page<Auction> page = auctionRepository.filterAuctions(filter);
-        return page.map(item -> {
-            String fileGroupId = item.getProduct().getFileId();
-            if (fileGroupId != null) {
-                List<FileDto> files = getFile(fileGroupId);
-                if (!files.isEmpty()) {
-                    String path = files.get(0).filePath();
-                    return AuctionResponse.getAuctionResponse(item, path);
-                }
-            }
-            return AuctionResponse.fromEntity(item);
-        });
-//        return page.map(AuctionResponse::fromEntity);
+        return page.map(AuctionResponse::fromEntity);
 
     }
 
 
-    public AuctionDetailResponse getAuctionDetail(String auctionId) {
+    public AuctionResponse getAuction(String auctionId) {
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
-        AuctionLiveState live = auction.getLiveState();
 
-        Product product = auction.getProduct();
-        List<FileDto> files = List.of();
-        if (product.getFileId() != null) {
-            files = getFile(product.getFileId());
 
-        }
-        return AuctionDetailResponse.fromEntity(auction, product, live, files);
+        return AuctionResponse.fromEntity(auction);
     }
 
     /**
@@ -133,15 +64,10 @@ public class AuctionService {
     public AuctionResponse createAuction(AuctionRequest request) {
         /*TODO: 즉시시작 추가여부에 따라서  validate 변경 (auction_start_at , nullable)*/
         String userId = UserContext.get().userId();
-        String role = UserContext.get().role();
 
-        if ("USER".equals(role)) {
+        if (!userId.equals(request.sellerId())) {
             throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
-        } else if ("SELLER".equals(role)) {
-            if (!userId.equals(request.sellerId())) {
-                throw new AuctionModifyForbiddenException("등록 권한이 없습니다.");
 
-            }
         }
 
         validateAuction(request);
@@ -158,7 +84,7 @@ public class AuctionService {
         // 대기중, 진행중 ,완료된 경매가 있으면 throw
         if (auctionRepository.existsByProductIdAndStatusInAndDeletedYn(
                 request.productId(),
-                List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED),"N")) {
+                List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS, AuctionStatus.COMPLETED), "N")) {
 
             throw new DuplicateAuctionException();
 
@@ -175,41 +101,21 @@ public class AuctionService {
     }
 
     private void publishSpringEvent(Auction auction) {
-        Product product = auction.getProduct();
-        AuctionCreateSearchRequestEvent event = new AuctionCreateSearchRequestEvent(
-                auction.getId(),
-                product.getId(),
-                product.getName(),
-                List.of(),
-                product.getDescription(),
-                auction.getStartBid(),
-                auction.getDepositAmount(),
-                auction.getStatus().name(),
-                product.getSellerId(),
-                auction.getAuctionStartAt(),
-                auction.getAuctionEndAt()
-        );
-        publisher.publishEvent(event);
+
+        /*TODO: es index 수정 필요*/
+        //        publisher.publishEvent(event);
 
     }
 
     @Transactional
     public AuctionResponse modifyAuction(String auctionId, AuctionRequest request) {
         String userId = UserContext.get().userId();
-        String role = UserContext.get().role();
-
-        if ("USER".equals(role)) {
-            throw new AuctionModifyForbiddenException();
-        }
-
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
-        String sellerId = auction.getProduct().getSellerId();
-        if ("SELLER".equals(role)) {
-            if (!sellerId.equals(userId)) {
-                throw new AuctionModifyForbiddenException();
-            }
+        String sellerId = auction.getCreatedBy();
+        if (!sellerId.equals(userId)) {
+            throw new AuctionModifyForbiddenException();
         }
 
         if (auction.getStatus() != AuctionStatus.READY) {
@@ -238,27 +144,20 @@ public class AuctionService {
     @Transactional
     public void removeAuction(String auctionId) {
         String userId = UserContext.get().userId();
-        String role = UserContext.get().role();
 
-        if ("USER".equals(role)) {
-            throw new AuctionModifyForbiddenException();
-        }
 
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(AuctionNotFoundException::new);
-
+        String sellerId = auction.getCreatedBy();
+        if (!sellerId.equals(userId)) {
+            throw new AuctionModifyForbiddenException();
+        }
 
         if (!List.of(AuctionStatus.READY, AuctionStatus.CANCELLED, AuctionStatus.FAILED)
                 .contains(auction.getStatus())) {
             throw new AuctionStatusInvalidException();
         }
 
-        String sellerId = auction.getProduct().getSellerId();
-        if ("SELLER".equals(role)) {
-            if (!sellerId.equals(userId)) {
-                throw new AuctionModifyForbiddenException();
-            }
-        }
 
         auction.remove(userId);
         publisher.publishEvent(auctionId);

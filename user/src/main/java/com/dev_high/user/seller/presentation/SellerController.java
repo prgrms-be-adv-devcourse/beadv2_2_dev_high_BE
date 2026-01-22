@@ -1,6 +1,5 @@
 package com.dev_high.user.seller.presentation;
 
-
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.seller.application.dto.SellerResponse;
@@ -32,7 +31,7 @@ public class SellerController {
 
     @DeleteMapping
     public ApiResponseDto<Void> deleteSeller() {
-        return sellerService.delete();
+        return sellerService.removeSeller();
     }
 
 }

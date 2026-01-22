@@ -2,6 +2,8 @@ package com.dev_high.file.infrastructure;
 
 import com.dev_high.file.domain.FileGroup;
 import com.dev_high.file.domain.FileGroupRepository;
+
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -20,5 +22,10 @@ public class FileGroupRepositoryAdapter implements FileGroupRepository {
     @Override
     public Optional<FileGroup> findById(String id) {
         return fileGroupJpaRepository.findById(id);
+    }
+
+    @Override
+    public List<FileGroup> findByFileGroupIds(List<String> fileGroupId) {
+        return fileGroupJpaRepository.findAllById(fileGroupId);
     }
 }

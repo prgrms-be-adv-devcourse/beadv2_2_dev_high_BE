@@ -42,33 +42,39 @@ spec:
               value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dev_high_BE" # 배포용 설정 리포 주소로 교체
 
             - name: CONFIG_GIT_LABEL
-              value: "main"
+              value: "config"
 
             - name: CONFIG_GIT_SEARCH_PATHS
-              value: "config/config"
+              value: "."
 
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul
                 -Xmx96m           
                 -XX:MaxMetaspaceSize=64m
+                -XX:MaxDirectMemorySize=32m
+                -XX:ReservedCodeCacheSize=16m
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/readiness
               port: 8888
-            initialDelaySeconds: 80
             periodSeconds: 60
             timeoutSeconds: 5
-            failureThreshold: 2
-
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: 8888
-            initialDelaySeconds: 100
             periodSeconds: 120
             timeoutSeconds: 5
-            failureThreshold: 1
+            failureThreshold: 3
 
           resources:
             requests:

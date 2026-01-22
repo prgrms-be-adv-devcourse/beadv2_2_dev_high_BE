@@ -1,6 +1,6 @@
 package com.dev_high.deposit.client;
 
-import com.dev_high.deposit.application.dto.DepositPaymentConfirmCommand;
+import com.dev_high.deposit.application.dto.DepositPaymentDto;
 import com.dev_high.deposit.client.dto.TossPaymentResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,14 +29,14 @@ public class TossPaymentClient {
     }
 
     // 하단에 try-catch를 제외하고 throw로 예외를 던져서 AOP로 처리해도 된다
-    public TossPaymentResponse confirm(DepositPaymentConfirmCommand command) {
+    public TossPaymentResponse confirm(DepositPaymentDto.ConfirmCommand command) {
         if (secretKey == null) {
             throw new IllegalStateException("Toss secret key is not configured");
         }
         //Toss에 요청할 헤더
         HttpHeaders headers = createHeaders();
 
-        HttpEntity<DepositPaymentConfirmCommand> entity = new HttpEntity<>(command, headers);
+        HttpEntity<DepositPaymentDto.ConfirmCommand> entity = new HttpEntity<>(command, headers);
 
         try {
             return restTemplate.postForObject(CONFIRM_URL, entity, TossPaymentResponse.class);

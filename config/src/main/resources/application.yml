@@ -20,21 +20,16 @@ spring:
           force-pull: false
           refresh-rate: ${CONFIG_GIT_REFRESH_RATE:600} # 0=매 요청마다 최신 확인
 
+logging:
+  level:
+    org.springframework.cloud.config.server: WARN
+
 management:
   endpoints:
     web:
       exposure:
-        include: health, refresh
-  info:
-    git:
-      mode: off
-  health:
-    config:
-      enabled: false
+        include: health
   endpoint:
     health:
-      enabled: true
-
-logging:
-  level:
-    org.springframework.cloud.config.server: WARN
+      probes:
+        enabled: true

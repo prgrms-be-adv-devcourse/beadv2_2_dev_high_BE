@@ -1,7 +1,7 @@
 package com.dev_high.settlement.batch.writer;
 
-import com.dev_high.settlement.domain.settle.Settlement;
-import com.dev_high.settlement.domain.settle.SettlementRepository;
+import com.dev_high.settlement.settle.domain.settle.Settlement;
+import com.dev_high.settlement.settle.domain.settle.SettlementRepository;
 import com.dev_high.settlement.batch.listener.SettlementRegistrationStepListener;
 import java.util.List;
 import java.util.Objects;

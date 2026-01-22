@@ -1,0 +1,60 @@
+package com.dev_high.deposit.application.dto;
+
+import com.dev_high.deposit.domain.DepositPayment;
+import com.dev_high.deposit.domain.DepositPaymentMethod;
+import com.dev_high.deposit.domain.DepositPaymentStatus;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
+public class DepositPaymentDto {
+    public record CreateCommand(
+            String orderId,
+            DepositPaymentMethod method,
+            BigDecimal amount
+    ) {
+        public static CreateCommand of(String orderId, DepositPaymentMethod method, BigDecimal amount) {
+            return new CreateCommand(orderId, method, amount);
+        }
+    }
+
+    public record ConfirmCommand(
+            String paymentKey,
+            String orderId,
+            BigDecimal amount
+    ) {
+        public static ConfirmCommand of(String paymentKey, String orderId, BigDecimal amount) {
+            return new ConfirmCommand(paymentKey, orderId, amount);
+        }
+    }
+
+    public record Info(
+            String id,
+            String orderId,
+            String userId,
+            String paymentKey,
+            String method,
+            BigDecimal amount,
+            OffsetDateTime requestedAt,
+            DepositPaymentStatus status,
+            String approvalNum,
+            OffsetDateTime approvedAt,
+            OffsetDateTime createdAt
+    ) {
+        public static Info from(DepositPayment depositPayment) {
+            return new Info(
+                    depositPayment.getId(),
+                    depositPayment.getOrderId(),
+                    depositPayment.getUserId(),
+                    depositPayment.getPaymentKey(),
+                    depositPayment.getMethod(),
+                    depositPayment.getAmount(),
+                    depositPayment.getRequestedAt(),
+                    depositPayment.getStatus(),
+                    depositPayment.getApprovalNum(),
+                    depositPayment.getApprovedAt(),
+                    depositPayment.getCreatedAt()
+            );
+        }
+    }
+}

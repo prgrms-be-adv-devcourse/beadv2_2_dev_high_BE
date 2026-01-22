@@ -8,11 +8,9 @@ include 'apigateway'
 include 'discovery'
 
 // service module
-include 'notification'
 include 'auction'
 include 'deposit'
 include 'product'
-include 'product-domain'
 include 'search'
 include 'settlement'
 include 'user'

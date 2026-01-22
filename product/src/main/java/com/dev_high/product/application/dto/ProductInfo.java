@@ -19,7 +19,8 @@ public record ProductInfo(
         String createdBy,
         OffsetDateTime updatedAt,
         String updatedBy,
-        List<CategoryInfo> categories
+        List<CategoryInfo> categories,
+        String fileGroupId
 ) {
 
     public static ProductInfo from(Product product) {
@@ -35,7 +36,8 @@ public record ProductInfo(
                 product.getCreatedBy(),
                 product.getUpdatedAt(),
                 product.getUpdatedBy(),
-                product.getCategories().stream().map(CategoryInfo::from).toList()
+                product.getCategories().stream().map(CategoryInfo::from).toList(),
+                product.getFileId()
         );
     }
 }

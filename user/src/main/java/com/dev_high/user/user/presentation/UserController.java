@@ -43,9 +43,4 @@ public class UserController {
         return userService.delete();
     }
 
-    @PostMapping("/logout")
-    public ApiResponseDto<Void> logout(){
-        return userService.logout();
     }
-
-}

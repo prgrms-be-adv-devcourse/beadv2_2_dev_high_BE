@@ -3,13 +3,10 @@ package com.dev_high.auction.infrastructure.auction;
 import com.dev_high.auction.application.dto.AuctionFilterCondition;
 import com.dev_high.auction.application.dto.AuctionProductProjection;
 import com.dev_high.auction.domain.*;
-import com.dev_high.product.domain.Product;
-import com.dev_high.product.domain.QProduct;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,22 +28,14 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     private final JPAQueryFactory queryFactory;
 
     private final QAuction qAuction = QAuction.auction;
-    private final QProduct qProduct = QProduct.product;
     private final QAuctionLiveState qLiveState = QAuctionLiveState.auctionLiveState;
-    private final EntityManager entityManager;
 
 
     @Override
     public Auction save(Auction auction) {
 
-        // 2) productId 기반으로 프록시 로딩
-        Product product = entityManager.find(Product.class, auction.getProductId());
-
-        // 3) LAZY 필드 주입
-        auction.setProduct(product);
 
         Auction saved = auctionJpaRepository.save(auction);
-
 
         return saved;
 
@@ -63,9 +52,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     public List<Auction> findByIdIn(List<String> ids) {
         return queryFactory
                 .selectFrom(qAuction)
-                .join(qAuction.product, qProduct).fetchJoin()
-                .join(qAuction.liveState, qLiveState).fetchJoin()
-                .where(qAuction.id.in(ids))
+                .where(qAuction.id.in(ids).and(qAuction.deletedYn.eq("N")))
                 .fetch();
 
     }
@@ -78,7 +65,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
     @Override
     public List<Auction> findByProductId(String productId) {
-        return auctionJpaRepository.findByProduct_IdAndDeletedYnOrderByIdDesc(productId, "N");
+        return auctionJpaRepository.findByProductIdAndDeletedYnOrderByIdDesc(productId, "N");
     }
 
     @Override
@@ -133,7 +120,6 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         long offset = (long) condition.pageNumber() * condition.pageSize();
 
         List<Auction> content = queryFactory.selectFrom(qAuction)
-                .leftJoin(qAuction.product).fetchJoin()
                 .where(builder)
                 .offset(offset)
                 .limit(condition.pageSize())

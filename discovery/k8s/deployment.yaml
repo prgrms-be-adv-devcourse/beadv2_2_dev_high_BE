@@ -43,24 +43,31 @@ spec:
               value: >
                 -Duser.timezone=Asia/Seoul
                 -Xmx96m
+                -XX:MaxMetaspaceSize=96m
+                -XX:MaxDirectMemorySize=32m
+                -XX:ReservedCodeCacheSize=16m
 
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/readiness
               port: 8761
-            initialDelaySeconds: 80
-            periodSeconds: 15
+            periodSeconds: 60
             timeoutSeconds: 5
-            failureThreshold: 12
-
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: 8761
-            initialDelaySeconds: 120
-            periodSeconds: 30
+            periodSeconds: 120
             timeoutSeconds: 5
-            failureThreshold: 6
+            failureThreshold: 3
 
           resources:
             requests:

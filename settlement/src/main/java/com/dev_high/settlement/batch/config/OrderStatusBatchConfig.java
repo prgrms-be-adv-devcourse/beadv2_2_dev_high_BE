@@ -5,7 +5,7 @@ import com.dev_high.settlement.batch.processor.OrderStatusChangeRequest;
 import com.dev_high.settlement.batch.processor.OrderStatusChangeResult;
 import com.dev_high.settlement.batch.reader.OrderStatusChangeReader;
 import com.dev_high.settlement.batch.writer.OrderStatusChangeWriter;
-import com.dev_high.settlement.domain.order.OrderStatus;
+import com.dev_high.settlement.order.domain.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -38,19 +38,25 @@ public class OrderStatusBatchConfig {
             OrderStatus.SHIP_STARTED,
             Duration.ofHours(12),
             "구매한 상품이 배송중 입니다.",
-            "/orders"
+            "/orders",
+            "ORDER_STATUS_CHANGED",
+            "STARTED"
         )))
         .next(step(new OrderStatusChangeRequest(
             OrderStatus.SHIP_STARTED,
             OrderStatus.SHIP_COMPLETED,
             Duration.ofHours(24),
             "배송이 완료되었습니다. 구매확정은 14일 후 자동 처리됩니다.",
-            "/orders"
+            "/orders",
+            "ORDER_STATUS_CHANGED",
+            "COMPLETED"
         )))
         .next(step(new OrderStatusChangeRequest(
             OrderStatus.SHIP_COMPLETED,
             OrderStatus.CONFIRM_BUY,
             Duration.ofDays(14),
+            null,
+            null,
             null,
             null
         )))
@@ -60,7 +66,9 @@ public class OrderStatusBatchConfig {
                 OrderStatus.UNPAID_CANCEL,
                 Duration.ofDays(3),
                 "미결제로 인하여 주문이 자동 취소되었습니다.",
-                "/orders"
+                "/orders",
+                "ORDER_STATUS_CHANGED",
+                "CANCELED"
             )))
         .build();
   }

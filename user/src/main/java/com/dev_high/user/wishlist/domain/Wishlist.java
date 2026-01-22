@@ -5,7 +5,6 @@ import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.user.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
-
 import java.time.OffsetDateTime;
 
 @Entity
@@ -26,16 +25,36 @@ public class Wishlist {
     @Column(name = "product_id", length = 20, nullable = false)
     private String productId;
 
-    @Column(name = "created_by", length = 50)
+    @Column(name = "deleted_yn", nullable = false)
+    private String deletedYn;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
+    @Column(name = "created_by", length = 50, nullable = false)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_by", length = 50, nullable = false)
+    private String updatedBy;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
-        createdBy = user.getId();
         createdAt = OffsetDateTime.now();
+        createdBy = user.getId();
+        updatedAt = OffsetDateTime.now();
+        updatedBy = user.getId();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedBy = user.getId();
+        updatedAt = OffsetDateTime.now();
     }
 
     protected Wishlist() {
@@ -45,5 +64,16 @@ public class Wishlist {
     public Wishlist(User user, String productId) {
         this.user = user;
         this.productId = productId;
+        this.deletedYn = "N";
+    }
+
+    public void remove() {
+        this.deletedYn = "Y";
+        this.deletedAt = OffsetDateTime.now();
+    }
+
+    public void restore() {
+        this.deletedYn = "N";
+        this.deletedAt = null;
     }
 }

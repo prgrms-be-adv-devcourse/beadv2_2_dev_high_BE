@@ -1,6 +1,6 @@
 package com.dev_high.settlement.batch.processor;
 
-import com.dev_high.settlement.application.order.dto.UpdateOrderProjection;
+import com.dev_high.settlement.order.application.dto.UpdateOrderProjection;
 import java.util.List;
 
 public record OrderStatusChangeResult(

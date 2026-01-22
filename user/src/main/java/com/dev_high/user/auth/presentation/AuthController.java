@@ -1,13 +1,10 @@
 package com.dev_high.user.auth.presentation;
 
-
 import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.auth.application.dto.*;
 import com.dev_high.common.dto.ApiResponseDto;
-import com.dev_high.user.auth.presentation.dto.LoginRequest;
-import com.dev_high.user.auth.presentation.dto.SendEmailRequest;
-import com.dev_high.user.auth.presentation.dto.TokenRequest;
-import com.dev_high.user.auth.presentation.dto.VerifyEmailRequest;
+import com.dev_high.user.auth.presentation.dto.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,19 +29,26 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request){
+    public ApiResponseDto<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response){
         LoginCommand command = new LoginCommand(
                 request.email(),
                 request.password()
         );
-        return authService.login(command);
+        return authService.login(command, response);
+    }
+
+    @PostMapping("/social/login")
+    public ApiResponseDto<LoginResponse> socialLogin(@RequestBody SocialLoginRequest request, HttpServletResponse response){
+        return authService.socialLogin(request, response);
+    }
+
+    @PostMapping("/logout")
+    public ApiResponseDto<Void> logout(@CookieValue(name = "refresh_token", required = false) String refreshToken, HttpServletResponse response){
+        return authService.logout(refreshToken, response);
     }
 
     @PostMapping("/refresh/token")
-    public ApiResponseDto<TokenResponse> refreshToken(@RequestBody TokenRequest request){
-        TokenCommand command = new TokenCommand(
-                request.refreshToken()
-        );
-        return authService.refreshToken(command);
+    public ApiResponseDto<TokenResponse> refreshToken(@CookieValue(name = "refresh_token", required = false) String refreshToken){
+        return authService.refreshToken(refreshToken);
     }
 }

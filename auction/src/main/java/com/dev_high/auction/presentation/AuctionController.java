@@ -1,7 +1,6 @@
 package com.dev_high.auction.presentation;
 
 import com.dev_high.auction.application.AuctionService;
-import com.dev_high.auction.application.dto.AuctionDetailResponse;
 import com.dev_high.auction.application.dto.AuctionResponse;
 import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.dto.ApiResponseDto;
@@ -47,10 +46,10 @@ public class AuctionController {
   }
 
 
-  @Operation(summary = "경매 상세 조회", description = "경매 ID로 상세 정보를 조회합니다.")
+  @Operation(summary = "경매 단일 조회", description = "경매 ID로 정보를 조회합니다.")
   @GetMapping("{auctionId}")
-  public ApiResponseDto<AuctionDetailResponse> getAuctionDetail(@PathVariable String auctionId) {
-    return ApiResponseDto.success(auctionService.getAuctionDetail(auctionId));
+  public ApiResponseDto<AuctionResponse> getAuction(@PathVariable String auctionId) {
+    return ApiResponseDto.success(auctionService.getAuction(auctionId));
   }
 
   @Operation(summary = "경매 생성", description = "새로운 경매를 생성합니다.")

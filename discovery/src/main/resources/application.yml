@@ -17,6 +17,12 @@ eureka:
   server:
     enable-self-preservation: false
 
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 #eureka:
 #  client:
 #    register-with-eureka: false

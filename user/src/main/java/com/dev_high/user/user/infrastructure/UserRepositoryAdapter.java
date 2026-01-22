@@ -1,5 +1,6 @@
 package com.dev_high.user.user.infrastructure;
 
+import com.dev_high.user.user.domain.OAuthProvider;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
 import org.springframework.stereotype.Repository;
@@ -26,12 +27,17 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
-        return userJpaRepository.findByEmail(email);
+    public Optional<User> findByEmailAndDeletedYn(String email, String deletedYn) {
+        return userJpaRepository.findByEmailAndDeletedYn(email, deletedYn);
     }
 
     @Override
-    public boolean existsByEmail(String email) {
-        return userJpaRepository.existsByEmail(email);
+    public boolean existsByEmailAndDeletedYn(String email, String deletedYn)  {
+        return userJpaRepository.existsByEmailAndDeletedYn(email, deletedYn);
+    }
+
+    @Override
+    public Optional<User> findByProviderAndProviderUserIdAndDeletedYn(OAuthProvider provider, String userId, String deletedYn) {
+        return userJpaRepository.findByProviderAndProviderUserIdAndDeletedYn(provider, userId, deletedYn);
     }
 }

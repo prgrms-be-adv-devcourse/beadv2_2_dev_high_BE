@@ -4,80 +4,83 @@ import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.deposit.application.DepositService;
 import com.dev_high.deposit.domain.DepositType;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
-/*
- * 예치금 서비스 Kafka 리스너
- * */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DepositEventListener {
     private final DepositService depositService;
+    private final ObjectMapper objectMapper;
 
-    /*
-    * user 서비스에서 발행한 메시지
-    * topics "user-deposit-create" 토픽 구독
-    * */
     @KafkaListener(topics = KafkaTopics.USER_DEPOSIT_CREATED_REQUESTED)
     public void handleUserDepositCreate(KafkaEventEnvelope<String> envelope, ConsumerRecord<?, ?> record) {
+        String userId = envelope.payload();
+
+        if (userId == null) {
+            log.warn("수신된 메시지의 UserId가 null입니다. : {}, Topic: {}, Partition: {}, Offset: {}", envelope, record.topic(), record.partition(), record.offset());
+            return;
+        }
+
+        DepositDto.CreateCommand command = new DepositDto.CreateCommand(userId);
+
         try {
-            String userId = envelope.payload();
-
-            if (userId == null) {
-                log.warn("User ID is null for user deposit create event: {}", envelope);
-                return;
-            }
-
-            DepositCreateCommand command = new DepositCreateCommand(userId);
-
             depositService.createDepositAccount(command);
+        } catch (IllegalArgumentException | DataIntegrityViolationException e) {
+            log.warn("이미 생성된 예치금 계좌입니다. userId: {}", userId, e);
         } catch (Exception e) {
-            log.error("Error processing user deposit create event: {}", envelope, e);
+            log.error("예치금 계좌 생성 실패. userId: {}, Offset : {}", userId, record.offset(), e);
+            throw e;
         }
     }
 
-    /**
-     * 경매 서비스에서 발행한 예치금 환불 요청 메시지를 처리합니다.
-     */
     @KafkaListener(topics = KafkaTopics.AUCTION_DEPOSIT_REFUND_REQUESTED)
     public void handleDepositRefund(KafkaEventEnvelope<Map<String, Object>> envelope, ConsumerRecord<?, ?> record) {
+        Map<String, Object> payload = envelope.payload();
+        List<String> userIds = objectMapper.convertValue(payload.get("userIds"), new TypeReference<>() {});
+        String auctionId = (String) payload.get("auctionId");
+        BigDecimal amount = Optional.ofNullable(payload.get("amount"))
+                .map(Object::toString)
+                .filter(s -> !s.isBlank())
+                .map(BigDecimal::new)
+                .orElse(BigDecimal.ZERO);
+
+        if (userIds == null || userIds.isEmpty() || auctionId == null) {
+            log.warn("필수 파라미터 누락 - userIds: {}, auctionId: {}, amount: {}, Offset: {}",
+                    userIds, auctionId, amount, record.offset());
+            return;
+        }
+
         try {
-            Map<String, Object> payload = envelope.payload();
-            // 1. payload에서 데이터를 가져옵니다.
-            List<String> userIds = (List<String>) payload.get("userIds");
-            String auctionId = (String) payload.get("auctionId");
-            // Kafka는 보통 Double로 숫자를 역직렬화하므로, Double을 거쳐 BigDecimal로 변환합니다.
-            BigDecimal amount = new BigDecimal(payload.get("amount").toString());
-
-            // userIds가 null이거나 비어있으면 아무것도 하지 않고 종료
-            if (userIds == null || userIds.isEmpty()) {
-                log.warn("User ID list is empty for refund event: {}", envelope);
-                return;
-            }
-
-            log.info("Processing deposit refund for auction [{}], amount [{}], for {} users.", auctionId, amount, userIds.size());
-
             userIds.forEach(userId -> {
-                DepositUsageCommand command = new DepositUsageCommand(
+                DepositDto.UsageCommand command = new DepositDto.UsageCommand(
                         userId,
-                        auctionId, // auctionId를 depositOrderId 필드에 저장하여 추적
+                        auctionId,
                         DepositType.REFUND,
-                        amount.longValue() // BigDecimal을 long으로 변환
+                        amount
                 );
                 depositService.updateBalance(command);
             });
-
+        } catch (NoSuchElementException e) {
+            log.warn("예치금 잔액 정보를 찾을 수 없습니다.", e);
+        } catch (IllegalArgumentException e) {
+            log.warn("지원하지 않는 예치금 유형입니다.", e);
         } catch (Exception e) {
-            log.error("Error processing deposit refund event: {}", envelope, e);
+            log.error("보증금 환불 실패. userIds: {}, Offset : {}", userIds, record.offset(), e);
+            throw e;
         }
     }
 }

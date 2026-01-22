@@ -4,9 +4,9 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.event.order.OrderToAuctionUpdateEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.settlement.application.order.dto.UpdateOrderProjection;
+import com.dev_high.settlement.order.application.dto.UpdateOrderProjection;
 import com.dev_high.settlement.batch.processor.OrderStatusChangeResult;
-import com.dev_high.settlement.domain.order.OrderStatus;
+import com.dev_high.settlement.order.domain.OrderStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
           .distinct()
           .toList();
 
-      notifyBuyers(buyerIds, result.request().message(), result.request().redirect());
+      notifyBuyers(buyerIds, result.request().message(), result.request().redirect(), result.request().type() ,result.request().status());
 
       if (result.request().newStatus() == OrderStatus.UNPAID_CANCEL) {
         List<String> auctionIds = updatedOrders.stream()
@@ -49,14 +49,14 @@ public class OrderStatusChangeWriter implements ItemWriter<OrderStatusChangeResu
     }
   }
 
-  private void notifyBuyers(List<String> buyer, String message, String redirect) {
+  private void notifyBuyers(List<String> buyer, String message, String redirect, String type, String status) {
     if (buyer.isEmpty() || message == null || redirect == null) {
       return;
     }
 
     try {
       publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-          new NotificationRequestEvent(buyer, message, redirect));
+          new NotificationRequestEvent(buyer, message, redirect, type, status));
     } catch (Exception e) {
       log.error("알림 이벤트 실패: {}", e.getMessage());
     }

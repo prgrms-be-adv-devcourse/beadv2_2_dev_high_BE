@@ -6,10 +6,10 @@ import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.util.HttpUtil;
-import com.dev_high.settlement.domain.settle.Settlement;
-import com.dev_high.settlement.domain.settle.SettlementStatus;
-import com.dev_high.settlement.domain.history.SettlementHistory;
-import com.dev_high.settlement.infrastructure.settle.SettlementHistoryJpaRepository;
+import com.dev_high.settlement.settle.domain.settle.Settlement;
+import com.dev_high.settlement.settle.domain.settle.SettlementStatus;
+import com.dev_high.settlement.settle.domain.history.SettlementHistory;
+import com.dev_high.settlement.settle.infrastructure.SettlementHistoryJpaRepository;
 import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -63,9 +63,11 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
         String formattedAmount = NumberFormat.getNumberInstance(Locale.KOREA).format(totalAmount);
         publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
             new NotificationRequestEvent(
-                List.of(sellerId),
-                formattedAmount + "원 정산이 완료되었습니다.",
-                "/mypage"
+                    List.of(sellerId),
+                    formattedAmount + "원 정산이 완료되었습니다.",
+                    "/mypage",
+                    "SETTLEMENT_SUCCESS",
+                    ""
             )
         );
       }
@@ -78,10 +80,11 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
       if (settlement.getTryCnt() > 3) {
         publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
             new NotificationRequestEvent(
-                List.of("SYSTEM"), // 어드민 아이디 example
-                String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(),
-                    settlement.getTryCnt()),
-                "/settlement/" + settlement.getId()
+                    List.of("SYSTEM"), // 어드민 아이디 example
+                    String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(), settlement.getTryCnt()),
+                    "/settlement/" + settlement.getId(),
+                    "SETTLEMENT_FAILED",
+                    ""
             )
         );
       }

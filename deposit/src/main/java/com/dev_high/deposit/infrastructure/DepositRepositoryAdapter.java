@@ -13,8 +13,8 @@ public class DepositRepositoryAdapter implements DepositRepository {
     private final DepositJpaRepository repository;
 
     @Override
-    public Optional<Deposit> findById(String userId) {
-        return repository.findById(userId);
+    public Optional<Deposit> findByUserId(String userId) {
+        return repository.findByUserId(userId);
     }
 
     @Override

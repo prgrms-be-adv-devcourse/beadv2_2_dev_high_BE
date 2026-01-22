@@ -1,0 +1,46 @@
+name: Sync Config Branch
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "config/config/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-config-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Checkout config branch
+        uses: actions/checkout@v4
+        with:
+          ref: config
+          path: config-branch
+          fetch-depth: 0
+
+      - name: Sync config files to branch root
+        run: |
+          rsync -a --delete --exclude ".git" config/config/ config-branch/
+
+      - name: Commit and push if changed
+        run: |
+          cd config-branch
+          if git diff --quiet; then
+            echo "No changes to push."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Sync config files"
+          git push origin config
