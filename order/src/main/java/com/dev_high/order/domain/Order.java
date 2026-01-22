@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Entity
@@ -31,10 +31,10 @@ public class Order {
     private Long winningAmount; // DB에 맞춰 통일
 
     @Column(name = "winning_date", nullable = false)
-    private LocalDateTime winningDate;
+    private OffsetDateTime winningDate;
 
     @Column(name = "pay_complete_date")
-    private LocalDateTime payCompleteDate; // NULL 허용
+    private OffsetDateTime payCompleteDate; // NULL 허용
 
     @Column(nullable = false, length = 1)
     private String payYn = "N";
@@ -45,25 +45,25 @@ public class Order {
 
     @Column(name = "created_at", nullable = false,
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at",
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public Order(String sellerId, String buyerId, String auctionId,
-                 Long winningAmount, LocalDateTime winningDate,
+                 Long winningAmount, OffsetDateTime winningDate,
                  OrderStatus status) {
         this.sellerId = sellerId;
         this.buyerId = buyerId;

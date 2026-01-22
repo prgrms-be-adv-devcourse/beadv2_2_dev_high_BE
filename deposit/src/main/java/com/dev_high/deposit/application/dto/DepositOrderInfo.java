@@ -3,7 +3,7 @@ package com.dev_high.deposit.application.dto;
 import com.dev_high.deposit.domain.DepositOrder;
 import com.dev_high.deposit.domain.DepositOrderStatus;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /*
  * 외부에 노출되는 예치금 주문 응답(Response) DTO
@@ -18,7 +18,7 @@ public record DepositOrderInfo(
         String userId,
         long amount,
         DepositOrderStatus status,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
     public static DepositOrderInfo from(DepositOrder depositOrder) {
         return new DepositOrderInfo(

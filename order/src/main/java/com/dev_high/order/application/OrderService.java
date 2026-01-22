@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -115,7 +115,7 @@ public class OrderService {
         order.setStatus(request.status());
         if (request.status() == OrderStatus.PAID) {
             order.setPayYn("Y");
-            order.setPayCompleteDate(LocalDateTime.now());
+            order.setPayCompleteDate(OffsetDateTime.now());
         }
         order = orderRepository.save(order);
         return ApiResponseDto.success(OrderResponse.fromEntity(order));
@@ -124,8 +124,8 @@ public class OrderService {
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<SettlementRegisterRequest> findConfirmedOrders(int page, int pageSize) {
 
-        LocalDateTime start = LocalDateTime.now().minusWeeks(3).with(LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.now().minusWeeks(2).with(LocalTime.MAX);
+        OffsetDateTime start = OffsetDateTime.now().minusWeeks(3).with(LocalTime.MIN);
+        OffsetDateTime end = OffsetDateTime.now().minusWeeks(2).with(LocalTime.MAX);
         log.info(">>> date range: {} ~ {}", start, end);
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("updatedAt").ascending());
 
@@ -141,7 +141,7 @@ public class OrderService {
 
     @Transactional
     public List<UpdateOrderProjection> updateStatusBulk(OrderStatus oldStatus,
-                                                        OrderStatus newStatus, LocalDateTime targetDate
+                                                        OrderStatus newStatus, OffsetDateTime targetDate
     ) {
 
         return orderRepository.updateStatusByUpdatedAtAndReturnBuyer(oldStatus, newStatus, targetDate);

@@ -2,7 +2,7 @@ package com.dev_high.settlement.presentation.dto;
 
 import com.dev_high.settlement.domain.SettlementStatus;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record SettlementResponse(
         String id,
@@ -13,11 +13,11 @@ public record SettlementResponse(
         Long winningAmount,
         Long charge,
         Long finalAmount,
-        LocalDateTime dueDate,
+        OffsetDateTime dueDate,
         SettlementStatus status,
         String payYn,
-        LocalDateTime inputDate,
-        LocalDateTime completeDate,
-        LocalDateTime lastUpdateDate
+        OffsetDateTime inputDate,
+        OffsetDateTime completeDate,
+        OffsetDateTime lastUpdateDate
 ) {
 }

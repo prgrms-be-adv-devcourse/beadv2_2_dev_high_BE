@@ -3,7 +3,7 @@ package com.dev_high.product.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "product_category_rel", schema = "product")
@@ -24,7 +24,7 @@ public class ProductCategoryRel {
     private Category category;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "created_by")
     private String createdBy;
@@ -44,7 +44,7 @@ public class ProductCategoryRel {
 
     @PrePersist
     public void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
     }
 }
 

@@ -6,12 +6,12 @@ import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.product.domain.Product;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record AuctionResponse(String auctionId, String productId, String sellerId, String productName,
                               AuctionStatus status,
                               BigDecimal startBid, BigDecimal currentBid,
-                              LocalDateTime auctionStartAt, LocalDateTime auctionEndAt, String filePath) {
+                              OffsetDateTime auctionStartAt, OffsetDateTime auctionEndAt, String filePath) {
 
 
     public static AuctionResponse getAuctionResponse(Auction auction, String filePath) {

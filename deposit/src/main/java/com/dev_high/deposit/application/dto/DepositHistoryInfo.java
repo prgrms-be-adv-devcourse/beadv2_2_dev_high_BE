@@ -4,7 +4,7 @@ import com.dev_high.deposit.domain.DepositHistory;
 import com.dev_high.deposit.domain.DepositType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /*
  * 외부에 노출되는 예치금 이력 응답(Response) DTO
@@ -36,7 +36,7 @@ public record DepositHistoryInfo(
         long balance,
 
         @Schema(description = "생성일시")
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
     public static DepositHistoryInfo from(DepositHistory depositHistory) {
         return new DepositHistoryInfo(

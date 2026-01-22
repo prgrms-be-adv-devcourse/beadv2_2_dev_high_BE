@@ -12,7 +12,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -81,7 +81,7 @@ public class Settlement {
    * 정산 예정일
    */
   @Column(name = "due_date", nullable = false)
-  private LocalDateTime dueDate;
+  private OffsetDateTime dueDate;
 
   /**
    * 정산 상태
@@ -94,19 +94,19 @@ public class Settlement {
    * 생성일
    */
   @Column(name = "created_at", nullable = false)
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   /**
    * 정산 완료일
    */
   @Column(name = "complete_date")
-  private LocalDateTime completeDate;
+  private OffsetDateTime completeDate;
 
   /**
    * 수정일
    */
   @Column(name = "update_date", nullable = false)
-  private LocalDateTime updateDate;
+  private OffsetDateTime updateDate;
 
   /**
    * 완료 여부 (Y/N)
@@ -121,7 +121,7 @@ public class Settlement {
   private Long tryCnt;
 
   public Settlement(String orderId, String sellerId, String buyerId, String auctionId,
-      Long winningAmount, SettlementStatus status, Long tryCnt, LocalDateTime dueDate) {
+      Long winningAmount, SettlementStatus status, Long tryCnt, OffsetDateTime dueDate) {
 
     this.orderId = orderId;
     this.sellerId = sellerId;
@@ -134,7 +134,7 @@ public class Settlement {
 
   }
 
-  public Settlement(SettlementRegisterRequest request, LocalDateTime dueDate) {
+  public Settlement(SettlementRegisterRequest request, OffsetDateTime dueDate) {
     this(request.id(), request.sellerId(), request.buyerId(), request.auctionId(),
         request.winningAmount(), SettlementStatus.WAITING, 0L, dueDate);
 
@@ -143,13 +143,13 @@ public class Settlement {
 
   @PrePersist
   protected void onCreate() {
-    this.createdAt = LocalDateTime.now();
-    this.updateDate = LocalDateTime.now();
+    this.createdAt = OffsetDateTime.now();
+    this.updateDate = OffsetDateTime.now();
   }
 
   @PreUpdate
   protected void onUpdate() {
-    this.updateDate = LocalDateTime.now();
+    this.updateDate = OffsetDateTime.now();
   }
 
   /**
@@ -163,7 +163,7 @@ public class Settlement {
 
     if (status == SettlementStatus.COMPLETED) {
       this.completeYn = "Y";
-      this.completeDate = LocalDateTime.now();
+      this.completeDate = OffsetDateTime.now();
     }
   }
 

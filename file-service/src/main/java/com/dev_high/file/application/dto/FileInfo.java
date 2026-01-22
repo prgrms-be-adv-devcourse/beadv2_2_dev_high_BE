@@ -1,7 +1,7 @@
 package com.dev_high.file.application.dto;
 
 import com.dev_high.file.domain.StoredFile;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record FileInfo(
         String id,
@@ -10,7 +10,7 @@ public record FileInfo(
         String filePath,
         String fileGroupId,
         String createdBy,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
 
     public static FileInfo from(StoredFile storedFile) {

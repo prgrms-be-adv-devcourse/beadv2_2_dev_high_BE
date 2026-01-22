@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Schema(description = "예치금 결제실패 이력")
 @Table(name = "deposit_payment_failure_history", schema = "deposit")
@@ -42,7 +42,7 @@ public class DepositPaymentFailureHistory {
 
     @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Schema(description = "생성자")
     @Column(name = "created_by", nullable = false, length = 20, updatable = false)
@@ -59,7 +59,7 @@ public class DepositPaymentFailureHistory {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
     }
 
     public static DepositPaymentFailureHistory create(String orderId, String userId, String code, String message) {

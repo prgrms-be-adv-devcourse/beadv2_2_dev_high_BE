@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -362,8 +362,8 @@ public class ProductService {
                 map.getOrDefault("status", "").toString(),
                 toBigDecimal(map.get("startBid")),
                 toBigDecimal(map.get("currentBid")),
-                toLocalDateTime(map.get("auctionStartAt")),
-                toLocalDateTime(map.get("auctionEndAt"))
+                toOffsetDateTime(map.get("auctionStartAt")),
+                toOffsetDateTime(map.get("auctionEndAt"))
         );
     }
 
@@ -387,11 +387,11 @@ public class ProductService {
         return null;
     }
 
-    private LocalDateTime toLocalDateTime(Object value) {
+    private OffsetDateTime toOffsetDateTime(Object value) {
         if (value == null) {
             return null;
         }
-        if (value instanceof LocalDateTime ldt) {
+        if (value instanceof OffsetDateTime ldt) {
             return ldt;
         }
 

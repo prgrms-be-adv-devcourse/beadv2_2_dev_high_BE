@@ -11,7 +11,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Entity
@@ -39,11 +39,11 @@ public class AuctionLiveState {
   private Long version;
 
   @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 
   @PreUpdate
   public void preUpdate() {
-    updatedAt = LocalDateTime.now();
+    updatedAt = OffsetDateTime.now();
   }
 
   protected AuctionLiveState() {
@@ -53,7 +53,7 @@ public class AuctionLiveState {
     this.auction = auction;
     this.auctionId = auction.getId();
     this.currentBid = BigDecimal.ZERO;
-    this.updatedAt = LocalDateTime.now();
+    this.updatedAt = OffsetDateTime.now();
   }
 
   public void update(String highestUserId, BigDecimal currentBid) {

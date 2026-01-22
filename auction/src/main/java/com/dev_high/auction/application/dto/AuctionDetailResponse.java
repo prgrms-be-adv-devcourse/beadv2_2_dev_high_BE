@@ -6,7 +6,7 @@ import com.dev_high.auction.domain.AuctionStatus;
 import com.dev_high.product.domain.Product;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record AuctionDetailResponse(String id, String productId, AuctionStatus status,
@@ -16,7 +16,7 @@ public record AuctionDetailResponse(String id, String productId, AuctionStatus s
                                     String description,
                                     String productName,
                                     String sellerId,
-                                    LocalDateTime auctionStartAt, LocalDateTime auctionEndAt,
+                                    OffsetDateTime auctionStartAt, OffsetDateTime auctionEndAt,
                                     BigDecimal depositAmount, boolean deletedYn,
                                     List<FileDto> files
 ) {

@@ -1,48 +1,51 @@
 package com.dev_high.common.util;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class DateUtil {
 
-  private static final String DEFAULT_PATTERN = "yyyy-MM-dd HH:mm:ss";
-  public static final DateTimeFormatter DEFAULT_FORMATTER =
-      DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final String DEFAULT_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    private static final DateTimeFormatter DEFAULT_FORMATTER =
+            DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
 
-  private DateUtil() {
-  }
+    private DateUtil() {}
 
-  // 현재 날짜/시간
-  public static LocalDateTime now() {
-    return LocalDateTime.now();
-  }
+    // 현재 시간 (항상 KST)
+    public static OffsetDateTime now() {
+        return OffsetDateTime.now(KST);
+    }
 
-  // 현재 날짜/시간 문자열 (기본 패턴)
-  public static String nowStr() {
-    return now().format(DEFAULT_FORMATTER);
-  }
+    // 문자열 → OffsetDateTime (오프셋 없는 입력은 KST로 해석)
+    public static OffsetDateTime parse(String dateStr) {
+        LocalDateTime ldt = LocalDateTime.parse(dateStr, DEFAULT_FORMATTER);
+        return ldt.atZone(KST).toOffsetDateTime();
+    }
 
-  // 현재 날짜/시간 문자열 (커스텀 패턴)
-  public static String nowStr(String pattern) {
-    return now().format(DateTimeFormatter.ofPattern(pattern));
-  }
+    public static OffsetDateTime parse(String dateStr, String pattern) {
+        LocalDateTime ldt =
+                LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(pattern));
+        return ldt.atZone(KST).toOffsetDateTime();
+    }
 
-  // 문자열 → LocalDateTime
-  public static LocalDateTime parse(String dateStr) {
+    // OffsetDateTime → 문자열 (표시용)
+    public static String format(OffsetDateTime dateTime) {
+        return dateTime.format(DEFAULT_FORMATTER);
+    }
 
-    return LocalDateTime.parse(dateStr, DEFAULT_FORMATTER);
-  }
+    public static String format(OffsetDateTime dateTime, String pattern) {
+        return dateTime.format(DateTimeFormatter.ofPattern(pattern));
+    }
 
-  public static LocalDateTime parse(String dateStr, String pattern) {
-    return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(pattern));
-  }
+    // 현재 시간 문자열
+    public static String nowStr() {
+        return format(now());
+    }
 
-  // LocalDateTime → 문자열
-  public static String format(LocalDateTime dateTime) {
-    return dateTime.format(DEFAULT_FORMATTER);
-  }
-
-  public static String format(LocalDateTime dateTime, String pattern) {
-    return dateTime.format(DateTimeFormatter.ofPattern(pattern));
-  }
+    public static String nowStr(String pattern) {
+        return format(now(), pattern);
+    }
 }

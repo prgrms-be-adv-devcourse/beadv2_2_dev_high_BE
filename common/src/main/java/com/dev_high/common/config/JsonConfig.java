@@ -4,20 +4,20 @@ package com.dev_high.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.OffsetDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.OffsetDateTimeSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static com.dev_high.common.util.DateUtil.DEFAULT_FORMATTER;
 
 @Configuration
 public class JsonConfig {
 
-    private static final LocalDateTimeSerializer LOCAL_DATETIME_SERIALIZER =
-            new LocalDateTimeSerializer(DEFAULT_FORMATTER);
+    private static final OffsetDateTimeSerializer LOCAL_DATETIME_SERIALIZER =
+            new OffsetDateTimeSerializer(DEFAULT_FORMATTER);
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -26,8 +26,8 @@ public class JsonConfig {
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         javaTimeModule.addSerializer(LOCAL_DATETIME_SERIALIZER);
         javaTimeModule.addDeserializer(
-                LocalDateTime.class,
-                new LocalDateTimeDeserializer(DEFAULT_FORMATTER)
+                OffsetDateTime.class,
+                new OffsetDateTimeDeserializer(DEFAULT_FORMATTER)
         );
         mapper.registerModule(javaTimeModule);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);

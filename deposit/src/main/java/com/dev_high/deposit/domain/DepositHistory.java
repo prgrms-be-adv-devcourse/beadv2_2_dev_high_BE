@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Schema(description = "예치금 이력")
 @Table(name = "deposit_history", schema = "deposit")
@@ -51,7 +51,7 @@ public class DepositHistory {
 
     @Schema(description = "생성일시")
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Schema(description = "생성자")
     @Column(name = "created_by", nullable = false, length = 20, updatable = false)
@@ -69,7 +69,7 @@ public class DepositHistory {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OffsetDateTime.now();
     }
 
     public static DepositHistory create(String userId, String depositOrderId, DepositType type, long amount, long currentBalance) {

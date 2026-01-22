@@ -1,6 +1,6 @@
 package com.dev_high.auction.application.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record FileDto(String id,
                       String fileName,
@@ -8,6 +8,6 @@ public record FileDto(String id,
                       String filePath,
                       String fileGroupId,
                       String createdBy,
-                      LocalDateTime createdAt) {
+                      OffsetDateTime createdAt) {
 
 }

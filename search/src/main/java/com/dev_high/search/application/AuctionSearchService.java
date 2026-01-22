@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.core.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 
@@ -67,8 +67,8 @@ public class AuctionSearchService {
                                                                 String status,
                                                                 BigDecimal minStartPrice,
                                                                 BigDecimal maxStartPrice,
-                                                                LocalDateTime startFrom,
-                                                                LocalDateTime startTo,
+                                                                OffsetDateTime startFrom,
+                                                                OffsetDateTime startTo,
                                                                 Pageable pageable) {
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
         // 키워드 검색

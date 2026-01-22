@@ -3,7 +3,7 @@ package com.dev_high.user.seller.domain;
 import com.dev_high.common.annotation.CustomGeneratedId;
 import com.dev_high.user.user.domain.User;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Entity
@@ -37,13 +37,13 @@ public class Seller {
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(name = "updated_by", length = 50)
     private String updatedBy;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     @PrePersist
     public void prePersist() {
@@ -51,13 +51,13 @@ public class Seller {
         updatedBy = user.getId();
         this.sellerStatus = SellerStatus.ACTIVE;
         this.deletedYn = "N";
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
     protected Seller() {

@@ -1,7 +1,7 @@
 package com.dev_high.common.kafka.event.auction;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record AuctionUpdateSearchRequestEvent(String auctionId, String productId,
@@ -9,8 +9,8 @@ public record AuctionUpdateSearchRequestEvent(String auctionId, String productId
                                               List<String> categories, String description,
                                               BigDecimal startPrice, BigDecimal depositAmount,
                                               String status, String sellerId,
-                                              LocalDateTime auctionStartAt,
-                                              LocalDateTime auctionEndAt) {
+                                              OffsetDateTime auctionStartAt,
+                                              OffsetDateTime auctionEndAt) {
 
 
 }

@@ -3,7 +3,7 @@ package com.dev_high.notification.application.dto;
 import com.dev_high.notification.domain.Notification;
 import com.dev_high.notification.domain.NotificationType;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /*
 * 외부에 노출되는 알림 응답(Response) DTO
@@ -23,7 +23,7 @@ public record NotificationInfo(
         String content,
         String relatedUrl,
         boolean readYn,
-        LocalDateTime createdAt
+        OffsetDateTime createdAt
 ) {
     public static NotificationInfo from(Notification notification) {
         return new NotificationInfo(

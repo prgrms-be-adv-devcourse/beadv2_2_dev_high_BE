@@ -5,7 +5,7 @@ import com.dev_high.product.domain.Product;
 import com.dev_high.product.domain.Product.DeleteStatus;
 import com.dev_high.product.domain.ProductStatus;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record ProductInfo(
@@ -15,10 +15,10 @@ public record ProductInfo(
         String description,
         String sellerId,
         DeleteStatus deletedYn,
-        LocalDateTime deletedAt,
-        LocalDateTime createdAt,
+        OffsetDateTime deletedAt,
+        OffsetDateTime createdAt,
         String createdBy,
-        LocalDateTime updatedAt,
+        OffsetDateTime updatedAt,
         String updatedBy,
         List<Category> categories,
         FileGroupResponse fileGroup
