@@ -3,6 +3,10 @@ package com.dev_high.order.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.dto.WinningOrderRecommendationResponse;
 import com.dev_high.common.exception.CustomException;
+import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.NotificationRequestEvent;
+import com.dev_high.common.kafka.topics.KafkaTopics;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.order.application.dto.UpdateOrderProjection;
 import com.dev_high.order.domain.OrderRepository;
 import com.dev_high.order.domain.OrderStatus;
@@ -29,6 +33,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final KafkaEventPublisher eventPublisher;
 
 
 
@@ -53,7 +58,7 @@ public class OrderService {
 
     /* 구매 확정 수동 처리 */
     @Transactional
-    public OrderResponse update(OrderModifyRequest request ) {
+    public OrderResponse update(OrderModifyRequest request) {
         WinningOrder order = orderRepository.findById(request.id()).orElse(null);
         String adminUserId = resolveAdminUserId();
         if (order == null) {
@@ -61,7 +66,9 @@ public class OrderService {
         }
 
 
-        order.changeStatus(request.status(),adminUserId);
+
+        order.changeStatus(request.status(),request.purchaseOrderId(), adminUserId);
+
         order = orderRepository.save(order);
 
 
@@ -123,7 +130,16 @@ public class OrderService {
 
         WinningOrder result = orderRepository.save(order);
 
-        return OrderResponse.fromEntity(result);
+        OrderResponse response = OrderResponse.fromEntity(result);
+        NotificationRequestEvent notificationRequestEvent = new NotificationRequestEvent(
+            List.of(response.buyerId()),
+            "주문이 완료되었습니다. 구매 기한 내 결제를 완료해 주세요. 기한 내 미결제 시 주문이 자동 취소됩니다.",
+            "/orders/" + response.id(),
+            NotificationCategory.Type.ORDER_CREATED
+        );
+        eventPublisher.publish(KafkaTopics.NOTIFICATION_REQUEST, notificationRequestEvent);
+
+        return response;
 
     }
 

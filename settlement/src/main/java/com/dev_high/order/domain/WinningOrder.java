@@ -19,6 +19,10 @@ public class WinningOrder {
     @CustomGeneratedId(method = "winning_order")
     private String id;
 
+    @Column(name = "purchase_order_id")
+    private String purchaseOrderId;
+
+
     @Column(name = "seller_id", nullable = false, length = 50)
     private String sellerId;
 
@@ -129,11 +133,12 @@ public class WinningOrder {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public void changeStatus(OrderStatus status, String updatedBy) {
+    public void changeStatus(OrderStatus status, String purchaseOrderId, String updatedBy) {
         if (status == OrderStatus.PAID) {
             this.payYn = "Y";
             this.payCompleteDate = OffsetDateTime.now();
         }
+        this.purchaseOrderId = purchaseOrderId;
         this.status = status;
         this.updatedBy = updatedBy;
     }
