@@ -116,8 +116,8 @@ public class DepositPaymentService {
         }
 
         // 4. 예치금 계좌 정보 수정
-        OffsetDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toOffsetDateTime() : null;
-        OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toOffsetDateTime() : null;
+        OffsetDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt() : null;
+        OffsetDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt() : null;
 
         DepositUsageCommand Command = new DepositUsageCommand(
                 userId,

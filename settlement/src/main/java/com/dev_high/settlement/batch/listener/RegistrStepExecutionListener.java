@@ -5,6 +5,7 @@ import com.dev_high.settlement.domain.SettlementStatus;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class RegistrStepExecutionListener implements StepExecutionListener {
     OffsetDateTime to = LocalDate.now()
         .plusMonths(1)
         .withDayOfMonth(3)
-        .atStartOfDay();
+        .atStartOfDay().atOffset(ZoneOffset.ofHours(9));
     OffsetDateTime from = to.minusMonths(1);
 
     Set<String> existingOrderIds = new HashSet<>(

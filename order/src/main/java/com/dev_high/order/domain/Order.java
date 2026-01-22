@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 @Data
 @Entity
 @NoArgsConstructor
-@Table(name = "\"order\"", schema = "\"order\"") // schema/테이블명 모두 변경
+@Table(name = "order", schema = "order") // schema/테이블명 모두 변경
 public class Order {
 
     @Id
@@ -43,12 +43,10 @@ public class Order {
     @Column(nullable = false, length = 20)
     private OrderStatus status;
 
-    @Column(name = "created_at", nullable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at",
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
     @PrePersist

@@ -26,7 +26,6 @@ env: # 배포 파일 전반에서 필요한 변수들은 여기서 관리
   IMAGE_NAME: ${{ github.repository_owner }}/config
   SERVICE_NAME: config
   NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
-
 jobs:
 #  test:
 #    runs-on: ubuntu-latest
@@ -88,7 +87,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: github.ref == 'refs/heads/main'
+#    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:

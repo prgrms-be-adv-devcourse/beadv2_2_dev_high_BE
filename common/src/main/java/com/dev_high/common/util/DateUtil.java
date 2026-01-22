@@ -9,7 +9,7 @@ public class DateUtil {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd HH:mm:ss";
-    private static final DateTimeFormatter DEFAULT_FORMATTER =
+    public static final DateTimeFormatter DEFAULT_FORMATTER =
             DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
 
     private DateUtil() {}

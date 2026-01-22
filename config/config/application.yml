@@ -44,6 +44,9 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
 
 management:
+  health:
+    config:
+      enabled: false
   endpoints:
     web:
       exposure:

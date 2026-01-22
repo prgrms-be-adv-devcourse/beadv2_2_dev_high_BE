@@ -14,6 +14,8 @@ spec:
       labels:
         app: discovery # pod에 실제로 붙는 라벨
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: node-1
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -32,11 +34,10 @@ spec:
               value: discovery
 
             - name: JAVA_TOOL_OPTIONS
-              value: "-Duser.timezone=Asia/Seoul"
-#              value: >
-#                -Xms128m
-#                -Xmx256m
-#                -XX:MaxMetaspaceSize=128m
+              value: >
+                -Xms128m
+                -Xmx256m
+                -Duser.timezone=Asia/Seoul
 
           readinessProbe:
             httpGet:
