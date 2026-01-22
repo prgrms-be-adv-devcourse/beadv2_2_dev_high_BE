@@ -17,10 +17,11 @@ public class OrderEvent {
     }
 
     public record OrderCompleted(
-            String winningOrderId
+            String winningOrderId,
+            String orderId
     ) {
-        public static OrderCompleted of(String winningOrderId) {
-            return new OrderCompleted(winningOrderId);
+        public static OrderCompleted of(String winningOrderId, String orderId) {
+            return new OrderCompleted(winningOrderId, orderId);
         }
     }
 }
