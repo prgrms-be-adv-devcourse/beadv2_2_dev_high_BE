@@ -3,6 +3,7 @@ package com.dev_high.user.deposit.application;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.user.deposit.application.dto.DepositDto;
+import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
 import com.dev_high.user.deposit.application.event.DepositEvent;
 import com.dev_high.user.deposit.domain.entity.Deposit;
 import com.dev_high.user.deposit.domain.repository.DepositRepository;
@@ -48,20 +49,40 @@ public class DepositService {
 
     @Transactional
     public DepositDto.Info updateBalance(DepositDto.UsageCommand command) {
+        log.info("[Deposit] updateBalance start userId={}, depositOrderId={}, type={}, amount={}",
+                command.userId(), command.depositOrderId(), command.type(), command.amount());
         Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
-                .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
+                .orElseThrow(() -> {log.warn("[Deposit] Not found deposit userId={}", command.userId());
+                return new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다");});
 
-        deposit.apply(command.type(), command.amount());
+        try {
+            deposit.apply(command.type(), command.amount());
+        } catch (IllegalArgumentException e) {
+            log.warn("[Deposit] Invalid deposit apply userId={}, depositOrderId={}, type={}, amount={}",
+                    command.userId(), command.depositOrderId(), command.type(), command.amount());
+            throw e;
+        }
         Deposit savedDeposit = depositRepository.save(deposit);
-        applicationEventPublisher.publishEvent(DepositEvent.DepositUpdated.of(command.userId(), command.depositOrderId(), command.type(), command.amount(), savedDeposit.getBalance()));
+        log.info("[Deposit] updateBalance success userId={}, Balance={}", command.userId(), savedDeposit.getBalance());
+        depositHistoryService.createHistory(DepositHistoryDto.CreateCommand.of(command.userId(), command.depositOrderId(), command.type(), command.amount(), savedDeposit.getBalance()));
         return  DepositDto.Info.from(savedDeposit, command.depositOrderId());
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void eventPublishByDepositType(DepositDto.PublishCommand command) {
+        log.info("[Deposit] eventPublishByDepositType start orderId={}, type={}",
+                command.depositOrderId(), command.type());
         switch (command.type()) {
-            case PAYMENT -> applicationEventPublisher.publishEvent(DepositEvent.DepositPaid.of(command.depositOrderId(), command.type()));
-            case CHARGE -> applicationEventPublisher.publishEvent(DepositEvent.DepositCharged.of(command.depositOrderId()));
+            case PAYMENT -> {
+                log.info("[Deposit] publish DepositPaid event requested orderId={}, type={}",
+                        command.depositOrderId(), command.type());
+                applicationEventPublisher.publishEvent(DepositEvent.DepositPaid.of(command.depositOrderId()));
+            }
+            case CHARGE -> {
+                log.info("[Deposit] publish DepositCharged event requested orderId={}, type={}",
+                        command.depositOrderId(), command.type());
+                applicationEventPublisher.publishEvent(DepositEvent.DepositCharged.of(command.depositOrderId()));
+            }
             default -> throw new IllegalArgumentException("지원하지 않는 유형입니다. :" + command.type());
         }
     }
