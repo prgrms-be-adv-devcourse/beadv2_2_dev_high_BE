@@ -1,0 +1,121 @@
+name: Discovery CI/CD
+
+on:
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'discovery/**'
+#      - '.github/workflows/discovery-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'discovery/**'
+#      - '.github/workflows/discovery-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/discovery
+  SERVICE_NAME: discovery
+  NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
+
+jobs:
+#  test:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 17
+#          cache: gradle
+#
+#      - name: Run discovery tests
+#        run: |
+#          chmod +x gradlew
+#          ./gradlew :discovery:test
+
+  build-and-push:
+#    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Build discovery bootJar
+        run: |
+          chmod +x gradlew
+          ./gradlew :discovery:bootJar
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GIT_ACTOR }} #username 고정
+          password: ${{ secrets.GIT_TOKEN }}
+
+      - name: Build and push image #이미지 빌드 후 ghcr에 push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: discovery/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: | #github.sha는 버전관리, latest는 최신버전(ghcr 등록마다 덮어쓰기)
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} 
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    needs: build-and-push
+    # GitHub sets refs/heads/<branch>; without refs/heads the deploy job is always skipped.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+#kubectl에게 k8s의 권한을 주는 과정
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Ensure GHCR imagePullSecret exists
+        run: | #secret 존재하면 덮어쓰기, 없으면 새로 생성(dry-run yaml을 생성해서-> apply로 자동저장)
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          kubectl apply -f discovery/k8s --namespace ${{ env.NAMESPACE }}
+          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}

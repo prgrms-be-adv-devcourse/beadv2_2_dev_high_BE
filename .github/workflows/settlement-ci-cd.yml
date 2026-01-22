@@ -1,0 +1,124 @@
+name: Settlement CI/CD
+
+on:
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'settlement/**'
+#      - '.github/workflows/settlement-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+#  pull_request:
+#    paths:
+#      - 'settlement/**'
+#      - '.github/workflows/settlement-ci-cd.yml'
+#      - 'build.gradle'
+#      - 'settings.gradle'
+#      - '.dockerignore'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/settlement
+  SERVICE_NAME: settlement-service
+  NAMESPACE: ${{ vars.K8S_NAMESPACE || 'default' }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Build settlement bootJar
+        run: |
+          chmod +x gradlew
+          ./gradlew :settlement:bootJar
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GIT_ACTOR }}
+          password: ${{ secrets.GIT_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: settlement/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+      
+
+      - name: Ensure GHCR imagePullSecret exists
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace ${{ env.NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ secrets.GIT_ACTOR }} \
+            --docker-password=${{ secrets.GIT_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create or update settlement secret
+        run: | 
+          kubectl create secret generic settlement-secret \
+          --namespace ${{ env.NAMESPACE }} \
+          --from-literal=SPRING_DATASOURCE_URL="${{secrets.SPRING_DATASOURCE_URL}}" \
+          --from-literal=SPRING_DATASOURCE_DRIVER="${{secrets.SPRING_DATASOURCE_DRIVER}}" \
+          --from-literal=SPRING_DATASOURCE_USERNAME="${{secrets.SPRING_DATASOURCE_USERNAME}}" \
+          --from-literal=SPRING_DATASOURCE_PASSWORD="${{secrets.SPRING_DATASOURCE_PASSWORD}}" \
+          --from-literal=JWT_SECRET="${{secrets.JWT_SECRET}}" \
+          --from-literal=JWT_ACCESS_TOKEN_EXPIRATION="${{secrets.JWT_ACCESS_TOKEN_EXPIRATION}}" \
+          --from-literal=JWT_REFRESH_TOKEN_EXPIRATION="${{secrets.JWT_REFRESH_TOKEN_EXPIRATION}}" \
+          --from-literal=MORE_MAIL_USERNAME="${{secrets.MORE_MAIL_USERNAME}}" \
+          --from-literal=MORE_MAIL_PASSWORD="${{secrets.MORE_MAIL_PASSWORD}}" \
+          --from-literal=KAFKA_BOOTSTRAP_SERVERS="${{secrets.KAFKA_BOOTSTRAP_SERVERS}}" \
+          --from-literal=KAFKA_BOOT_PORT="${{secrets.KAFKA_BOOT_PORT}}" \
+          --from-literal=KAFKA_USER="${{secrets.KAFKA_USER}}" \
+          --from-literal=KAFKA_PASSWORD="${{secrets.KAFKA_PASSWORD}}" \
+          --from-literal=ELASTIC_SEARCH_URL="${{secrets.ELASTIC_SEARCH_URL}}" \
+          --from-literal=REDIS_HOST="${{secrets.REDIS_HOST}}" \
+          --from-literal=REDIS_PORT="${{secrets.REDIS_PORT}}" \
+          --from-literal=TOSS_SECRET_KEY="${{secrets.TOSS_SECRET_KEY}}" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          kubectl apply -f settlement/k8s --namespace ${{ env.NAMESPACE }}
+          kubectl set image deployment/${{ env.SERVICE_NAME }} ${{ env.SERVICE_NAME }}=$IMAGE --namespace ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} --namespace ${{ env.NAMESPACE }}
