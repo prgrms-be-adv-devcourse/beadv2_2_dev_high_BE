@@ -9,6 +9,7 @@ import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Component;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -19,6 +20,7 @@ public class ElasticsearchIndexInitializer {
     private final ElasticsearchOperations elasticsearchOperations;
 
     private static final String INDEX_NAME = "product";
+    private static final int EMBEDDING_DIMS = 1536;
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
@@ -39,11 +41,40 @@ public class ElasticsearchIndexInitializer {
         }
 
         Map<String, Object> settings = Map.of(
+                "index", Map.of(
+                        "max_ngram_diff", 3
+                ),
                 "analysis", Map.of(
+                        "tokenizer", Map.of(
+                                "ngram_tokenizer", Map.of(
+                                        "type", "ngram",
+                                        "min_gram", 2,
+                                        "max_gram", 5
+                                )
+                        ),
+
+                        "filter", Map.of(
+                                "nori_pos_filter", Map.of(
+                                        "type", "nori_part_of_speech",
+                                        "stoptags", List.of(
+                                                "E", "J", "IC", "MAJ", "MM", "XSV", "XSA"
+                                        )
+                                )
+                        ),
+
                         "analyzer", Map.of(
                                 "nori_analyzer", Map.of(
                                         "type", "custom",
-                                        "tokenizer", "nori_tokenizer"
+                                        "tokenizer", "nori_tokenizer",
+                                        "filter", List.of(
+                                                "lowercase",
+                                                "nori_pos_filter"
+                                        )
+                                ),
+                                "ngram_analyzer", Map.of(
+                                        "type", "custom",
+                                        "tokenizer", "ngram_tokenizer",
+                                        "filter", List.of("lowercase")
                                 )
                         )
                 )
@@ -57,8 +88,19 @@ public class ElasticsearchIndexInitializer {
 
                         Map.entry("productName", Map.of(
                                 "type", "text",
-                                "analyzer", "nori_analyzer"
+                                "analyzer", "nori_analyzer",
+                                "fields", Map.of(
+                                        "ngram", Map.of(
+                                                "type", "text",
+                                                "analyzer", "ngram_analyzer"
+                                        )
+                                )
                         )),
+
+                        Map.entry("productNameSayt", Map.of(
+                                "type", "search_as_you_type"
+                        )),
+
                         Map.entry("description", Map.of(
                                 "type", "text",
                                 "analyzer", "nori_analyzer"
@@ -82,7 +124,9 @@ public class ElasticsearchIndexInitializer {
 
                         Map.entry("embedding", Map.of(
                                 "type", "dense_vector",
-                                "dims", 1536
+                                "dims", EMBEDDING_DIMS,
+                                "index", true,
+                                "similarity", "cosine"
                         ))
                 )
         );

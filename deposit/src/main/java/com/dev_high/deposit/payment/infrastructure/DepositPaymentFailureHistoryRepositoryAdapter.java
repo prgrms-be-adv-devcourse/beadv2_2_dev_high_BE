@@ -30,8 +30,8 @@ public class DepositPaymentFailureHistoryRepositoryAdapter implements DepositPay
     }
 
     @Override
-    public Page<DepositPaymentFailureHistory> findByOrderId(String orderId, Pageable pageable) {
-        return repository.findByOrderId(orderId, pageable);
+    public Page<DepositPaymentFailureHistory> findByPaymentId(String paymentId, Pageable pageable) {
+        return repository.findByPaymentId(paymentId, pageable);
     }
 
     @Override

@@ -13,7 +13,7 @@ public interface DepositPaymentFailureHistoryRepository {
 
     Optional<DepositPaymentFailureHistory> findById(Long id);
 
-    Page<DepositPaymentFailureHistory> findByOrderId(String orderId, Pageable pageable);
+    Page<DepositPaymentFailureHistory> findByPaymentId(String paymentId, Pageable pageable);
 
     Page<DepositPaymentFailureHistory> findByUserId(String userId, Pageable pageable);
 }

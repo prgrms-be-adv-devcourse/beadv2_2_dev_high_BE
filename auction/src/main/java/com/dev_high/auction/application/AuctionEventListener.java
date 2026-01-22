@@ -47,6 +47,7 @@ public class AuctionEventListener {
         try {
             if (val.type().equals("REFUND")) {
                 recordService.markDepositRefunded(val.auctionId(), val.userIds());
+
             }
         } catch (TransientDataAccessException | NetworkException e) {
             // 일시적 오류: 재시도
@@ -59,7 +60,8 @@ public class AuctionEventListener {
 
     }
 
-    @KafkaListener(topics = KafkaTopics.DEPOSIT_AUCTION_DEPOIST_RESPONSE) // 보증금 차감 이벤트
+//    @KafkaListener(topics = KafkaTopics.DEPOSIT_AUCTION_DEPOIST_RESPONSE) // 보증금 차감 이벤트
+    @Deprecated
     public void depositComplete(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
 
         DepositCompletedEvent val = JsonUtil.fromPayload(envelope.payload(),

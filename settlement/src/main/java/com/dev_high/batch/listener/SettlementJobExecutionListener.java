@@ -5,8 +5,10 @@ import com.dev_high.common.kafka.KafkaEventPublisher;
 import com.dev_high.common.kafka.event.NotificationRequestEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.type.DepositType;
 import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.common.util.HttpUtil;
+import com.dev_high.settle.domain.group.SettlementGroupRepository;
 import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementStatus;
 import com.dev_high.settle.domain.history.SettlementHistory;
@@ -20,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
@@ -38,10 +39,12 @@ import org.springframework.web.client.RestTemplate;
 public class SettlementJobExecutionListener implements JobExecutionListener {
 
   private final SettlementHistoryJpaRepository settlementHistoryJpaRepository;
+  private final SettlementGroupRepository settlementGroupRepository;
   private final KafkaEventPublisher publisher;
   private final RestTemplate restTemplate;
-  private final List<Settlement> successSettlements;
+  private final List<Settlement> allSettlements;
   private final List<Settlement> failedSettlements;
+
 
   @Override
   public void beforeJob(JobExecution jobExecution) {
@@ -51,53 +54,72 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
   @Override
   public void afterJob(JobExecution jobExecution) {
     // 정산 결과 알림 및 이력 저장 처리
-      Map<String, BigDecimal> sellerAmountMap = successSettlements.stream()
-              .filter(s -> s.getStatus() == SettlementStatus.COMPLETED)
-              .collect(Collectors.groupingBy(
-                      Settlement::getSellerId,
-                      Collectors.reducing(
-                              BigDecimal.ZERO,
-                              Settlement::getFinalAmount,
-                              BigDecimal::add
-                      )
-              ));
 
-    sellerAmountMap.forEach((sellerId, totalAmount) -> {
-      boolean depositSuccess = requestDeposit(sellerId, totalAmount);
-      persistSettlementSummary(sellerId, totalAmount, depositSuccess);
 
-      if (depositSuccess) {
-        String formattedAmount = NumberFormat.getNumberInstance(Locale.KOREA).format(totalAmount);
-        publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
-            new NotificationRequestEvent(
-                    List.of(sellerId),
-                    formattedAmount + "원 정산이 완료되었습니다.",
-                    "/mypage",
-                    NotificationCategory.Type.SETTLEMENT_SUCCESS
-            )
-        );
+    Map<String, SettleTotal> groupedTotals = allSettlements.stream()
+        .filter(settlement -> settlement.getStatus() == SettlementStatus.COMPLETED)
+        .filter(settlement -> settlement.getSettlementGroupId() != null)
+        .collect(Collectors.groupingBy(Settlement::getSettlementGroupId,
+            Collectors.collectingAndThen(Collectors.toList(), settlements -> {
+              String sellerId = settlements.get(0).getSellerId();
+              BigDecimal totalFinalAmount = settlements.stream()
+                  .map(Settlement::getFinalAmount)
+                  .map(this::safeAmount)
+                  .reduce(BigDecimal.ZERO, BigDecimal::add);
+              BigDecimal totalCharge = settlements.stream()
+                  .map(Settlement::getCharge)
+                  .map(this::safeAmount)
+                  .reduce(BigDecimal.ZERO, BigDecimal::add);
+              return new SettleTotal(settlements.get(0).getSettlementGroupId(), sellerId,
+                  totalCharge, totalFinalAmount);
+            })));
+
+    for (SettleTotal total : groupedTotals.values()) {
+      String groupId = total.groupId();
+      String sellerId = total.sellerId();
+      BigDecimal totalFinalAmount = total.totalFinalAmount();
+      BigDecimal totalCharge = total.totalCharge();
+
+      var groupOpt = settlementGroupRepository.findById(groupId);
+      if (groupOpt.isEmpty()) {
+        continue;
       }
-    });
+      var group = groupOpt.get();
+      if (totalFinalAmount.compareTo(BigDecimal.ZERO) > 0) {
+        boolean depositSuccess = requestDeposit(sellerId, totalFinalAmount);
+        if (depositSuccess) {
+          group.addPaid(totalCharge, totalFinalAmount);
+          String formattedAmount = NumberFormat.getNumberInstance(Locale.KOREA)
+              .format(totalFinalAmount);
+          publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
+              new NotificationRequestEvent(
+                  List.of(sellerId),
+                  formattedAmount + "원 정산이 완료되었습니다.",
+                  "/mypage",
+                  NotificationCategory.Type.SETTLEMENT_SUCCESS
+              )
+          );
+        }
+      }
+      group.refreshDepositStatus();
+      settlementGroupRepository.save(group);
+    }
 
     failedSettlements.forEach(settlement -> {
-
       log.error("Settlement ID={} 정산 실패, 시도 횟수={}", settlement.getId(), settlement.getTryCnt());
-
       if (settlement.getTryCnt() > 3) {
         publisher.publish(KafkaTopics.NOTIFICATION_REQUEST,
             new NotificationRequestEvent(
-                    List.of("SYSTEM"), // 어드민 아이디 example
-                    String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(), settlement.getTryCnt()),
-                    "/settlement/" + settlement.getId(),
-                    NotificationCategory.Type.SETTLEMENT_FAILED
+                List.of("SYSTEM"), // 어드민 아이디 example
+                String.format("Settlement ID %s - 정산 실패 횟수: %d", settlement.getId(), settlement.getTryCnt()),
+                "/settlement/" + settlement.getId(),
+                NotificationCategory.Type.SETTLEMENT_FAILED
             )
         );
       }
     });
     // 이력 생성용 + id로 오름차순 정렬
-    List<SettlementHistory> histories = Stream.concat(successSettlements.stream(),
-            failedSettlements.stream())
-        .sorted(Comparator.comparing(Settlement::getId))
+    List<SettlementHistory> histories = allSettlements.stream()
         .map(SettlementHistory::fromSettlement)
         .toList();
 
@@ -107,17 +129,15 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
       settlementHistoryJpaRepository.saveAll(histories.subList(i, end));
       settlementHistoryJpaRepository.flush(); // DB 반영
     }
-
     failedSettlements.clear();
-    successSettlements.clear();
+    allSettlements.clear();
   }
 
   private boolean requestDeposit(String sellerId, BigDecimal totalAmount) {
     try {
       Map<String, Object> map = new HashMap<>();
       map.put("userId", sellerId);
-      map.put("type", "CHARGE");
-      map.put("depositOrderId", "SETTLEMENT_SUMMARY");
+      map.put("type", DepositType.CHARGE);
       map.put("amount", totalAmount);
 
       HttpEntity<Map<String, Object>> entity = HttpUtil.createDirectEntity(map);
@@ -143,7 +163,11 @@ public class SettlementJobExecutionListener implements JobExecutionListener {
     }
   }
 
-  private void persistSettlementSummary(String sellerId, BigDecimal totalAmount, boolean success) {
-    // TODO: summary 테이블에 합산 정산 결과 저장 (성공/실패 포함)
+  private BigDecimal safeAmount(BigDecimal amount) {
+    if (amount == null) {
+      return BigDecimal.ZERO;
+    }
+    return amount.setScale(0, java.math.RoundingMode.DOWN);
   }
+
 }

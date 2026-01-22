@@ -34,7 +34,7 @@ public class GatewayConfig {
 
             // Product Service
             .route("product-service", r -> r
-                    .path("/api/v1/products/**", "/api/v1/categories/**", "/api/v1/chat/**", "/api/v1/files/**")
+                    .path("/api/v1/products/**", "/api/v1/categories/**", "/api/v1/chat/**", "/api/v1/files/**", "/api/v1/admin/products/**")
                     .uri("lb://PRODUCT-SERVICE"))
 
             // Search Service
@@ -54,7 +54,7 @@ public class GatewayConfig {
 
             // User Service
             .route("user-service", r -> r
-                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**", "/api/v1/deposit/**")
+                    .path("/api/v1/users/**", "/api/v1/auth/**", "/api/v1/sellers/**", "/api/v1/notifications/**", "/api/v1/deposit/**", "/api/v1/admin/sellers/**")
                     .uri("lb://USER-SERVICE"))
             .build();
   }

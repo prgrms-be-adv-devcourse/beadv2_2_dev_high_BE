@@ -83,19 +83,7 @@ public class DepositOrder {
         this.status = status;
     }
 
-    public void confirmOrder() {
-        this.status = DepositOrderStatus.PAYMENT_CONFIRMED;
-    }
-
-    public void completeOrder() {
-        this.status = DepositOrderStatus.COMPLETED;
-    }
-
-    public void failOrder() {
-        this.status = DepositOrderStatus.FAILED;
-    }
-
-    public void ErrorOrder() {
-        this.status = DepositOrderStatus.ERROR;
+    public void ChangeStatus(DepositOrderStatus status) {
+        this.status = status;
     }
 }

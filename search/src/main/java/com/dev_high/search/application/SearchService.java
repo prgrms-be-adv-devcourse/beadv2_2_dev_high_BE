@@ -4,10 +4,12 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
+import com.dev_high.search.application.dto.ProductAutocompleteResponse;
 import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
 import com.dev_high.search.domain.ProductDocument;
@@ -17,14 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.*;
 import org.springframework.data.elasticsearch.core.*;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.springframework.ai.embedding.EmbeddingModel;
 
 @AllArgsConstructor
@@ -76,89 +80,102 @@ public class SearchService {
             BigDecimal maxStartPrice,
             OffsetDateTime startFrom,
             OffsetDateTime startTo,
-            Pageable pageable) {
+            Pageable pageable
+    ) {
+        String kw = keyword == null ? "" : keyword.trim();
+        int len = kw.replaceAll("\\s+", "").length();
+        boolean hasKeyword = !kw.isBlank() && len > 1;
 
-        BoolQuery.Builder boolQuery = new BoolQuery.Builder();
+        BoolQuery.Builder bool = new BoolQuery.Builder();
 
-        // 키워드 검색
-        if (keyword != null && !keyword.isBlank()) {
-            boolQuery.should(m -> m.matchPhrase(mm -> mm
-                    .field("productName")
-                    .query(keyword)
-                    .slop(1)
-                    .boost(2.0f)
-            ));
-            boolQuery.should(m -> m.match(mm -> mm
-                    .field("productName")
-                    .query(keyword)
-                    .operator(Operator.Or)
-                    .boost(1.0f)
-            ));
-            boolQuery.should(m -> m.match(mm -> mm
-                    .field("description")
-                    .query(keyword)
-                    .operator(Operator.Or)
-                    .boost(1.0f)
-            ));
-            boolQuery.minimumShouldMatch("1");
-        }
-
-        // 카테고리 필터
         if (categories != null && !categories.isEmpty()) {
-            boolQuery.filter(f -> f.terms(t -> t
-                    .field("categories")
-                    .terms(tv -> tv.value(categories.stream().map(FieldValue::of).toList()))
-            ));
+            bool.filter(f -> f.terms(t -> t.field("categories")
+                    .terms(v -> v.value(categories.stream().map(FieldValue::of).toList()))));
         }
 
-        // 상태 필터
         if (status != null && !status.isBlank()) {
-            boolQuery.filter(f -> f.term(t -> t.field("status").value(status)));
+            bool.filter(f -> f.term(t -> t.field("status").value(status)));
         }
 
-        // startPrice 범위
         if (minStartPrice != null || maxStartPrice != null) {
-            boolQuery.filter(f -> f.bool(b -> {
-                b.should(s -> s.range(r -> r.number(n -> {
-                    n.field("startPrice");
-                    if (minStartPrice != null) n.gte(minStartPrice.doubleValue());
-                    if (maxStartPrice != null) n.lte(maxStartPrice.doubleValue());
-                    return n;
-                })));
-                b.should(s -> s.bool(bb -> bb.mustNot(mn -> mn.exists(e -> e.field("startPrice")))));
-                b.minimumShouldMatch("1");
-                return b;
-            }));
+            bool.filter(f -> f.bool(b -> b
+                    .should(s -> s.range(r -> r.number(n -> {
+                        n.field("startPrice");
+                        if (minStartPrice != null) n.gte(minStartPrice.doubleValue());
+                        if (maxStartPrice != null) n.lte(maxStartPrice.doubleValue());
+                        return n;
+                    })))
+                    .should(s -> s.bool(bb -> bb.mustNot(m -> m.exists(e -> e.field("startPrice")))))
+                    .minimumShouldMatch("1")
+            ));
         }
 
         if (startFrom != null || startTo != null) {
-            boolQuery.filter(f -> f.bool(b -> {
-                b.should(s -> s.range(r -> r.date(d -> {
-                    d.field("auctionStartAt");
-                    if (startFrom != null) d.gte(startFrom.toString());
-                    if (startTo != null) d.lte(startTo.toString());
-                    return d;
-                })));
-                b.should(s -> s.bool(bb -> bb.mustNot(mn -> mn.exists(e -> e.field("auctionStartAt")))));
-                b.minimumShouldMatch("1");
-                return b;
+            bool.filter(f -> f.bool(b -> b
+                    .should(s -> s.range(r -> r.date(d -> {
+                        d.field("auctionStartAt");
+                        if (startFrom != null) d.gte(startFrom.toString());
+                        if (startTo != null) d.lte(startTo.toString());
+                        return d;
+                    })))
+                    .should(s -> s.bool(bb -> bb.mustNot(m -> m.exists(e -> e.field("auctionStartAt")))))
+                    .minimumShouldMatch("1")
+            ));
+        }
+
+        if (hasKeyword) {
+            String qNoSpace = kw.replaceAll("\\s+", "");
+
+            bool.must(m -> m.bool(b -> {
+                b.should(s -> s.matchPhrase(mp -> mp.field("productName").query(kw).slop(1).boost(4f)));
+                b.should(s -> s.match(mp -> mp.field("productName").query(kw).operator(Operator.And).boost(3f)));
+
+                if (len >= 3) {
+                    b.should(s -> s.match(mp -> mp.field("productName")
+                            .query(kw)
+                            .operator(Operator.Or)
+                            .minimumShouldMatch("70%")
+                            .fuzziness("AUTO")
+                            .prefixLength(1)
+                            .maxExpansions(50)
+                            .boost(0.4f)));
+                }
+
+                b.should(s -> s.match(mp -> mp.field("description").query(kw).boost(0.2f)));
+
+                if (len >= 3) {
+                    b.should(s -> s.match(mp -> mp.field("productName.ngram")
+                            .query(qNoSpace)
+                            .minimumShouldMatch(len <= 4 ? "1" : len <= 7 ? "40%" : "60%")
+                            .boost(0.05f)));
+                }
+
+                return b.minimumShouldMatch("1");
             }));
+        } else {
+            bool.must(m -> m.matchAll(ma -> ma));
         }
 
         NativeQuery query = NativeQuery.builder()
-                .withQuery(q -> q.bool(boolQuery.build()))
-                .withSort(s -> s.field(f -> f
-                        .field("auctionStartAt")
-                        .order(SortOrder.Desc)
-                        .missing("_last")
-                ))
+                .withQuery(q -> q.bool(bool.build()))
+                .withSort(s -> s.score(sc -> sc.order(SortOrder.Desc)))
                 .withPageable(pageable)
+                .withSourceFilter(new FetchSourceFilter(true, new String[]{}, new String[]{"embedding"}))
                 .build();
 
-        SearchHits<ProductDocument> hits = elasticsearchOperations.search(query, ProductDocument.class);
-        SearchPage<ProductDocument> searchPage = SearchHitSupport.searchPageFor(hits, pageable);
+        SearchHits<ProductDocument> hits =
+                elasticsearchOperations.search(query, ProductDocument.class);
 
-        return ApiResponseDto.success(searchPage.map(hit -> ProductSearchResponse.from(hit.getContent())));
+        Page<ProductSearchResponse> page = new PageImpl<>(
+                hits.getSearchHits().stream()
+                        .map(SearchHit::getContent)
+                        .map(ProductSearchResponse::from)
+                        .toList(),
+                pageable,
+                hits.getTotalHits()
+        );
+
+        return ApiResponseDto.success("상품 검색이 완료되었습니다.", page);
     }
 
     public List<SimilarProductResponse> findSimilarProducts(String productId, int limit) {
@@ -167,7 +184,7 @@ public class SearchService {
         }
 
         ProductDocument base = searchRepository.findByProductId(productId)
-            .orElse(null);
+                .orElse(null);
         if (base == null) {
             return List.of();
         }
@@ -189,33 +206,88 @@ public class SearchService {
         SearchResponse<ProductDocument> response;
         try {
             response = elasticsearchClient.search(s -> s
-                    .index("product")
-                    .knn(kq -> kq
-                            .field("embedding")
-                            .queryVector(queryVector)
-                            .k(k)
-                            .numCandidates(numCandidates)
-                    )
-                    .source(src -> src.filter(f -> f.includes("productId")))
-            , ProductDocument.class);
+                            .index("product")
+                            .knn(kq -> kq
+                                    .field("embedding")
+                                    .queryVector(queryVector)
+                                    .k(k)
+                                    .numCandidates(numCandidates)
+                            )
+                            .source(src -> src.filter(f -> f.includes("productId","auctionId","imageUrl")))
+                    , ProductDocument.class);
         } catch (Exception e) {
             log.warn("similar search failed: {}", e.getMessage());
             return List.of();
         }
 
         return response.hits().hits().stream()
-            .filter(hit -> hit.source() != null)
-            .filter(hit -> !productId.equals(hit.source().getProductId()))
-            .limit(limit)
-            .map(hit -> new SimilarProductResponse(
-                hit.source().getProductId(),
-                hit.score() == null ? 0.0 : hit.score()
-            ))
-            .toList();
+                .filter(hit -> hit.source() != null)
+                .filter(hit -> !productId.equals(hit.source().getProductId()))
+                .limit(limit)
+                .map(hit -> new SimilarProductResponse(
+                        hit.source().getProductId(),
+                        hit.source().getAuctionId(),
+                        hit.source().getImageUrl(),
+                        hit.score() == null ? 0.0 : hit.score()
+                ))
+                .toList();
+    }
+
+    public ApiResponseDto<ProductAutocompleteResponse> autocompleteProductName(String keyword, int size) {
+        String k = keyword == null ? "" : keyword.trim();
+        if (k.isBlank()) {
+            return ApiResponseDto.success(
+                    "검색어 자동완성이 완료되었습니다.",
+                    ProductAutocompleteResponse.of(List.of())
+            );
+        }
+
+        try {
+            NativeQuery query = NativeQuery.builder()
+                    .withQuery(q -> q.multiMatch(mm -> mm
+                            .query(k)
+                            .type(TextQueryType.BoolPrefix)
+                            .fields(
+                                    "productNameSayt",
+                                    "productNameSayt._2gram",
+                                    "productNameSayt._3gram"
+                            )
+                    ))
+                    .withSourceFilter(
+                            new FetchSourceFilter(
+                                    true,
+                                    new String[]{},
+                                    new String[]{"embedding"}
+                            )
+                    )
+                    .withPageable(PageRequest.of(0, size))
+                    .build();
+
+            List<String> result = elasticsearchOperations
+                    .search(query, ProductDocument.class)
+                    .getSearchHits()
+                    .stream()
+                    .map(SearchHit::getContent)
+                    .map(ProductDocument::getProductName)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            return ApiResponseDto.success(
+                    "검색어 자동완성이 완료되었습니다.",
+                    ProductAutocompleteResponse.of(result)
+            );
+
+        } catch (Exception e) {
+            log.warn("자동완성 조회 실패: prefix={}, size={}, err={}", k, size, e.toString());
+            return ApiResponseDto.success(
+                    "검색어 자동완성에 실패했습니다.",
+                    ProductAutocompleteResponse.of(List.of())
+            );
+        }
     }
 
     private String buildEmbeddingText(ProductDocument document) {
-
         String categories = document.getCategories() != null
                 ? String.join(", ", document.getCategories())
                 : "";
@@ -272,5 +344,4 @@ public class SearchService {
             page++;
         }
     }
-
 }

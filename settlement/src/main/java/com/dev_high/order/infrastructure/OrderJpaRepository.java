@@ -25,6 +25,7 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
                       updated_at = now()
                     WHERE status = :oldStatus
                       AND updated_at <= :targetDate
+                      AND deleted_yn = 'N' 
                     RETURNING
                       id         AS id,
                       buyer_id   AS buyerId,
@@ -49,6 +50,7 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
                       updated_at = now()
                     WHERE status = :oldStatus
                       AND payment_limit_date <= :targetDate
+                      AND deleted_yn = 'N'
                     RETURNING
                       id         AS id,
                       buyer_id   AS buyerId,
@@ -64,31 +66,36 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
             @Param("targetDate") OffsetDateTime targetDate
     );
 
-    Page<WinningOrder> findAllByStatusAndUpdatedAtBetween(
+    Page<WinningOrder> findAllByStatusAndUpdatedAtBetweenAndDeletedYn(
             OrderStatus status,
             OffsetDateTime start,
             OffsetDateTime end,
-            Pageable pageable
+            Pageable pageable,
+            String deletedYn
     );
 
 
-    Long countByBuyerIdAndStatus(String buyerId, OrderStatus orderStatus);
+    Long countByBuyerIdAndStatusAndDeletedYn(String buyerId, OrderStatus orderStatus ,String deletedYn);
 
-    Long countBySellerIdAndStatus(String sellerId, OrderStatus orderStatus);
+    Long countBySellerIdAndStatusAndDeletedYn(String sellerId, OrderStatus orderStatus ,String deletedYn);
 
-    Page<WinningOrder> findAllOrdersBySellerId(String sellerId ,Pageable pageable);
+    Page<WinningOrder> findAllOrdersBySellerIdAndDeletedYn(String sellerId ,Pageable pageable, String deletedYn);
 
-    Page<WinningOrder> findAllOrdersByBuyerId(String buyerId ,Pageable pageable);
+    Page<WinningOrder> findAllOrdersByBuyerIdAndDeletedYn(String buyerId ,Pageable pageable,String deletedYn);
 
 
-    Page<WinningOrder> findByBuyerIdAndStatus(String buyerId, OrderStatus status ,Pageable pageable);
+    Page<WinningOrder> findByBuyerIdAndStatusAndDeletedYn(String buyerId, OrderStatus status ,Pageable pageable,String deletedYn);
 
-    Page<WinningOrder> findBySellerIdAndStatus(String sellerId, OrderStatus status ,Pageable pageable);
+    Page<WinningOrder> findBySellerIdAndStatusAndDeletedYn(String sellerId, OrderStatus status ,Pageable pageable,String deletedYn);
 
-    List<WinningOrder> findByProductIdInAndWinningDateAfter(
+    boolean existsByAuctionIdAndStatusAndDeletedYn(String auctionId, OrderStatus status,String deletedYn);
+
+    List<WinningOrder> findByProductIdInAndWinningDateAfterAndDeletedYn(
         List<String> productIds,
         OffsetDateTime winningDate,
-        Pageable pageable
+        Pageable pageable,
+        String deletedYn
     );
+
 
 }

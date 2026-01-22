@@ -30,8 +30,8 @@ public class DepositOrderRequest {
             @NotNull(message = "주문 상태는 필수 입니다.")
             DepositOrderStatus status
     ) {
-        public DepositOrderDto.UpdateCommand toCommand(String id, DepositOrderStatus status) {
-            return DepositOrderDto.UpdateCommand.of(id, status);
+        public DepositOrderDto.ChangeOrderStatusCommand toCommand(String id, DepositOrderStatus status) {
+            return DepositOrderDto.ChangeOrderStatusCommand.of(id, status);
         }
     }
 }

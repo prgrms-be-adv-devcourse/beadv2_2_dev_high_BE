@@ -1,26 +1,53 @@
 package com.dev_high.admin.applicaiton;
 
+import com.dev_high.auction.application.dto.AuctionResponse;
+import com.dev_high.auction.application.AuctionLifecycleService;
+import com.dev_high.auction.domain.AuctionRepository;
+import com.dev_high.auction.domain.AuctionStatus;
+import com.dev_high.common.context.UserContext;
+import com.dev_high.exception.AuctionNotFoundException;
+import com.dev_high.exception.AuctionStatusInvalidException;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class AdminService {
 
+    private final AuctionRepository auctionRepository;
+    private final AuctionLifecycleService lifecycleService;
 
-
-    public void createAuction(){
-    // 셀러아이디 상관없이 등록가능
-    // 해당상품에 라스트옥션에 해당 데이터 넣어줘야함.
+    @Transactional
+    public AuctionResponse startAuctionNow(String auctionId) {
+        String userId = resolveAdminUserId();
+        var auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+        if (auction.getStatus() != AuctionStatus.READY) {
+            throw new AuctionStatusInvalidException();
+        }
+        return AuctionResponse.fromEntity(lifecycleService.startNow(auctionId, userId));
     }
 
-    public void modifyAuction(){
-        // 셀러아이디 상관없이 수정가능 (경매상태, 시간 ,가격등)
-        // 시작중일때 중지가능 > 이후로직 처리해야함 참여자들 보증금 환불처리 등, 최종낙찰자 처리 등?
-        // 대기상태 바로 시작가능 > 상태값 진행으로 바꿀때 시작시간 현재시간으로 박아서 사용
-        // 바로 종료처리> 상태값 종료로 바꿀때 종료시간 현재시간으로 바로 적용
+    @Transactional
+    public AuctionResponse endAuctionNow(String auctionId) {
+        String userId = resolveAdminUserId();
+        var auction = auctionRepository.findById(auctionId)
+                .orElseThrow(AuctionNotFoundException::new);
+        if (!List.of(AuctionStatus.READY, AuctionStatus.IN_PROGRESS).contains(auction.getStatus())) {
+            throw new AuctionStatusInvalidException();
+        }
+        return AuctionResponse.fromEntity(lifecycleService.endNow(auctionId, userId));
     }
 
-    public void removeAuction(){
-        // 셀러아이디 상관없이 삭제가능
-        // 해당 상품에 라스트옥션 제거
+
+    private String resolveAdminUserId() {
+        if (UserContext.get() == null || UserContext.get().userId() == null) {
+            return "SYSTEM";
+        }
+        return UserContext.get().userId();
     }
 }

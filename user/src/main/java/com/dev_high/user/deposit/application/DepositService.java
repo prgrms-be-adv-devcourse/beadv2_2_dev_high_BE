@@ -2,21 +2,17 @@ package com.dev_high.user.deposit.application;
 
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventPublisher;
-import com.dev_high.common.kafka.event.deposit.DepositCompletedEvent;
-import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
-import com.dev_high.common.kafka.event.deposit.DepositPaymentCompletedEvent;
-import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.user.deposit.application.dto.DepositDto;
-import com.dev_high.user.deposit.application.dto.DepositHistoryDto;
+import com.dev_high.user.deposit.application.event.DepositEvent;
 import com.dev_high.user.deposit.domain.entity.Deposit;
 import com.dev_high.user.deposit.domain.repository.DepositRepository;
-import com.dev_high.common.type.DepositType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -26,6 +22,7 @@ public class DepositService {
     private final DepositRepository depositRepository;
     private final DepositHistoryService depositHistoryService;
     private final KafkaEventPublisher eventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public DepositDto.Info createDepositAccount(DepositDto.CreateCommand command) {
@@ -54,61 +51,27 @@ public class DepositService {
         Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
                 .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
 
-        switch (command.type()) {
-            case CHARGE, REFUND:
-                deposit.increaseBalance(command.amount());
-                break;
-
-            case USAGE, DEPOSIT:
-                deposit.decreaseBalance(command.amount());
-                break;
-
-            default:
-                throw new IllegalArgumentException("지원하지 않는 예치금 유형입니다: " + command.type());
-        }
-
+        deposit.apply(command.type(), command.amount());
         Deposit savedDeposit = depositRepository.save(deposit);
-
-        DepositHistoryDto.CreateCommand Command = new DepositHistoryDto.CreateCommand(
-                command.userId(),
-                command.depositOrderId(),
-                command.type(),
-                command.amount(),
-                savedDeposit.getBalance()
-        );
-
-        DepositHistoryDto.Info history = depositHistoryService.createHistory(Command);
-
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ACT") && command.type() == DepositType.DEPOSIT) {
-            try {
-                // command.userId()를 List<String> 형태로 가공
-                List<String> userIds = List.of(command.userId());
-
-                eventPublisher.publish(KafkaTopics.DEPOSIT_AUCTION_DEPOIST_RESPONSE,
-                        new DepositCompletedEvent(userIds, command.depositOrderId(), command.amount(), "DEPOSIT"));
-            } catch (Exception e) {
-                log.error("보증금 차감 실패 : auctionId={}, userId={}", command.depositOrderId(), command.userId());
-            }
-        }
-
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("ORD") && command.type() == DepositType.USAGE) {
-            try {
-                eventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE,
-                        new DepositOrderCompletedEvent(command.depositOrderId(), "PAID"));
-            } catch (Exception e) {
-                log.error("예치금 주문 실패 : orderId={}, userId={}", command.depositOrderId(), command.userId());
-            }
-        }
-
-        if (command.depositOrderId() != null && command.depositOrderId().startsWith("DOR") && command.type() == DepositType.CHARGE) {
-            try {
-                eventPublisher.publish(KafkaTopics.DEPOSIT_PAYMENT_COMPLETE_RESPONSE,
-                        DepositPaymentCompletedEvent.of(command.depositOrderId()));
-            } catch (Exception e) {
-                log.error("예치금 충전 알림 실패 : orderId={}, userId={}", command.depositOrderId(), command.userId(), e);
-            }
-        }
-
+        applicationEventPublisher.publishEvent(DepositEvent.DepositUpdated.of(command.userId(), command.depositOrderId(), command.type(), command.amount(), savedDeposit.getBalance()));
         return  DepositDto.Info.from(savedDeposit, command.depositOrderId());
+    }
+
+    @Transactional
+    public void eventPublishByDepositType(DepositDto.PublishCommand command) {
+        switch (command.type()) {
+            case PAYMENT -> applicationEventPublisher.publishEvent(DepositEvent.DepositPaid.of(command.depositOrderId(), command.type()));
+            case CHARGE -> applicationEventPublisher.publishEvent(DepositEvent.DepositCharged.of(command.depositOrderId()));
+            default -> throw new IllegalArgumentException("지원하지 않는 유형입니다. :" + command.type());
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void compensateBalance(DepositDto.CompensateCommand command) {
+        Deposit deposit = depositRepository.findByUserIdWithLock(command.userId())
+                .orElseThrow(() -> new NoSuchElementException("예치금 잔액 정보를 찾을 수 없습니다"));
+        deposit.compensate(command.type(), command.amount());
+        depositRepository.save(deposit);
+        applicationEventPublisher.publishEvent(DepositEvent.DepositCompensated.of(command.depositOrderId()));
     }
 }

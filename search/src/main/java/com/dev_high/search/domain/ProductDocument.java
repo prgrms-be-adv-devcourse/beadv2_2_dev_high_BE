@@ -3,12 +3,11 @@ package com.dev_high.search.domain;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
+import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
-import lombok.Getter;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -20,6 +19,7 @@ public class ProductDocument {
     @Id
     private String productId;
 
+    @Field(type = FieldType.Keyword)
     private String auctionId;
 
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
@@ -30,6 +30,9 @@ public class ProductDocument {
 
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
     private String description;
+
+    @Field(type = FieldType.Search_As_You_Type)
+    private String productNameSayt;
 
     @Field(type = FieldType.Keyword)
     private String imageUrl;
@@ -43,6 +46,7 @@ public class ProductDocument {
     @Field(type = FieldType.Keyword)
     private String status;
 
+    @Field(type = FieldType.Keyword)
     private String sellerId;
 
     @Field(type = FieldType.Date, format = DateFormat.date_time)
@@ -61,6 +65,7 @@ public class ProductDocument {
         this.productName = request.productName();
         this.categories = request.categories();
         this.description = request.description();
+        this.productNameSayt = request.productName();
         this.imageUrl = request.imageUrl();
         this.status = request.status();
         this.sellerId = request.sellerId();
@@ -71,6 +76,7 @@ public class ProductDocument {
         this.productName = request.productName();
         this.categories = request.categories();
         this.description = request.description();
+        this.productNameSayt = request.productName();
         this.imageUrl = request.imageUrl();
         this.sellerId = request.sellerId();
     }

@@ -1,7 +1,7 @@
 package com.dev_high.deposit.payment.presentation.dto;
 
 import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
-import com.dev_high.deposit.payment.domain.DepositPaymentStatus;
+import com.dev_high.common.type.DepositPaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 public class DepositPaymentResponse {
     public record Detail(
-            @Schema(description = "예치금 주문 ID")
+            @Schema(description = "주문 ID")
             String orderId,
 
             @Schema(description = "사용자 ID")

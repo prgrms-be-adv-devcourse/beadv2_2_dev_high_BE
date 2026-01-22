@@ -1,6 +1,5 @@
 package com.dev_high.order.presentation.dto;
 
-import com.dev_high.order.application.dto.AuctionDto;
 import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.order.domain.OrderStatus;
 
@@ -22,7 +21,8 @@ public record OrderResponse(
         OffsetDateTime payLimitDate,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
-        String payYn
+        String payYn,
+        String deletedYn
 ) {
 
     public static OrderResponse fromEntity(WinningOrder order) {
@@ -40,7 +40,8 @@ public record OrderResponse(
                 order.getPaymentLimitDate(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                order.getPayYn()
+                order.getPayYn(),
+                order.getDeletedYn()
         );
     }
 }

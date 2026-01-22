@@ -1,7 +1,7 @@
 package com.dev_high.deposit.payment.application.dto;
 
 import com.dev_high.deposit.payment.domain.entity.DepositPayment;
-import com.dev_high.deposit.payment.domain.DepositPaymentStatus;
+import com.dev_high.common.type.DepositPaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

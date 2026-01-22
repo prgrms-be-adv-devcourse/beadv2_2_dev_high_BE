@@ -22,6 +22,9 @@ public class Auction {
     @Column(name = "product_id", nullable = false)
     private String productId;
 
+    @Column(name = "seller_id", length = 20)
+    private  String sellerId;
+
     @Column(length = 50, nullable = false)
     @Enumerated(EnumType.STRING)
     private AuctionStatus status;
@@ -81,13 +84,13 @@ public class Auction {
     }
 
     public Auction(BigDecimal startBid, OffsetDateTime auctionStartAt,
-                   OffsetDateTime auctionEndAt, String creatorId, String productId,String productName) {
+                   OffsetDateTime auctionEndAt, String creatorId, String productId,String productName ,String sellerId) {
 
         this.status = AuctionStatus.READY;
         this.productId = productId;
         this.productName = productName;
         this.startBid = startBid;
-
+        this.sellerId=sellerId;
         this.depositAmount = depositMax(startBid);
         this.auctionStartAt = auctionStartAt;
         this.auctionEndAt = auctionEndAt;
@@ -120,6 +123,23 @@ public class Auction {
 
     public void changeStatus(AuctionStatus status, String updatedBy) {
         this.status = status;
+        this.updatedBy = updatedBy;
+    }
+
+    public void startNow(String updatedBy) {
+        this.status = AuctionStatus.IN_PROGRESS;
+        this.auctionStartAt =  OffsetDateTime.now();
+        this.updatedBy = updatedBy;
+    }
+
+    public void endNow( String updatedBy) {
+        this.status = AuctionStatus.COMPLETED;
+        this.auctionEndAt = OffsetDateTime.now();;
+        this.updatedBy = updatedBy;
+    }
+
+    public void rescheduleEnd(OffsetDateTime endAt, String updatedBy) {
+        this.auctionEndAt = endAt;
         this.updatedBy = updatedBy;
     }
 

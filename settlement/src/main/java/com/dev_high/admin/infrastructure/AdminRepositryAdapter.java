@@ -5,8 +5,8 @@ import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
 import com.dev_high.order.domain.QWinningOrder;
 import com.dev_high.order.domain.WinningOrder;
-import com.dev_high.settle.domain.settle.QSettlement;
-import com.dev_high.settle.domain.settle.Settlement;
+import com.dev_high.settle.domain.group.QSettlementGroup;
+import com.dev_high.settle.domain.group.SettlementGroup;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Order;
@@ -34,7 +34,7 @@ public class AdminRepositryAdapter implements AdminRepository {
     private final JPAQueryFactory queryFactory;
 
     private final QWinningOrder winningOrder = QWinningOrder.winningOrder;
-    private final QSettlement settlement = QSettlement.settlement;
+    private final QSettlementGroup settlementGroup = QSettlementGroup.settlementGroup;
 
     @Override
     public Page<WinningOrder> findAllWinningOrder(Pageable pageable, OrderAdminSearchFilter filter) {
@@ -56,18 +56,18 @@ public class AdminRepositryAdapter implements AdminRepository {
     }
 
     @Override
-    public Page<Settlement> findAllSettlement(Pageable pageable, SettlementAdminSearchFilter filter) {
-        BooleanBuilder predicate = buildSettlementPredicate(filter);
+    public Page<SettlementGroup> findAllSettlementGroups(Pageable pageable, SettlementAdminSearchFilter filter) {
+        BooleanBuilder predicate = buildSettlementGroupPredicate(filter);
 
-        List<Settlement> content = queryFactory.selectFrom(settlement)
+        List<SettlementGroup> content = queryFactory.selectFrom(settlementGroup)
             .where(predicate)
-            .orderBy(orderSpecifiers(pageable, settlementSortMap(), "createdAt"))
+            .orderBy(orderSpecifiers(pageable, settlementGroupSortMap(), "settlementDate"))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
 
-        Long total = queryFactory.select(settlement.count())
-            .from(settlement)
+        Long total = queryFactory.select(settlementGroup.count())
+            .from(settlementGroup)
             .where(predicate)
             .fetchOne();
 
@@ -86,26 +86,21 @@ public class AdminRepositryAdapter implements AdminRepository {
         addEqualsIfText(builder, filter.auctionId(), winningOrder.auctionId);
         addEqualsIfNotNull(builder, filter.status(), winningOrder.status);
         addEqualsIfText(builder, filter.payYn(), winningOrder.payYn);
+        addEqualsIfText(builder, filter.deletedYn(), winningOrder.deletedYn);
         addBetween(builder, winningOrder.createdAt, filter.createdFrom(), filter.createdTo());
 
         return builder;
     }
 
-    private BooleanBuilder buildSettlementPredicate(SettlementAdminSearchFilter filter) {
+    private BooleanBuilder buildSettlementGroupPredicate(SettlementAdminSearchFilter filter) {
         BooleanBuilder builder = new BooleanBuilder();
         if (filter == null) {
             return builder;
         }
 
-        addEqualsIfText(builder, filter.settlementId(), settlement.id);
-        addEqualsIfText(builder, filter.completeYn(), settlement.orderId);
-        addEqualsIfText(builder, filter.sellerId(), settlement.sellerId);
-        addEqualsIfText(builder, filter.buyerId(), settlement.buyerId);
-        addEqualsIfText(builder, filter.auctionId(), settlement.auctionId);
-        addEqualsIfNotNull(builder, filter.status(), settlement.status);
-        addEqualsIfText(builder, filter.completeYn(), settlement.completeYn);
-        addBetween(builder, settlement.createdAt, filter.createdFrom(), filter.createdTo());
-        addBetween(builder, settlement.completeDate, filter.completeFrom(), filter.completeTo());
+        addEqualsIfText(builder, filter.sellerId(), settlementGroup.sellerId);
+        addBetween(builder, settlementGroup.settlementDate,
+            filter.settlementDateFrom(), filter.settlementDateTo());
 
         return builder;
     }
@@ -172,13 +167,13 @@ public class AdminRepositryAdapter implements AdminRepository {
         );
     }
 
-    private Map<String, ComparableExpressionBase<?>> settlementSortMap() {
+    private Map<String, ComparableExpressionBase<?>> settlementGroupSortMap() {
         return Map.of(
-            "createdAt", settlement.createdAt,
-            "updateDate", settlement.updateDate,
-            "completeDate", settlement.completeDate,
-            "winningAmount", settlement.winningAmount,
-            "finalAmount", settlement.finalAmount
+            "settlementDate", settlementGroup.settlementDate,
+            "createdAt", settlementGroup.createdAt,
+            "updateDate", settlementGroup.updateDate
         );
     }
+
+
 }

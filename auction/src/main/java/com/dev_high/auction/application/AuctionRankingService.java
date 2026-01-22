@@ -43,7 +43,7 @@ public class AuctionRankingService {
   private final AuctionSummaryCacheService auctionSummaryCacheService;
   private final AuctionLiveStateJpaRepository auctionLiveStateJpaRepository;
 
-  @Value("${auction.ranking.view-window-minutes:5}")
+  @Value("${auction.ranking.view-window-minutes:1}")
   private long viewWindowMinutes;
 
   public void incrementBidCount(String auctionId) {
@@ -221,7 +221,7 @@ public class AuctionRankingService {
         summary.auctionStartAt(),
         summary.auctionEndAt(),
         summary.depositAmount(),
-        summary.deletedYn()
+        summary.deletedYn(), summary.sellerId()
     );
   }
 }

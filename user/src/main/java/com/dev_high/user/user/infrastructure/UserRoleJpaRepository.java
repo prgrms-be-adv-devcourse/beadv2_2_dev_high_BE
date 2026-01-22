@@ -1,5 +1,7 @@
 package com.dev_high.user.user.infrastructure;
 
+import com.dev_high.user.user.domain.Role;
+import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,4 +26,6 @@ public interface UserRoleJpaRepository extends JpaRepository<UserRole, String> {
     Optional<UserRole> findByUserIdAndRoleName(String userId, String roleName);
 
     List<UserRole> findByUserId(String userId);
+
+    boolean existsByUserAndRole(User user, Role role);
 }

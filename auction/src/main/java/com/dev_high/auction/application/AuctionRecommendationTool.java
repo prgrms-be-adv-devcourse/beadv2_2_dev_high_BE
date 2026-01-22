@@ -2,11 +2,14 @@ package com.dev_high.auction.application;
 
 import com.dev_high.auction.application.dto.AuctionRecommendationResponse.AuctionAiRecommendationResult;
 import java.math.BigDecimal;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class AuctionRecommendationTool {
 
   @Tool(

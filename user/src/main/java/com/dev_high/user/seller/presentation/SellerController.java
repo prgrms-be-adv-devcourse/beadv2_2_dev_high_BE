@@ -15,8 +15,8 @@ public class SellerController {
     private final SellerService sellerService;
 
     @PostMapping
-    public ApiResponseDto<SellerResponse> create(@RequestBody SellerRequest request) {
-        return sellerService.create(request.toCommand());
+    public ApiResponseDto<SellerResponse> request(@RequestBody SellerRequest request) {
+        return sellerService.request(request.toCommand());
     }
 
     @GetMapping("/profile")
