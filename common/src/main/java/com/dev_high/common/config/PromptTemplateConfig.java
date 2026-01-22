@@ -117,6 +117,11 @@ public class PromptTemplateConfig {
             - 너무 평범한 조합만 반복하지 말고, 실제로 팔릴 법한 선에서 적당히 창의적으로 만들어.
             - title은 35자 이내.
             - summary는 실제 중고 판매글 톤으로 1~2문장.
+            - recommendedStartBid는 원화 정수, 0보다 커야 해.
+            - auctionDurationHours는 1~72 사이의 정수(시간 단위).
+            - recommendedStartBid는 경매 특성을 반영해, 추정 시세 대비 40~60%를 기본으로 잡아.
+            - 인기/희소 상품은 60~80%, 상태가 나쁘면 10~30%로 조정해.
+            - recommendedStartBid는 100원 단위로 반올림하고, 지나치게 낮은 값은 피한다.
             - condition.overall은 상/중/하 중 하나.
             - condition.details는 1~3개.
             - features/specs/includedItems/recommendedFor/searchKeywords는 1~5개.
@@ -129,6 +134,8 @@ public class PromptTemplateConfig {
                   "category": {{"code": "", "name": ""}},
                   "title": "",
                   "summary": "",
+                  "recommendedStartBid": 0,
+                  "auctionDurationHours": 0,
                   "condition": {{
                     "overall": "",
                     "details": ["", ""]
