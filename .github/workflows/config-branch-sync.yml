@@ -7,6 +7,11 @@ on:
     paths:
       - "config/config/**"
   workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Deploy ref (branch/tag/sha)"
+        required: false
+        default: "main"
 
 permissions:
   contents: write

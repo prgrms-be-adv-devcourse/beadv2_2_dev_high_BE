@@ -18,6 +18,11 @@ on:
 #      - 'settings.gradle'
 #      - '.dockerignore'
   workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: "Deploy ref (branch/tag/sha)"
+        required: false
+        default: "main"
     
 
 env:

@@ -1,0 +1,69 @@
+name: Sync main -> develop
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create or update PR main -> develop, then merge if possible
+        env:
+          GH_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          LABEL="auto-sync"
+          REPO="${GITHUB_REPOSITORY}"
+
+          # label 없으면 생성 (이미 있으면 무시)
+          gh label create "$LABEL" \
+            --description "Auto sync PRs from main to develop" \
+            --color "0E8A16" 2>/dev/null || true
+
+          # 이미 열려있는 PR이 있으면 재사용, 없으면 생성
+          PR_NUMBER="$(gh pr list --repo "$REPO" \
+            --base develop --head main --state open \
+            --json number --jq '.[0].number' || true)"
+
+          if [ -z "${PR_NUMBER:-}" ]; then
+            PR_NUMBER="$(gh pr create --repo "$REPO" \
+              --base develop --head main \
+              --title "chore: sync main -> develop" \
+              --body "Auto-created after a release push to main." \
+              --label "$LABEL" \
+              --json number --jq '.number')"
+            echo "Created PR: #$PR_NUMBER"
+          else
+            echo "Existing PR: #$PR_NUMBER"
+          fi
+
+          # 방향 검증(혹시 뒤집히면 중단)
+          BASE="$(gh pr view --repo "$REPO" "$PR_NUMBER" --json baseRefName --jq '.baseRefName')"
+          HEAD="$(gh pr view --repo "$REPO" "$PR_NUMBER" --json headRefName --jq '.headRefName')"
+          echo "PR #$PR_NUMBER head=$HEAD -> base=$BASE"
+
+          if [ "$BASE" != "develop" ] || [ "$HEAD" != "main" ]; then
+            echo "ERROR: PR direction is wrong. Expected head=main base=develop."
+            exit 1
+          fi
+
+          # 충돌이면 자동 머지 안 함
+          MERGEABLE="$(gh pr view --repo "$REPO" "$PR_NUMBER" --json mergeable --jq '.mergeable')"
+          echo "mergeable=$MERGEABLE"
+
+          if [ "$MERGEABLE" = "MERGEABLE" ]; then
+            # 머지 시도 (승인/체크가 필요하면 GitHub에서 막힐 수 있음)
+            gh pr merge --repo "$REPO" "$PR_NUMBER" --merge || true
+            echo "Tried to merge PR #$PR_NUMBER"
+          else
+            echo "PR #$PR_NUMBER is not mergeable (likely conflict). Leaving it open."
+          fi
