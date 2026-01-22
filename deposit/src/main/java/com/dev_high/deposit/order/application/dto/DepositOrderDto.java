@@ -1,5 +1,6 @@
 package com.dev_high.deposit.order.application.dto;
 
+import com.dev_high.common.type.DepositType;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import com.dev_high.common.type.DepositOrderStatus;
 
@@ -7,22 +8,48 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class DepositOrderDto {
-    public record CreateCommand(
+    public record CreatePaymentCommand(
+            BigDecimal amount,
+            BigDecimal deposit
+    ) {
+        public static CreatePaymentCommand of(BigDecimal amount, BigDecimal deposit) {
+            return new CreatePaymentCommand(amount, deposit);
+        }
+    }
+
+    public record CreateDepositPaymentCommand(
             BigDecimal amount
     ) {
-        public static CreateCommand of(BigDecimal amount) {
-            return new CreateCommand(amount);
+        public static CreateDepositPaymentCommand of(BigDecimal amount) {
+            return new CreateDepositPaymentCommand(amount);
+        }
+    }
+
+    public record OrderPayWithDepositCommand(
+            String id
+    ) {
+        public static OrderPayWithDepositCommand of(String id) {
+            return new OrderPayWithDepositCommand(id);
+        }
+    }
+
+    public record useDepositCommand(
+            String userId,
+            String depositOrderId,
+            DepositType type,
+            BigDecimal amount
+    ) {
+        public static useDepositCommand of(String userId, String depositOrderId, DepositType type, BigDecimal amount) {
+            return new useDepositCommand(userId, depositOrderId, type, amount);
         }
     }
 
     public record ConfirmCommand(
             String id,
-            String userId,
-            BigDecimal amount,
-            DepositOrderStatus status
+            String winningOrderId
     ) {
-        public static ConfirmCommand of(String id, String userId, BigDecimal amount, DepositOrderStatus status) {
-            return new ConfirmCommand(id, userId, amount, status);
+        public static ConfirmCommand of(String id, String winningOrderId) {
+            return new ConfirmCommand(id, winningOrderId);
         }
     }
 
@@ -40,7 +67,9 @@ public class DepositOrderDto {
             String userId,
             BigDecimal amount,
             DepositOrderStatus status,
-            OffsetDateTime createdAt
+            OffsetDateTime createdAt,
+            BigDecimal deposit,
+            BigDecimal paidAmount
     ) {
         public static Info from(DepositOrder depositOrder) {
             return new Info(
@@ -48,7 +77,9 @@ public class DepositOrderDto {
                     depositOrder.getUserId(),
                     depositOrder.getAmount(),
                     depositOrder.getStatus(),
-                    depositOrder.getCreatedAt()
+                    depositOrder.getCreatedAt(),
+                    depositOrder.getDeposit(),
+                    depositOrder.getPaidAmount()
             );
         }
     }

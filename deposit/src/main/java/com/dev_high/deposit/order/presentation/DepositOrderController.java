@@ -1,6 +1,7 @@
 package com.dev_high.deposit.order.presentation;
 
 import com.dev_high.common.dto.ApiResponseDto;
+import com.dev_high.common.type.DepositOrderStatus;
 import com.dev_high.deposit.order.application.DepositOrderService;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.presentation.dto.DepositOrderRequest;
@@ -21,12 +22,22 @@ import org.springframework.web.bind.annotation.*;
 public class DepositOrderController {
     private final DepositOrderService depositOrderService;
 
-    @Operation(summary = "예치금 주문 생성", description = "예치금 주문을 생성하고 저장")
-    @PostMapping("/orders")
+    @Operation(summary = "결제 주문 생성", description = "결제 주문을 생성하고 저장")
+    @PostMapping("/orders/order-payment")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponseDto<DepositOrderResponse.Detail> createOrder(@RequestBody @Valid DepositOrderRequest.Create request) {
-        DepositOrderDto.CreateCommand command = request.toCommand(request.amount());
-        DepositOrderDto.Info info = depositOrderService.createOrder(command);
+    public ApiResponseDto<DepositOrderResponse.Detail> createPaymentOrder(@RequestBody @Valid DepositOrderRequest.CreatePayment request) {
+        DepositOrderDto.CreatePaymentCommand command = request.toCommand(request.amount(), request.deposit());
+        DepositOrderDto.Info info = depositOrderService.createPaymentOrder(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        return ApiResponseDto.success(response);
+    }
+
+    @Operation(summary = "예치금 충전 주문 생성", description = "예치금 충전 주문을 생성하고 저장")
+    @PostMapping("/orders/deposit-charge")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponseDto<DepositOrderResponse.Detail> createDepositPaymentOrder(@RequestBody @Valid DepositOrderRequest.CreateDepositPayment request) {
+        DepositOrderDto.CreateDepositPaymentCommand command = request.toCommand(request.amount());
+        DepositOrderDto.Info info = depositOrderService.createDepositPaymentOrder(command);
         DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
         return ApiResponseDto.success(response);
     }
@@ -39,6 +50,16 @@ public class DepositOrderController {
         return ApiResponseDto.success(response);
     }
 
-
-
+    @Operation(summary = "주문 ID의 예치금 사용 처리", description = "주문 ID의 예치금 사용 처리")
+    @PostMapping("/orders/pay-by-deposit")
+    public ApiResponseDto<?> payOrderByDeposit(@RequestBody @Valid DepositOrderRequest.OrderPayWithDeposit request) {
+        DepositOrderDto.OrderPayWithDepositCommand command = request.toCommand(request.id());
+        DepositOrderDto.Info info = depositOrderService.payOrderByDeposit(command);
+        if (info.status().equals(DepositOrderStatus.DEPOSIT_APPLIED_ERROR)) {
+            return ApiResponseDto.fail("예치금 사용에 실패하였습니다", info.status().name());
+        } else {
+            DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+            return ApiResponseDto.success(response);
+        }
+    }
 }

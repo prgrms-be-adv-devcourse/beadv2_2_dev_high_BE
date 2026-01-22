@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface SettlementRepository {
 
@@ -22,7 +23,7 @@ public interface SettlementRepository {
 
     Settlement save(Settlement settlement);
 
-    Page<Settlement> findByStatus(SettlementStatus status,
-                                                  Pageable pageable);
+    Page<Settlement> findByStatusIn(Set<SettlementStatus> statuses,
+                                    Pageable pageable);
 
 }

@@ -42,7 +42,7 @@ public class PaymentsAdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<DepositPaymentResponse.Detail> createPayment(@RequestBody @Valid DepositPaymentRequest.Create request) {
         DepositPaymentDto.CreateCommand command = request.toCommand(request.orderId(), request.userId(), request.amount());
-        DepositPaymentDto.Info info =  paymentService.createPayment(command);
+        DepositPaymentDto.Info info =  paymentService.createInitialPayment(command);
         DepositPaymentResponse.Detail response = DepositPaymentResponse.Detail.from(info);
         return ApiResponseDto.success(response);
     }

@@ -66,24 +66,19 @@ public record AuctionFilterCondition(
       List<AuctionStatus> status,
       BigDecimal minBid,
       BigDecimal maxBid,
-      String startFrom,
-      String startTo,
-      String endFrom,
-      String endTo,
+      OffsetDateTime startFrom,
+      OffsetDateTime startTo,
+      OffsetDateTime endFrom,
+      OffsetDateTime endTo,
       String productId,
       String sellerId,
       String deletedYn,
       Pageable pageable) {
 
-    OffsetDateTime parsedStartFrom = parseStartOfDay(startFrom);
-    OffsetDateTime parsedStartTo = parseEndOfDay(startTo);
-    OffsetDateTime parsedEndFrom = parseStartOfDay(endFrom);
-    OffsetDateTime parsedEndTo = parseEndOfDay(endTo);
-
-    if (parsedStartFrom != null && parsedStartTo != null && parsedStartFrom.isAfter(parsedStartTo)) {
+    if (startFrom != null && startTo != null && startFrom.isAfter(startTo)) {
       throw new CustomException("시작일 From은 To 이전이어야 합니다.");
     }
-    if (parsedEndFrom != null && parsedEndTo != null && parsedEndFrom.isAfter(parsedEndTo)) {
+    if (endFrom != null && endTo != null && endFrom.isAfter(endTo)) {
       throw new CustomException("종료일 From은 To 이전이어야 합니다.");
     }
 
@@ -96,10 +91,10 @@ public record AuctionFilterCondition(
         status,
         minBid,
         maxBid,
-        parsedStartFrom,
-        parsedStartTo,
-        parsedEndFrom,
-        parsedEndTo,
+        startFrom,
+        startTo,
+        endFrom,
+        endTo,
         StringUtils.hasText(productId) ? productId : null,
         StringUtils.hasText(sellerId) ? sellerId : null,
         StringUtils.hasText(deletedYn) ? deletedYn : null,

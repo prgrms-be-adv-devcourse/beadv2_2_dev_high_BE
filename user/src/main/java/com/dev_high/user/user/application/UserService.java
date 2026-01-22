@@ -2,8 +2,12 @@ package com.dev_high.user.user.application;
 
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.user.application.dto.*;
+import com.dev_high.user.user.domain.Address;
+import com.dev_high.user.user.domain.AddressRepository;
 import com.dev_high.user.user.domain.User;
 import com.dev_high.user.user.domain.UserRepository;
+import com.dev_high.user.user.exception.AddressNotFoundException;
+import com.dev_high.user.user.exception.AddressNotOwnedException;
 import com.dev_high.user.user.exception.UserAlreadyExistsException;
 import com.dev_high.user.user.util.EmailMasker;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +30,7 @@ public class UserService {
     private final SellerService sellerService;
     private final UserDomainService userDomainService;
     private final ApplicationEventPublisher publisher;
+    private final AddressRepository addressRepository;
 
     @Transactional
     public ApiResponseDto<UserResponse> create(CreateUserCommand command){
@@ -141,5 +142,86 @@ public class UserService {
         }
 
         return ApiResponseDto.success(result);
+    }
+
+    public ApiResponseDto<List<UserAddressResponse>> getAddressList() {
+        String userId = userDomainService.getUser().getId();
+        List<Address> addresses = addressRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<UserAddressResponse> responseList = addresses.stream()
+                .map(UserAddressResponse::of)
+                .toList();
+        return ApiResponseDto.success("주소지가 정상적으로 조회되었습니다.", responseList);
+    }
+
+    @Transactional
+    public ApiResponseDto<UserAddressResponse> registerAddress(UserAddressCommand command) {
+        String userId = userDomainService.getUser().getId();
+
+        if(command.isDefault()) {
+            Optional<Address> currentDefaultAddress = getCurrentDefaultAddress(userId);
+            currentDefaultAddress.ifPresent(Address::clearDefault);
+        }
+
+        Address address = new Address(command.zipcode(), command.state(), command.city(), command.detail(),  command.isDefault(), userId);
+
+        Address saved = addressRepository.save(address);
+
+        return ApiResponseDto.success("주소지가 정상적으로 저장되었습니다.", UserAddressResponse.of(saved));
+    }
+
+    @Transactional
+    public ApiResponseDto<UserAddressResponse> updateAddress(String addressId, UserAddressCommand command) {
+        String userId = userDomainService.getUser().getId();
+        Address address = getAddress(addressId);
+
+        if(!userId.equals(address.getUserId())) {
+            throw new AddressNotOwnedException();
+        }
+
+        Optional<Address> currentDefaultAddress = getCurrentDefaultAddress(userId);
+
+        String msg = "주소지가 정상적으로 변경되었습니다.";
+
+        if(command.isDefault()) {
+            currentDefaultAddress.ifPresent(Address::clearDefault);
+            address.makeDefault();
+        } else {
+            if(currentDefaultAddress.isPresent() && !currentDefaultAddress.get().equals(address)) {
+                address.clearDefault();
+            } else {
+                msg = "기본 배송지는 해제할 수 없습니다.";
+            }
+        }
+        address.update(command.zipcode(), command.state(), command.city(), command.detail(), userId);
+        return ApiResponseDto.success(msg, UserAddressResponse.of(address));
+    }
+
+
+    public ApiResponseDto<Void> deleteAddress(String addressId) {
+        String userId = userDomainService.getUser().getId();
+        Address address = getAddress(addressId);
+
+        if(!userId.equals(address.getUserId())) {
+            throw new AddressNotOwnedException();
+        }
+
+        if(address.getIsDefault()) {
+            addressRepository
+                    .findFirstByUserIdAndIsDefaultFalseOrderByUpdatedAtDesc(userId)
+                    .ifPresent(Address::makeDefault);
+        }
+
+        addressRepository.delete(address);
+
+        return ApiResponseDto.success("주소지가 정상적으로 삭제되었습니다.", null);
+    }
+
+    private Address getAddress(String addressId) {
+        return addressRepository.findById(addressId)
+                .orElseThrow(AddressNotFoundException::new);
+    }
+
+    private Optional<Address> getCurrentDefaultAddress(String userId) {
+        return addressRepository.findCurrentDefaultAddress(userId);
     }
 }

@@ -17,6 +17,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,22 +55,24 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
 
     @Override
     public List<Auction> findByIdIn(List<String> ids) {
-        return queryFactory
-                .selectFrom(qAuction)
-                .where(qAuction.id.in(ids).and(qAuction.deletedYn.eq("N")))
-                .fetch();
+        return queryFactory.selectFrom(qAuction).where(qAuction.id.in(ids).and(qAuction.deletedYn.eq("N"))).fetch();
 
+    }
+
+    @Override
+    public List<Auction> findByProductIdAndDeletedYn(String productId) {
+        return auctionJpaRepository.findByProductIdAndDeletedYnOrderByCreatedAtDesc(productId, "N");
     }
 
     @Override
     public boolean existsByProductIdAndStatusInAndDeletedYn(String productId, List<AuctionStatus> statuses, String deletedYn) {
 
-        return auctionJpaRepository.existsByProductIdAndStatusInAndDeletedYn(productId, statuses ,deletedYn);
+        return auctionJpaRepository.existsByProductIdAndStatusInAndDeletedYn(productId, statuses, deletedYn);
     }
 
     @Override
     public List<Auction> findByProductId(String productId) {
-        return auctionJpaRepository.findByProductIdAndDeletedYnOrderByIdDesc(productId, "N");
+        return auctionJpaRepository.findByProductIdOrderByCreatedAtDesc(productId);
     }
 
     @Override
@@ -76,10 +80,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
         if (productIds == null || productIds.isEmpty()) {
             return List.of();
         }
-        return queryFactory
-                .selectFrom(qAuction)
-                .where(qAuction.productId.in(productIds).and(qAuction.deletedYn.eq("N")))
-                .fetch();
+        return queryFactory.selectFrom(qAuction).where(qAuction.productId.in(productIds).and(qAuction.deletedYn.eq("N"))).fetch();
     }
 
     @Override
@@ -105,10 +106,7 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
     @Override
     public Page<Auction> filterAuctions(AuctionFilterCondition condition) {
 
-        NumberExpression<BigDecimal> effectiveBid = new CaseBuilder()
-                .when(qLiveState.currentBid.isNull().or(qLiveState.currentBid.eq(BigDecimal.ZERO)))
-                .then(qAuction.startBid)
-                .otherwise(qLiveState.currentBid);
+        NumberExpression<BigDecimal> effectiveBid = new CaseBuilder().when(qLiveState.currentBid.isNull().or(qLiveState.currentBid.eq(BigDecimal.ZERO))).then(qAuction.startBid).otherwise(qLiveState.currentBid);
 
         BooleanBuilder builder = new BooleanBuilder();
         if (condition.deletedYn() != null) {
@@ -149,28 +147,42 @@ public class AuctionRepositoryAdapter implements AuctionRepository {
             builder.and(qAuction.auctionEndAt.loe(condition.endTo()));
         }
 
-        long total = Optional.ofNullable(
-                queryFactory.select(qAuction.count())
-                        .from(qAuction)
-                        .leftJoin(qAuction.liveState, qLiveState)
-                        .where(builder)
-                        .fetchOne()
-        ).orElse(0L);
+        long total = Optional.ofNullable(queryFactory.select(qAuction.count()).from(qAuction).leftJoin(qAuction.liveState, qLiveState).where(builder).fetchOne()).orElse(0L);
 
         OrderSpecifier<?>[] orders = getOrderSpecifiers(condition.sort());
         long offset = (long) condition.pageNumber() * condition.pageSize();
 
-        List<Auction> content = queryFactory.selectFrom(qAuction)
-                .leftJoin(qAuction.liveState, qLiveState)
+        List<Auction> content = queryFactory.selectFrom(qAuction).leftJoin(qAuction.liveState, qLiveState).where(builder).offset(offset).limit(condition.pageSize()).orderBy(orders.length > 0 ? orders : new OrderSpecifier[]{qAuction.updatedAt.desc()}).fetch();
+
+        return new PageImpl<>(content, PageRequest.of(condition.pageNumber(), condition.pageSize()), total);
+
+    }
+
+    @Override
+    public Long getEndingSoonAuctionCount(AuctionStatus status, int withinHours) {
+        OffsetDateTime now = OffsetDateTime.now(ZoneId.of("Asia/Seoul"));
+        OffsetDateTime until = now.plusHours(withinHours);
+
+        return queryFactory.select(qAuction.count()).from(qAuction).where(qAuction.status.eq(status), qAuction.deletedYn.eq("N"), qAuction.auctionEndAt.goe(now),    // >= now
+                qAuction.auctionEndAt.loe(until)   // <= now + withinHours
+        ).fetchOne();
+
+
+    }
+
+    @Override
+    public Long getAuctionCount(AuctionStatus status, OffsetDateTime asOf) {
+        BooleanBuilder builder = new BooleanBuilder()
+                .and(qAuction.status.eq(status))
+                .and(qAuction.deletedYn.eq("N"));
+        if (asOf != null) {
+            builder.and(qAuction.updatedAt.loe(asOf));
+        }
+        return queryFactory
+                .select(qAuction.count())
+                .from(qAuction)
                 .where(builder)
-                .offset(offset)
-                .limit(condition.pageSize())
-                .orderBy(orders.length > 0 ? orders : new OrderSpecifier[]{qAuction.updatedAt.desc()})
-                .fetch();
-
-        return new PageImpl<>(content, PageRequest.of(condition.pageNumber(), condition.pageSize()),
-                total);
-
+                .fetchOne();
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(Sort sort) {

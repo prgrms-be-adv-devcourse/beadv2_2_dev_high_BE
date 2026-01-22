@@ -52,6 +52,11 @@ public class OrderController {
         return ApiResponseDto.success(orderService.update(request));
     }
 
+    @PatchMapping("{orderId}/address")
+    public ApiResponseDto<OrderResponse> modifyAddressId(@PathVariable String orderId ,@RequestBody OrderModifyRequest request) {
+        return ApiResponseDto.success(orderService.updateAddress(orderId,request.addressId()));
+    }
+
     @GetMapping("/winning/recommendation")
     public ApiResponseDto<List<WinningOrderRecommendationResponse>> getWinningOrdersForRecommendation(
         @RequestParam List<String> productIds,

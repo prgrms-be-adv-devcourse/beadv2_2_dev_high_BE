@@ -1,12 +1,10 @@
 package com.dev_high.deposit.order.application.event;
 
 import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.deposit.DepositOrderCompletedEvent;
 import com.dev_high.common.kafka.event.payment.PaymentDepositConfirmRequestedEvent;
 import com.dev_high.common.kafka.topics.KafkaTopics;
-import com.dev_high.common.type.DepositType;
 import com.dev_high.deposit.payment.application.DepositPaymentService;
-import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
-import com.dev_high.deposit.payment.application.event.PaymentEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,12 +19,12 @@ public class OrderEventHandler {
     private final KafkaEventPublisher kafkaEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderCreated(OrderEvent.OrderCreated event) {
-        depositPaymentService.createInitialPayment(DepositPaymentDto.CreateCommand.of(event.id(), event.userId(), event.amount()));
+    public void handleOrderConfirmed(OrderEvent.OrderConfirmed event) {
+        kafkaEventPublisher.publish(KafkaTopics.PAYMENT_DEPOSIT_CONFIRM_REQUESTED, PaymentDepositConfirmRequestedEvent.of(event.userId(), event.orderId(), event.type(), event.amount()));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderConfirmed(OrderEvent.OrderConfirmed event) {
-        kafkaEventPublisher.publish(KafkaTopics.PAYMENT_DEPOSIT_CONFIRM_REQUESTED, PaymentDepositConfirmRequestedEvent.of(event.userId(), event.orderId(), DepositType.CHARGE, event.amount()));
+    public void handlerDepositPaid(OrderEvent.OrderCompleted event) {
+        kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE, DepositOrderCompletedEvent.of(event.winningOrderId(), "PAID"));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -57,9 +58,9 @@ public class SettlementRepositoryAdapter implements SettlementRepository {
 
 
     @Override
-    public Page<Settlement> findByStatus(SettlementStatus status,
-                                                          Pageable pageable) {
-        return settlementRepository.findByStatus(status,  pageable);
+    public Page<Settlement> findByStatusIn(Set<SettlementStatus> statuses,
+                                           Pageable pageable) {
+        return settlementRepository.findByStatusIn(statuses,  pageable);
     }
 
 }

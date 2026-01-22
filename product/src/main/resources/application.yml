@@ -16,6 +16,11 @@ spring:
       - optional:configserver:http://localhost:8888
       - optional:file:.env[.properties]
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: 1
 ---
 spring:
   config:

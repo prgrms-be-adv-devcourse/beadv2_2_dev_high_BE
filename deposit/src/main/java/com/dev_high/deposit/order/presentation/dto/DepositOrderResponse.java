@@ -22,7 +22,14 @@ public class DepositOrderResponse {
             DepositOrderStatus status,
 
             @Schema(description = "생성일시")
-            OffsetDateTime createdAt
+            OffsetDateTime createdAt,
+
+            @Schema(description = "사용 예치금액")
+            BigDecimal deposit,
+
+            @Schema(description = "결제금액")
+            BigDecimal paidAmount
+
     ) {
         public static Detail from(DepositOrderDto.Info info) {
             return new Detail(
@@ -30,7 +37,9 @@ public class DepositOrderResponse {
                     info.userId(),
                     info.amount(),
                     info.status(),
-                    info.createdAt()
+                    info.createdAt(),
+                    info.deposit(),
+                    info.paidAmount()
             );
         }
     }

@@ -1,5 +1,8 @@
 package com.dev_high.admin.application;
 
+import com.dev_high.admin.application.dto.DashboardSellerRankItem;
+import com.dev_high.admin.application.dto.DashboardTrendPoint;
+import com.dev_high.admin.application.dto.TrendGroupBy;
 import com.dev_high.admin.domain.AdminRepository;
 import com.dev_high.admin.presentation.dto.OrderAdminSearchFilter;
 import com.dev_high.admin.presentation.dto.SettlementAdminSearchFilter;
@@ -10,15 +13,14 @@ import com.dev_high.order.domain.OrderStatus;
 import com.dev_high.order.domain.WinningOrder;
 import com.dev_high.order.presentation.dto.OrderModifyRequest;
 import com.dev_high.order.presentation.dto.OrderResponse;
+import com.dev_high.settle.domain.group.SettlementGroup;
 import com.dev_high.settle.domain.group.SettlementGroupRepository;
 import com.dev_high.settle.domain.settle.Settlement;
 import com.dev_high.settle.domain.settle.SettlementRepository;
 import com.dev_high.settle.domain.settle.SettlementStatus;
-import com.dev_high.settle.domain.group.SettlementGroup;
-import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
 import com.dev_high.settle.presentation.dto.SettlementGroupResponse;
+import com.dev_high.settle.presentation.dto.SettlementModifyRequest;
 import com.dev_high.settle.presentation.dto.SettlementResponse;
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -30,6 +32,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.*;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -161,4 +167,142 @@ public class AdminService {
         return UserContext.get().userId();
     }
 
+    public Long getOrderCount(OrderStatus status) {
+
+        return adminRepository.countOrders(status);
+    }
+
+    public List<DashboardTrendPoint> getGmvTrend(
+        String from,
+        String to,
+        String groupBy,
+        String timezone
+    ) {
+        ZoneId zone = resolveZone(timezone);
+        OffsetDateTime[] range = resolveRange(from, to, zone);
+        TrendGroupBy by = resolveGroupBy(groupBy);
+        List<DashboardTrendPoint> points = adminRepository.getGmvTrend(
+            range[0],
+            range[1],
+            by,
+            zone
+        );
+        return points;
+    }
+
+    public List<DashboardSellerRankItem> getSellerRank(
+        String from,
+        String to,
+        Integer limit,
+        String timezone
+    ) {
+        ZoneId zone = resolveZone(timezone);
+        OffsetDateTime[] range = resolveMonthRange(from, to, zone);
+        int size = (limit == null || limit <= 0) ? 10 : limit;
+        return adminRepository.getSellerRank(range[0], range[1], size);
+    }
+
+    private static TrendGroupBy resolveGroupBy(String groupBy) {
+        if (groupBy == null || groupBy.isBlank()) {
+            return TrendGroupBy.DAY;
+        }
+        try {
+            return TrendGroupBy.valueOf(groupBy.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return TrendGroupBy.DAY;
+        }
+    }
+
+    private static ZoneId resolveZone(String timezone) {
+        if (timezone == null || timezone.isBlank()) {
+            return ZoneId.of("Asia/Seoul");
+        }
+        try {
+            return ZoneId.of(timezone);
+        } catch (DateTimeException e) {
+            return ZoneId.of("Asia/Seoul");
+        }
+    }
+
+    private static OffsetDateTime[] resolveRange(String from, String to, ZoneId zone) {
+        OffsetDateTime parsedFrom = parseFrom(from, zone);
+        OffsetDateTime parsedTo = parseToExclusive(to, zone);
+
+        if (parsedFrom == null && parsedTo == null) {
+            OffsetDateTime start = LocalDate.now(zone).atStartOfDay(zone).toOffsetDateTime();
+            return new OffsetDateTime[]{start, start.plusDays(1)};
+        }
+        if (parsedFrom == null) {
+            OffsetDateTime base = parsedTo.atZoneSameInstant(zone).toLocalDate().atStartOfDay(zone).toOffsetDateTime();
+            return new OffsetDateTime[]{base, parsedTo};
+        }
+        if (parsedTo == null) {
+            return new OffsetDateTime[]{parsedFrom, OffsetDateTime.now(zone)};
+        }
+        if (parsedFrom.isAfter(parsedTo)) {
+            return new OffsetDateTime[]{parsedTo, parsedFrom};
+        }
+        return new OffsetDateTime[]{parsedFrom, parsedTo};
+    }
+
+    private static OffsetDateTime parseFrom(String value, ZoneId zone) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(value);
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            return LocalDateTime.parse(value).atZone(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            return LocalDate.parse(value).atStartOfDay(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+        return null;
+    }
+
+    private static OffsetDateTime parseToExclusive(String value, ZoneId zone) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(value);
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            return LocalDateTime.parse(value).atZone(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+        try {
+            return LocalDate.parse(value).plusDays(1).atStartOfDay(zone).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+        }
+        return null;
+    }
+
+    private static OffsetDateTime[] resolveMonthRange(String from, String to, ZoneId zone) {
+        OffsetDateTime parsedFrom = parseFrom(from, zone);
+        OffsetDateTime parsedTo = parseToExclusive(to, zone);
+
+        if (parsedFrom == null && parsedTo == null) {
+            OffsetDateTime start = LocalDate.now(zone).withDayOfMonth(1)
+                .atStartOfDay(zone).toOffsetDateTime();
+            return new OffsetDateTime[]{start, OffsetDateTime.now(zone)};
+        }
+        if (parsedFrom == null) {
+            OffsetDateTime base = parsedTo.atZoneSameInstant(zone).toLocalDate().withDayOfMonth(1)
+                .atStartOfDay(zone).toOffsetDateTime();
+            return new OffsetDateTime[]{base, parsedTo};
+        }
+        if (parsedTo == null) {
+            return new OffsetDateTime[]{parsedFrom, OffsetDateTime.now(zone)};
+        }
+        if (parsedFrom.isAfter(parsedTo)) {
+            return new OffsetDateTime[]{parsedTo, parsedFrom};
+        }
+        return new OffsetDateTime[]{parsedFrom, parsedTo};
+    }
 }
