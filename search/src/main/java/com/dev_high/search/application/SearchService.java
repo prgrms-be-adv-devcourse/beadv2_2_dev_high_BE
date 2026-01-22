@@ -9,7 +9,6 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.kafka.event.auction.*;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
-import com.dev_high.search.application.ai.AiKeywordsExtractor;
 import com.dev_high.search.application.dto.ProductAutocompleteResponse;
 import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
@@ -41,7 +40,6 @@ public class SearchService {
     private final SearchRepository searchRepository;
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchClient elasticsearchClient;
-    private final AiKeywordsExtractor aiKeywordsExtractor;
 
     public ProductDocument createProduct(ProductCreateSearchRequestEvent request) {
         ProductDocument document = new ProductDocument(request);
@@ -299,11 +297,9 @@ public class SearchService {
                 ? String.join(", ", document.getCategories())
                 : "";
 
-        List<String> keywords = aiKeywordsExtractor.extractKeywords(document.getDescription(), 8);
-
         return "%s | %s | %s".formatted(
                 document.getProductName(),
-                String.join(" ", keywords),
+                document.getDescription() != null ? document.getDescription() : "",
                 categories
         );
 

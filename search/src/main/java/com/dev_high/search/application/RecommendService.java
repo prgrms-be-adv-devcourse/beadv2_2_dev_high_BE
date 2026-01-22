@@ -35,7 +35,6 @@ public class RecommendService {
     private static final int EMBEDDING_DIMS = 1536;
 
     private static final int LIMIT = 5;
-    private static final int NUM_CANDIDATES_FACTOR = 200;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ElasticsearchClient elasticsearchClient;
@@ -54,9 +53,9 @@ public class RecommendService {
         }
 
         float[] userVector = VectorUtils.meanVector(vectors);
-        VectorUtils.l2NormalizeInPlace(userVector);
 
         List<ProductRecommendResponse> candidates = searchCandidatesByKnn(userVector, wishlistProductIds, userId);
+
         if (candidates.isEmpty()) {
             return fallback(wishlistProductIds, userId);
         }
@@ -97,10 +96,10 @@ public class RecommendService {
                 .average()
                 .orElse(0.0);
 
-        if (avgScore < 0.91) {
+        if (avgScore < 0.88) {
             return RecommendationConfidence.LOW;
         }
-        if (avgScore < 0.95) {
+        if (avgScore < 0.93) {
             return RecommendationConfidence.MID;
         }
         return RecommendationConfidence.HIGH;
@@ -120,21 +119,25 @@ public class RecommendService {
             List<String> wishlistIds,
             String userId
     ) {
-        int k = LIMIT;
-        int numCandidates = Math.max(200, k * NUM_CANDIDATES_FACTOR);
+        int k = LIMIT * LIMIT;
+        int numCandidates = 200;
 
         try {
             SearchRequest req = SearchRequest.of(s -> s
                     .index(INDEX)
-                    .size(k)
+                    .size(LIMIT)
                     .knn(knn -> knn
                             .field("embedding")
                             .queryVector(VectorUtils.toFloatList(userVector))
                             .k(k)
                             .numCandidates(numCandidates)
                     )
+                    .minScore(0.80)
                     .query(q -> q.bool(b -> {
                         b.filter(f -> f.exists(e -> e.field("embedding")));
+                        return b;
+                    }))
+                    .postFilter(pf -> pf.bool(b -> {
                         applyRecommendFilters(b, wishlistIds, userId);
                         return b;
                     }))

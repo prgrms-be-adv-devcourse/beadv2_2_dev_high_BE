@@ -24,23 +24,6 @@ public final class VectorUtils {
         return out;
     }
 
-    public static void l2NormalizeInPlace(float[] v) {
-        double sumSq = 0.0;
-        for (float x : v) {
-            sumSq += (double) x * x;
-        }
-
-        double norm = Math.sqrt(sumSq);
-        if (norm == 0.0) {
-            return;
-        }
-
-        float inv = (float) (1.0 / norm);
-        for (int i = 0; i < v.length; i++) {
-            v[i] *= inv;
-        }
-    }
-
     public static List<Float> toFloatList(float[] arr) {
         List<Float> list = new ArrayList<>(arr.length);
         for (float f : arr) {
