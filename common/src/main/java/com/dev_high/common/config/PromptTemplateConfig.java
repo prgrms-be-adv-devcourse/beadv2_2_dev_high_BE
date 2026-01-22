@@ -163,6 +163,7 @@ public class PromptTemplateConfig {
             - 실사 사진, 스튜디오 조명, 중립 배경
             - 텍스트/워터마크/로고/사람 없음
             - 제품이 한 개만 보이도록
+            - 폭력/무기/선정/미성년/브랜드 노출이 연상되는 표현 금지
             - 1~2문장
             """;
         return new PromptTemplate(template);

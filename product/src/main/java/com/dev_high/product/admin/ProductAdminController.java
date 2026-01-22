@@ -84,8 +84,8 @@ public class ProductAdminController {
         SseEmitter emitter = new SseEmitter(0L);
         var userInfo = com.dev_high.common.context.UserContext.get();
         emitter.onCompletion(() -> {});
-        emitter.onTimeout(() -> {});
-        emitter.onError(ex -> {});
+        emitter.onTimeout(emitter::complete);
+        emitter.onError(emitter::completeWithError);
         productAdminAiService.generateAiProductsAsync(request, userInfo)
             .whenComplete((products, ex) -> {
                 try {
@@ -93,6 +93,8 @@ public class ProductAdminController {
                         emitter.send(SseEmitter.event()
                             .name("failed")
                             .data(Map.of("status", "failed", "error", ex.getMessage())));
+                        emitter.completeWithError(ex);
+                        return;
                     } else {
                         emitter.send(SseEmitter.event()
                             .name("completed")
@@ -100,6 +102,10 @@ public class ProductAdminController {
                     }
                     emitter.complete();
                 } catch (IOException sendError) {
+                    if (ex != null) {
+                        emitter.completeWithError(ex);
+                        return;
+                    }
                     emitter.complete();
                 }
             });
