@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TossPaymentResponse(
@@ -14,6 +15,7 @@ public record TossPaymentResponse(
         String method,
         String status,
         OffsetDateTime requestedAt,
-        OffsetDateTime approvedAt
+        OffsetDateTime approvedAt,
+        List<TossCancel> cancels
 ) {
 }

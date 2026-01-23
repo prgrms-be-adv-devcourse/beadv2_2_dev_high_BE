@@ -78,4 +78,15 @@ public class DepositOrderController {
             return ApiResponseDto.fail("예치금 사용에 실패하였습니다", e.getMessage());
         }
     }
+
+    @Operation(summary = "주문 ID의 주문 취소 처리", description = "주문 ID의 주문 취소 처리")
+    @PostMapping("/orders/cancel")
+    public ApiResponseDto<DepositOrderResponse.Detail> cancelledOrder(@RequestBody @Valid DepositOrderRequest.Cancel request) {
+        log.info("[PaymentOrder API] PATH : /orders/cancled request received. id={}, cancelReason={}", request.id(), request.cancelReason());
+        DepositOrderDto.CancelCommand command = request.toCommand(request.id(), request.cancelReason());
+        DepositOrderDto.Info info = depositOrderService.cancelledOrder(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        log.info("[PaymentOrder API] PATH : /orders/cancled success. orderId={}, amount={}, deposit={}, paidAmount={}, status={}", response.id(), response.amount(), response.deposit(), response.paidAmount(), response.status());
+        return ApiResponseDto.success(response);
+    }
 }

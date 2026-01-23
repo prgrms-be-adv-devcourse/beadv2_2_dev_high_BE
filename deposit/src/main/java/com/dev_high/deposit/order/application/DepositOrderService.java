@@ -108,13 +108,17 @@ public class DepositOrderService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void confirmOrder(DepositOrderDto.ConfirmCommand command) {
+        log.info("[PaymentOrder] confirmOrder start. orderId={}, winningOrderId={}", command.id(), command.winningOrderId());
         DepositOrder order = loadOrder(command.id());
         order.applyConfirmedStatus();
         updateOrderStatusAfterPayment(order);
         orderRepository.save(order);
+        log.info("[PaymentOrder] confirmOrder success. orderId={}, winningOrderId={}", command.id(), command.winningOrderId());
         if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
+            log.info("[PaymentOrder] Applying deposit charge transaction. orderId={}", order.getId());
             applyDepositTransaction(order, DepositType.CHARGE);
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            log.info("[PaymentOrder] Publishing OrderCompleted event. orderId={}, winningOrderId={}", order.getId(), command.winningOrderId());
             applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId(), order.getId()));
         }
     }
@@ -146,6 +150,22 @@ public class DepositOrderService {
         }
     }
 
+    @Transactional
+    public DepositOrderDto.Info cancelledOrder(DepositOrderDto.CancelCommand command) {
+        log.info("[PaymentOrder] cancelledOrder start. orderId={}, cancelReason={}", command.id(), command.cancelReason());
+        DepositOrder order = loadOrder(command.id());
+        paymentService.cancelPayment(DepositPaymentDto.CancelCommand.of(command.id(), command.cancelReason()));
+        order.applyCancelledStatus();
+        if (order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
+            applyDepositTransaction(order, DepositType.DEDUCT);
+        } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            applyDepositTransaction(order, DepositType.REFUND);
+        }
+        orderRepository.save(order);
+        log.info("[PaymentOrder] cancelledOrder success. orderId={}, cancelReason={}, status={}", command.id(), command.cancelReason(), order.getStatus());
+        return DepositOrderDto.Info.from(order);
+    }
+
     private DepositOrder loadOrder(String orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> {
@@ -165,7 +185,7 @@ public class DepositOrderService {
         DepositOrderDto.useDepositCommand command =
         switch (type) {
             case USAGE,REFUND -> command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), type, order.getDeposit());
-            case CHARGE -> command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), type, order.getPaidAmount());
+            case CHARGE,DEDUCT -> command = DepositOrderDto.useDepositCommand.of(order.getUserId(), order.getId(), type, order.getPaidAmount());
             default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
         };
         log.info("[PaymentOrder] requesting deposit usage. orderId={}, userId={}, amount={}", order.getId(), order.getUserId(), order.getDeposit());

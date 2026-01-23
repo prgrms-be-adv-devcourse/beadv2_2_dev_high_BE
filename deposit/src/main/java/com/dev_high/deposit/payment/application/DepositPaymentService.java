@@ -6,6 +6,7 @@ import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentFailureDto;
 import com.dev_high.deposit.payment.application.event.PaymentEvent;
 import com.dev_high.deposit.payment.infrastructure.client.TossPaymentClient;
+import com.dev_high.deposit.payment.infrastructure.client.dto.TossCancel;
 import com.dev_high.deposit.payment.infrastructure.client.dto.TossErrorResponse;
 import com.dev_high.deposit.payment.infrastructure.client.dto.TossPaymentResponse;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
@@ -29,6 +30,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @Service
@@ -134,22 +136,10 @@ public class DepositPaymentService {
     }
 
     private TossPaymentResponse handleConfirmHttpException(HttpStatusCodeException e, DepositPaymentDto.ConfirmCommand command, String userId) {
-        String responseBody = e.getResponseBodyAsString();
-        log.warn("[Payment] Toss payment confirmation failed. orderId={}, httpStatus={}", command.orderId(), e.getStatusCode(), e);
-        try {
-            TossErrorResponse errorResponse = parseTossError(responseBody);
-            String code = errorResponse.error().code();
-            String message = errorResponse.traceId() + " | " + errorResponse.error().message();
-            log.warn("[Payment] Toss error response received. orderId={} Code: {}, Message: {}", command.orderId(), code, message);
-            handlePaymentFailure(command.orderId(), userId, command.amount(),  code, message);
-            throw new IllegalStateException("토스 결제 승인에 실패했습니다: [" + code + "] " + message, e);
-        } catch (Exception jsonEx) {
-            String code = "UNKNOWN";
-            String message = "토스 결제 승인 실패 및 오류 응답 파싱 불가";
-            log.warn("[Payment] Failed to parse Toss error response. orderId={}, body={}", command.orderId(), responseBody, jsonEx);
-            handlePaymentFailure(command.orderId(), userId, command.amount(), code, message);
-            throw new IllegalStateException("토스 결제 승인 실패 및 오류 응답 파싱 불가: " + responseBody, e);
-        }
+        handleTossHttpException(e, command.orderId(), "승인",
+                (code, message) -> handlePaymentFailure(command.orderId(), userId, command.amount(), code, message)
+        );
+        return null;
     }
 
     private TossErrorResponse parseTossError(String responseBody) throws JsonProcessingException {
@@ -175,5 +165,64 @@ public class DepositPaymentService {
         payment.ChangeStatus(DepositPaymentStatus.CONFIRMED_FAILED);
         depositPaymentRepository.save(payment);
         log.warn("[Payment] confirmFailedPayment success. orderId={}", orderId);
+    }
+
+    @Transactional
+    public void cancelPayment(DepositPaymentDto.CancelCommand command) {
+        log.info("[Payment] cancelPayment start. orderId={}, cancelReason={}", command.orderId(), command.cancelReason());
+        DepositPayment payment = loadPayment(command.orderId());
+        payment.applyCancelledStatus();
+        TossPaymentResponse tossPayment = tossPaymentCancel(DepositPaymentDto.CancelRequestCommand.of(payment.getOrderId(), payment.getPaymentKey(), command.cancelReason()));
+        TossCancel tossPaymentCancel = extractCancel(tossPayment);
+        compareAmount(payment.getAmount(), tossPaymentCancel.cancelAmount());
+
+        OffsetDateTime canceledAt = (tossPaymentCancel.canceledAt() != null) ? tossPaymentCancel.canceledAt() : OffsetDateTime.now();
+
+        payment.cancelPayment(canceledAt);
+        DepositPayment savedPayment = depositPaymentRepository.save(payment);
+        log.info("[Payment] cancelPayment success. paymentId={}, orderId={}, amount={}, status={}", savedPayment.getId(), savedPayment.getOrderId(), savedPayment.getAmount(), savedPayment.getStatus());
+    }
+
+    private TossCancel extractCancel(TossPaymentResponse response) {
+        if (response.cancels() == null || response.cancels().isEmpty()) {
+            log.error("[Payment] Toss cancel response has no cancel data. response={}", response);
+            throw new IllegalStateException("토스 결제 취소 응답에 cancel 정보가 없습니다.");
+        }
+        return response.cancels().get(0);
+    }
+
+    private TossPaymentResponse tossPaymentCancel (DepositPaymentDto.CancelRequestCommand command) {
+        try {
+            log.info("[Payment] requesting Toss payment cancel. paymentKey={}, cancelReason={}", command.paymentKey(), command.cancelReason());
+            return tossPaymentClient.cancel(command);
+        } catch (HttpStatusCodeException e) {
+            handleCancelHttpException(e, command);
+            throw e;
+        }
+    }
+
+    private void handleCancelHttpException(HttpStatusCodeException e, DepositPaymentDto.CancelRequestCommand command) {
+        handleTossHttpException(e, command.orderId(), "취소", null);
+    }
+
+    private void handleTossHttpException(HttpStatusCodeException e, String orderId, String actionName, BiConsumer<String, String> failureHandler) {
+        String responseBody = e.getResponseBodyAsString();
+        log.warn("[Payment] Toss payment {} failed. orderId={}, httpStatus={}", actionName, orderId, e.getStatusCode(), e);
+        try {
+            TossErrorResponse errorResponse = parseTossError(responseBody);
+            String code = errorResponse.error().code();
+            String message = errorResponse.traceId() + " | " + errorResponse.error().message();
+            log.warn("[Payment] Toss error response received. orderId={} Code: {}, Message: {}", orderId, code, message);
+            if (failureHandler != null) {
+                failureHandler.accept(code, message);
+            }
+            throw new IllegalStateException("토스 결제 " + actionName + "에 실패했습니다: [" + code + "] " + message, e);
+        } catch (Exception jsonEx) {
+            log.warn("[Payment] Failed to parse Toss error response. orderId={}, body={}", orderId, responseBody, jsonEx);
+            if (failureHandler != null) {
+                failureHandler.accept("UNKNOWN", "토스 오류 응답 파싱 실패");
+            }
+            throw new IllegalStateException("토스 결제 " + actionName + " 실패 (응답 파싱 불가)" + ": " + responseBody, e);
+        }
     }
 }

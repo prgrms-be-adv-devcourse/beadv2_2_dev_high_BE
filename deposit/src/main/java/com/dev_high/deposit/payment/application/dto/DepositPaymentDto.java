@@ -28,13 +28,25 @@ public class DepositPaymentDto {
         }
     }
 
-    public record failCommand(
-            String orderId
+    public record CancelCommand(
+            String orderId,
+            String cancelReason
     ) {
-        public static failCommand of(String orderId) {
-            return new failCommand(orderId);
+        public static CancelCommand of(String orderId, String cancelReason) {
+            return new CancelCommand(orderId, cancelReason);
         }
     }
+
+    public record CancelRequestCommand(
+            String orderId,
+            String paymentKey,
+            String cancelReason
+    ) {
+        public static CancelRequestCommand of(String orderId, String paymentKey, String cancelReason) {
+            return new CancelRequestCommand(orderId, paymentKey, cancelReason);
+        }
+    }
+
 
     public record Info(
             String id,

@@ -61,4 +61,18 @@ public class DepositOrderRequest {
             return DepositOrderDto.ChangeOrderStatusCommand.of(id, status);
         }
     }
+
+    public record Cancel(
+            @Schema(description = "취소할 주문 ID")
+            @NotBlank(message = "주문 ID는 필수 입니다.")
+            String id,
+
+            @Schema(description = "취소 사유")
+            @NotNull(message = "취소 사유는 필수 입니다.")
+            String cancelReason
+    ) {
+        public DepositOrderDto.CancelCommand toCommand(String id, String cancelReason) {
+            return DepositOrderDto.CancelCommand.of(id, cancelReason);
+        }
+    }
 }
