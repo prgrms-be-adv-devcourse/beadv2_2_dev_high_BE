@@ -178,6 +178,16 @@ public class DepositOrderService {
         return DepositOrderDto.Info.from(order);
     }
 
+    @Transactional
+    public DepositOrderDto.Info cancelPendingOrder(DepositOrderDto.CancelPendingCommand command) {
+        log.info("[PaymentOrder] cancelPendingOrder start. orderId={}", command.id());
+        DepositOrder order = loadOrder(command.id());
+        order.applyCancelFendingStatus();
+        orderRepository.save(order);
+        log.info("[PaymentOrder] cancelPendingOrder success. orderId={}, status={}", command.id(), order.getStatus());
+        return DepositOrderDto.Info.from(order);
+    }
+
     private DepositOrder loadOrder(String orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> {
