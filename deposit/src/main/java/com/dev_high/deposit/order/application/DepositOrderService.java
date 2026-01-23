@@ -157,14 +157,18 @@ public class DepositOrderService {
     public DepositOrderDto.Info cancelledOrder(DepositOrderDto.CancelCommand command) {
         log.info("[PaymentOrder] cancelledOrder start. orderId={}, cancelReason={}", command.id(), command.cancelReason());
         DepositOrder order = loadOrder(command.id());
-        paymentService.cancelPayment(DepositPaymentDto.CancelCommand.of(command.id(), command.cancelReason()));
         order.applyCancelledStatus();
         if (order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
             applyDepositTransaction(order, DepositType.DEDUCT);
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
-            applyDepositTransaction(order, DepositType.REFUND);
+            if(order.isDeposit()) {
+                applyDepositTransaction(order, DepositType.REFUND);
+            }
         }
         orderRepository.save(order);
+        if(order.isPayment()) {
+            paymentService.cancelPayment(DepositPaymentDto.CancelCommand.of(command.id(), command.cancelReason()));
+        }
         log.info("[PaymentOrder] cancelledOrder success. orderId={}, cancelReason={}, status={}", command.id(), command.cancelReason(), order.getStatus());
         if (order.getType() == DepositOrderType.ORDER_PAYMENT) {
             log.info("[PaymentOrder] Publishing OrderCancelled event. orderId={}", order.getId());
