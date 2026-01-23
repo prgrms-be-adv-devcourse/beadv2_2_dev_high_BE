@@ -59,7 +59,7 @@ public class OrderService {
     /* 구매 확정 수동 처리 */
     @Transactional
     public OrderResponse update(OrderModifyRequest request) {
-        WinningOrder order = orderRepository.findById(request.id()).orElse(null);
+        WinningOrder order = request.id() !=null?orderRepository.findById(request.id()).orElse(null) : orderRepository.findByPurchaseOrderId(request.purchaseOrderId());
         String adminUserId = resolveAdminUserId();
         if (order == null) {
             throw new CustomException(HttpStatus.NOT_FOUND,"주문이 존재하지 않습니다.");

@@ -97,5 +97,6 @@ public interface OrderJpaRepository extends JpaRepository<WinningOrder, String> 
         String deletedYn
     );
 
+    WinningOrder findByPurchaseOrderId(String purchaseOrderId);
 
 }
