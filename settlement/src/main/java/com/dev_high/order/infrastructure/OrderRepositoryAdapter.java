@@ -105,5 +105,10 @@ public class OrderRepositoryAdapter implements OrderRepository {
         );
     }
 
+    @Override
+    public WinningOrder findByPurchaseOrderId(String purchaseId) {
+        return orderRepository.findByPurchaseOrderId(purchaseId);
+    }
+
 
 }

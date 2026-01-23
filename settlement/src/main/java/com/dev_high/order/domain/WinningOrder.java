@@ -138,6 +138,10 @@ public class WinningOrder {
             this.payYn = "Y";
             this.payCompleteDate = OffsetDateTime.now();
         }
+        if(status==OrderStatus.PAID_CANCEL){
+            this.payYn="N";
+            this.payCompleteDate=null;
+        }
         this.purchaseOrderId = purchaseOrderId;
         this.status = status;
         this.updatedBy = updatedBy;

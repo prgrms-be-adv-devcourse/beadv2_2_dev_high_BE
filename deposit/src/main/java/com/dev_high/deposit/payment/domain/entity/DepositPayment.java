@@ -64,8 +64,11 @@ public class DepositPayment {
     @Column(name = "updated_by", nullable = false, length = 20)
     private String updatedBy;
 
+    @Column(name = "canceled_at")
+    private OffsetDateTime canceledAt;
+
     @Builder
-    public DepositPayment(String orderId, String userId, String paymentKey, String method, BigDecimal amount, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt) {
+    public DepositPayment(String orderId, String userId, String paymentKey, String method, BigDecimal amount, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt, OffsetDateTime canceledAt) {
         this.orderId = orderId;
         this.userId = userId;
         this.paymentKey = paymentKey;
@@ -77,6 +80,7 @@ public class DepositPayment {
         this.approvedAt = approvedAt;
         this.createdBy = userId;
         this.updatedBy = userId;
+        this.canceledAt = canceledAt;
     }
 
     @PrePersist
@@ -106,6 +110,10 @@ public class DepositPayment {
         return this.status == DepositPaymentStatus.READY;
     }
 
+    public boolean isConfirmed() {
+        return this.status == DepositPaymentStatus.CONFIRMED;
+    }
+
     public void confirmPayment(String paymentKey, String method, OffsetDateTime approvedAt, OffsetDateTime requestedAt) {
         this.paymentKey = paymentKey;
         this.status = DepositPaymentStatus.CONFIRMED;
@@ -116,5 +124,15 @@ public class DepositPayment {
 
     public void ChangeStatus(DepositPaymentStatus status) {
         this.status = status;
+    }
+    public void applyCancelledStatus() {
+        if (!isConfirmed()) {
+            throw new IllegalArgumentException("결제승인된 결제가 아닙니다. 현재 상태: " +  this.status);
+        }
+        this.status = DepositPaymentStatus.CANCELED;
+    }
+
+    public void cancelPayment(OffsetDateTime canceledAt) {
+        this.canceledAt = canceledAt;
     }
 }

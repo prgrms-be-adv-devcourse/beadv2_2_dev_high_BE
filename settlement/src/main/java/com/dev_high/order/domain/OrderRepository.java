@@ -47,6 +47,7 @@ public interface OrderRepository {
         Pageable pageable
     );
 
+    WinningOrder findByPurchaseOrderId(String purchaseId);
 
 
 }
