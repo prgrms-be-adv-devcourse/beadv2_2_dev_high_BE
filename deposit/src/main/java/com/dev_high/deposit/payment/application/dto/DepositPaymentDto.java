@@ -40,10 +40,12 @@ public class DepositPaymentDto {
     public record CancelRequestCommand(
             String orderId,
             String paymentKey,
-            String cancelReason
+            String cancelReason,
+            BigDecimal amount,
+            String userId
     ) {
-        public static CancelRequestCommand of(String orderId, String paymentKey, String cancelReason) {
-            return new CancelRequestCommand(orderId, paymentKey, cancelReason);
+        public static CancelRequestCommand of(String orderId, String paymentKey, String cancelReason, BigDecimal amount, String userId) {
+            return new CancelRequestCommand(orderId, paymentKey, cancelReason, amount, userId);
         }
     }
 
