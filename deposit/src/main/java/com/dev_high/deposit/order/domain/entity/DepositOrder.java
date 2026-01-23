@@ -142,6 +142,11 @@ public class DepositOrder {
         return this.status == DepositOrderStatus.COMPLETED;
     }
 
+    public boolean isCancelable() {
+        return List.of(DepositOrderStatus.COMPLETED, DepositOrderStatus.CANCEL_PENDING)
+                .contains(this.status);
+    }
+
     public void applyConfirmedStatus() {
         if (!isConfirmable()) {
             throw new IllegalArgumentException("결제승인처리를 진행할 수 없는 주문 상태입니다: " + this.status);
@@ -156,10 +161,17 @@ public class DepositOrder {
     }
 
     public void applyCancelledStatus() {
-        if (!isCompleted()) {
-            throw new IllegalArgumentException("결제완료된 주문이 아닙니다. 현재 상태: " +  this.status);
+        if (!isCancelable()) {
+            throw new IllegalArgumentException("결제취소처리를 진행할 수 없는 주문 상태입니다. 현재 상태: " +  this.status);
         }
         this.status = DepositOrderStatus.CANCELLED;
+    }
+
+    public void applyCancelFendingStatus() {
+        if (!isCompleted()) {
+            throw new IllegalArgumentException("결제취소대기처리를 진행할 수 없는 주문 상태입니다. 현재 상태: " +  this.status);
+        }
+        this.status = DepositOrderStatus.CANCEL_PENDING;
     }
 
     public void ChangeStatus(DepositOrderStatus status) {

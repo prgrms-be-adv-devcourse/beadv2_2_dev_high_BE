@@ -9,6 +9,7 @@ package com.dev_high.common.type;
  * COMPLETED : 충전 완료 (충전/환불 성공)
  * FAILED : 실패 (결제 실패)
  * CANCELLED : 취소 (사용자 요청에 의한 취소)
+ * CANCEL_PENDING : 취소 대기
  * DEPOSIT_APPLIED_ERROR : 예치금 처리 에러발생
  * PAYMENT_CONFIRMED_ERROR : 결제 승인처리 에러발생
  * */
@@ -20,6 +21,7 @@ public enum DepositOrderStatus {
     COMPLETED,
     FAILED,
     CANCELLED,
+    CANCEL_PENDING,
     DEPOSIT_APPLIED_ERROR,
     PAYMENT_CONFIRMED_ERROR
 }
