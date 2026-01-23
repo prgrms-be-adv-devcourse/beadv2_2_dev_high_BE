@@ -21,12 +21,12 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public Optional<RefreshToken> findByUserId(String userId) {
-        return refreshTokenCrudRepository.findById(userId);
+    public Optional<RefreshToken> findById(String refreshToken) {
+        return refreshTokenCrudRepository.findById(refreshToken);
     }
 
     @Override
-    public void deleteById(String userId) {
-        refreshTokenCrudRepository.deleteById(userId);
+    public void deleteById(String refreshToken) {
+        refreshTokenCrudRepository.deleteById(refreshToken);
     }
 }
