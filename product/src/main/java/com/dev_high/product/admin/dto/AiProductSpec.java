@@ -6,6 +6,8 @@ public record AiProductSpec(
     Category category,
     String title,
     String summary,
+    Long recommendedStartBid,
+    Integer auctionDurationHours,
     Condition condition,
     List<String> features,
     List<String> specs,

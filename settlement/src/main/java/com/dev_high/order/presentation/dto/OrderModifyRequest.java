@@ -8,10 +8,12 @@ public record OrderModifyRequest(
         String id,
         OrderStatus status,
         OffsetDateTime payLimitDate,
+        String purchaseOrderId,
         String addressId
 ) {
-    public OrderModifyRequest(String id ,OrderStatus status , OffsetDateTime payLimitDate)
-        {
-           this(id,status,payLimitDate,null);
-        }
+
+    public OrderModifyRequest(String id, OrderStatus status, OffsetDateTime payLimitDate,String purchaseOrderId) {
+        this(id, status, payLimitDate, purchaseOrderId, null);
+    }
+
 }
