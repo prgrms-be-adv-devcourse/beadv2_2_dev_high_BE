@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 public enum NotificationCategory {
     AUCTION(List.of(Type.AUCTION_NO_BID, Type.AUCTION_CLOSED)),
-    DEPOSIT(List.of(Type.DEPOSIT)),
+    PAYMENT(List.of(Type.PAYMENT_COMPLETED, Type.DEPOSIT_CHARGE_COMPLETED)),
     ORDER(List.of(Type.ORDER_CREATED, Type.ORDER_STARTED, Type.ORDER_COMPLETED, Type.ORDER_CANCELED)),
     PRODUCT(List.of(Type.PRODUCT)),
     SEARCH(List.of(Type.SEARCH)),
@@ -32,7 +32,8 @@ public enum NotificationCategory {
     public enum Type {
         AUCTION_NO_BID("경매 유찰"),
         AUCTION_CLOSED("경매 종료"),
-        DEPOSIT("예치금"),
+        PAYMENT_COMPLETED("주문 결제 완료"),
+        DEPOSIT_CHARGE_COMPLETED("예치금 충전 완료"),
         ORDER_CREATED("주문 생성"),
         ORDER_STARTED("배송중"),
         ORDER_COMPLETED("배송 완료"),

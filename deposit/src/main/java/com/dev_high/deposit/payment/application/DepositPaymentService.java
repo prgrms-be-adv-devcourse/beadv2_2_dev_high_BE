@@ -172,7 +172,7 @@ public class DepositPaymentService {
         log.info("[Payment] cancelPayment start. orderId={}, cancelReason={}", command.orderId(), command.cancelReason());
         DepositPayment payment = loadPayment(command.orderId());
         payment.applyCancelledStatus();
-        TossPaymentResponse tossPayment = tossPaymentCancel(DepositPaymentDto.CancelRequestCommand.of(payment.getOrderId(), payment.getPaymentKey(), command.cancelReason()));
+        TossPaymentResponse tossPayment = tossPaymentCancel(DepositPaymentDto.CancelRequestCommand.of(payment.getOrderId(), payment.getPaymentKey(), command.cancelReason(), payment.getAmount(), payment.getUserId()));
         TossCancel tossPaymentCancel = extractCancel(tossPayment);
         compareAmount(payment.getAmount(), tossPaymentCancel.cancelAmount());
 
@@ -202,7 +202,8 @@ public class DepositPaymentService {
     }
 
     private void handleCancelHttpException(HttpStatusCodeException e, DepositPaymentDto.CancelRequestCommand command) {
-        handleTossHttpException(e, command.orderId(), "취소", null);
+        handleTossHttpException(e, command.orderId(), "취소",
+                (code, message) -> handlePaymentFailure(command.orderId(), command.userId(), command.amount(), code, message));
     }
 
     private void handleTossHttpException(HttpStatusCodeException e, String orderId, String actionName, BiConsumer<String, String> failureHandler) {

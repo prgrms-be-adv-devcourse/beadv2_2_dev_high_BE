@@ -5,6 +5,7 @@ import com.dev_high.common.dto.ApiResponseDto;
 import com.dev_high.common.type.DepositOrderStatus;
 import com.dev_high.common.type.DepositOrderType;
 import com.dev_high.common.type.DepositType;
+import com.dev_high.common.type.NotificationCategory;
 import com.dev_high.common.util.HttpUtil;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.application.event.OrderEvent;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -120,6 +122,7 @@ public class DepositOrderService {
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
             log.info("[PaymentOrder] Publishing OrderCompleted event. orderId={}, winningOrderId={}", order.getId(), command.winningOrderId());
             applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId(), order.getId()));
+            publishOrderNotification(order, order.getType(), "CONFIRM");
         }
     }
 
@@ -154,15 +157,24 @@ public class DepositOrderService {
     public DepositOrderDto.Info cancelledOrder(DepositOrderDto.CancelCommand command) {
         log.info("[PaymentOrder] cancelledOrder start. orderId={}, cancelReason={}", command.id(), command.cancelReason());
         DepositOrder order = loadOrder(command.id());
-        paymentService.cancelPayment(DepositPaymentDto.CancelCommand.of(command.id(), command.cancelReason()));
         order.applyCancelledStatus();
         if (order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
             applyDepositTransaction(order, DepositType.DEDUCT);
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
-            applyDepositTransaction(order, DepositType.REFUND);
+            if(order.isDeposit()) {
+                applyDepositTransaction(order, DepositType.REFUND);
+            }
         }
         orderRepository.save(order);
+        if(order.isPayment()) {
+            paymentService.cancelPayment(DepositPaymentDto.CancelCommand.of(command.id(), command.cancelReason()));
+        }
         log.info("[PaymentOrder] cancelledOrder success. orderId={}, cancelReason={}, status={}", command.id(), command.cancelReason(), order.getStatus());
+        if (order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            log.info("[PaymentOrder] Publishing OrderCancelled event. orderId={}", order.getId());
+            applicationEventPublisher.publishEvent(OrderEvent.OrderCancelled.of(command.cancelReason()));
+            publishOrderNotification(order, order.getType(), "CANCEL");
+        }
         return DepositOrderDto.Info.from(order);
     }
 
@@ -224,7 +236,9 @@ public class DepositOrderService {
             order.ChangeStatus(DepositOrderStatus.DEPOSIT_APPLIED);
         } else {
             order.ChangeStatus(DepositOrderStatus.COMPLETED);
+            log.info("[PaymentOrder] Publishing OrderCompleted event. orderId={}, winningOrderId={}", order.getId(),winningOrderId);
             applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(winningOrderId, order.getId()));
+            publishOrderNotification(order, order.getType(), "CONFIRM");
         }
     }
 
@@ -234,5 +248,30 @@ public class DepositOrderService {
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
             order.ChangeStatus(DepositOrderStatus.COMPLETED);
         }
+    }
+
+    private void publishOrderNotification(DepositOrder order, DepositOrderType oderType, String type) {
+        String message = switch (type) {
+            case "CONFIRM" -> switch (oderType) {
+                case DEPOSIT_CHARGE -> "충전이 완료되었습니다.";
+                case ORDER_PAYMENT -> "결제가 완료되었습니다.";
+            };
+            case "CANCEL" -> switch (oderType) {
+                case DEPOSIT_CHARGE -> "충전이 취소되었습니다.";
+                case ORDER_PAYMENT -> "결제가 취소되었습니다.";
+            };
+            default -> throw new IllegalStateException("허용되지 않는 type 입니다: " + type);
+        };
+        String redirectUrl = switch (oderType) {
+            case DEPOSIT_CHARGE -> "/mypage?tab=0";
+            case ORDER_PAYMENT -> "/mypage?tab=1";
+        };
+
+        NotificationCategory.Type notificationType = switch (oderType) {
+            case DEPOSIT_CHARGE -> NotificationCategory.Type.DEPOSIT_CHARGE_COMPLETED;
+            case ORDER_PAYMENT -> NotificationCategory.Type.PAYMENT_COMPLETED;
+        };
+        log.info("[PaymentOrder] Publishing publishOrderNotification event. orderId={}, oderType={}, type={}, notificationType={}, message={}", order.getId(), oderType, type, notificationType, message);
+        applicationEventPublisher.publishEvent(OrderEvent.OrderNotification.of(List.of(order.getUserId()), message, redirectUrl, notificationType));
     }
 }
