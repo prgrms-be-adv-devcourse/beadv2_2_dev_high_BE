@@ -10,5 +10,8 @@ public record NotificationRequestEvent(
     String redirectUrl,
     NotificationCategory.Type type
 ) {
+    public static NotificationRequestEvent of(List<String> userIds, String message, String redirectUrl, NotificationCategory.Type type) {
+        return new NotificationRequestEvent(userIds, message, redirectUrl, type);
+    }
 
 }
