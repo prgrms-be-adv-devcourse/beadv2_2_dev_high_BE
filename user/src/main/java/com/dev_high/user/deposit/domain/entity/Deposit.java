@@ -69,7 +69,7 @@ public class Deposit {
     public void apply(DepositType type, BigDecimal amount) {
         switch (type) {
             case CHARGE, REFUND -> increaseBalance(amount);
-            case USAGE, PAYMENT, DEPOSIT -> decreaseBalance(amount);
+            case USAGE, PAYMENT, DEPOSIT, DEDUCT -> decreaseBalance(amount);
             default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
         }
     }
@@ -77,7 +77,7 @@ public class Deposit {
     public void compensate(DepositType type, BigDecimal amount) {
         switch (type) {
             case CHARGE, REFUND -> decreaseBalance(amount);
-            case USAGE, PAYMENT, DEPOSIT -> increaseBalance(amount);
+            case USAGE, PAYMENT, DEPOSIT, DEDUCT -> increaseBalance(amount);
             default -> throw new IllegalArgumentException("지원하지 않는 예치금 유형: " + type);
         }
     }

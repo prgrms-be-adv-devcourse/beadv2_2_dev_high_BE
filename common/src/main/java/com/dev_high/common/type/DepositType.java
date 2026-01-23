@@ -19,10 +19,11 @@ public enum DepositType {
     USAGE,
     PAYMENT,
     DEPOSIT,
-    REFUND;
+    REFUND,
+    DEDUCT;
 
     private static final List<DepositType> INCOME_GROUP = List.of(CHARGE, REFUND);
-    private static final List<DepositType> OUTCOME_GROUP = List.of(USAGE, PAYMENT, DEPOSIT);
+    private static final List<DepositType> OUTCOME_GROUP = List.of(USAGE, PAYMENT, DEPOSIT, DEDUCT);
 
     public List<DepositType> getRelatedTypes() {
         if (INCOME_GROUP.contains(this)) {

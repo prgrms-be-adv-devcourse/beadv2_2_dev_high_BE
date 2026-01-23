@@ -71,6 +71,15 @@ public class DepositOrderDto {
         }
     }
 
+    public record CancelCommand(
+            String id,
+            String cancelReason
+    ) {
+        public static CancelCommand of(String id, String cancelReason) {
+            return new CancelCommand(id, cancelReason);
+        }
+    }
+
     public record Info(
             String id,
             String userId,
