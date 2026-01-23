@@ -14,6 +14,7 @@ import com.dev_high.search.application.dto.ProductSearchResponse;
 import com.dev_high.common.dto.SimilarProductResponse;
 import com.dev_high.search.domain.ProductDocument;
 import com.dev_high.search.domain.SearchRepository;
+import com.dev_high.search.exception.SearchDocumentNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
+
 import org.springframework.ai.embedding.EmbeddingModel;
 import com.dev_high.search.util.VectorUtils;
 
@@ -48,15 +50,15 @@ public class SearchService {
         return searchRepository.save(document);
     }
 
-    public ProductDocument updateByProduct(ProductUpdateSearchRequestEvent request) {
-        ProductDocument document = searchRepository.findByProductId(request.productId()).orElseThrow(RuntimeException::new);
+    public ProductDocument updateByProduct(ProductUpdateSearchRequestEvent request) throws SearchDocumentNotFoundException {
+        ProductDocument document = retryFind(request.productId(), 3, 500);
         document.updateByProduct(request);
         embedding(document);
         return searchRepository.save(document);
     }
 
-    public ProductDocument updateByAuction(AuctionUpdateSearchRequestEvent request) {
-        ProductDocument document = searchRepository.findByProductId(request.productId()).orElseThrow(RuntimeException::new);
+    public ProductDocument updateByAuction(AuctionUpdateSearchRequestEvent request) throws SearchDocumentNotFoundException {
+        ProductDocument document = retryFind(request.productId(), 3, 500);
         document.updateByAuction(request);
         return searchRepository.save(document);
     }
@@ -98,7 +100,6 @@ public class SearchService {
                         if (maxStartPrice != null) n.lte(maxStartPrice.doubleValue());
                         return n;
                     })))
-                    .should(s -> s.bool(bb -> bb.mustNot(m -> m.exists(e -> e.field("startPrice")))))
                     .minimumShouldMatch("1")
             ));
         }
@@ -111,7 +112,6 @@ public class SearchService {
                         if (startTo != null) d.lte(startTo.toString());
                         return d;
                     })))
-                    .should(s -> s.bool(bb -> bb.mustNot(m -> m.exists(e -> e.field("auctionStartAt")))))
                     .minimumShouldMatch("1")
             ));
         }
@@ -304,5 +304,19 @@ public class SearchService {
                 categories
         );
 
+    }
+
+    private ProductDocument retryFind(String productId, int maxRetry,long delayMs) throws SearchDocumentNotFoundException {
+
+        for (int i = 0; i < maxRetry; i++) {
+            Optional<ProductDocument> doc = searchRepository.findByProductId(productId);
+            if (doc.isPresent()) {
+                return doc.get();
+            } try {
+                Thread.sleep(delayMs);
+            } catch (InterruptedException ignored) {}
+        }
+
+        throw new SearchDocumentNotFoundException(productId);
     }
 }
