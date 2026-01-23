@@ -163,6 +163,10 @@ public class DepositOrderService {
         }
         orderRepository.save(order);
         log.info("[PaymentOrder] cancelledOrder success. orderId={}, cancelReason={}, status={}", command.id(), command.cancelReason(), order.getStatus());
+        if (order.getType() == DepositOrderType.ORDER_PAYMENT) {
+            log.info("[PaymentOrder] Publishing OrderCancelled event. orderId={}", order.getId());
+            applicationEventPublisher.publishEvent(OrderEvent.OrderCancelled.of(command.cancelReason()));
+        }
         return DepositOrderDto.Info.from(order);
     }
 

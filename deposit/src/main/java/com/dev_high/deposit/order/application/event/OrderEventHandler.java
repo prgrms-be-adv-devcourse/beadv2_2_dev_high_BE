@@ -19,4 +19,9 @@ public class OrderEventHandler {
     public void handlerDepositPaid(OrderEvent.OrderCompleted event) {
         kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE, DepositOrderCompletedEvent.of(event.winningOrderId(), event.orderId(), "PAID"));
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlerPaymentPaid(OrderEvent.OrderCancelled event) {
+        kafkaEventPublisher.publish(KafkaTopics.DEPOSIT_ORDER_COMPLETE_RESPONSE, DepositOrderCompletedEvent.of("", event.orderId(), "PAID_CANCEL"));
+    }
 }

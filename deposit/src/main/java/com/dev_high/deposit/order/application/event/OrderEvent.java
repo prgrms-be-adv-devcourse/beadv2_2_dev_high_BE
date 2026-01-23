@@ -9,4 +9,12 @@ public class OrderEvent {
             return new OrderCompleted(winningOrderId, orderId);
         }
     }
+
+    public record OrderCancelled(
+        String orderId
+    ) {
+        public static OrderCancelled of(String orderId) {
+            return new OrderCancelled(orderId);
+        }
+    }
 }
