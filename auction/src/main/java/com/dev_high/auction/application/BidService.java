@@ -7,6 +7,9 @@ import com.dev_high.auction.domain.idclass.AuctionParticipationId;
 import com.dev_high.auction.infrastructure.bid.AuctionLiveStateJpaRepository;
 import com.dev_high.auction.infrastructure.bid.AuctionParticipationJpaRepository;
 import com.dev_high.common.context.UserContext;
+import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.auction.AuctionBidSuccessEvent;
+import com.dev_high.common.kafka.topics.KafkaTopics;
 import com.dev_high.exception.*;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +31,15 @@ public class BidService {
   private final AuctionWebSocketService auctionWebSocketService;
   private final AuctionRankingService auctionRankingService;
   private final AuctionSummaryCacheService auctionSummaryCacheService;
+  private final KafkaEventPublisher kafkaEventPublisher;
+  private final AuctionBidBanService auctionBidBanService;
 
   private static final int MAX_ATTEMPTS = 2;
 
   public AuctionParticipationResponse createOrUpdateAuctionBid(String auctionId,
       BigDecimal bidPrice) {
     String userId = UserContext.get().userId();
+    auctionBidBanService.assertNotBanned(auctionId, userId);
 
     AuctionParticipation participation = auctionParticipationJpaRepository.findById(
             new AuctionParticipationId(userId, auctionId))
@@ -76,6 +82,7 @@ public class BidService {
         auctionRankingService.registerBidder(auctionId, userId);
         auctionRankingService.incrementBidCount(auctionId);
         broadcastBid(history);
+        publishFraudCheckRequest(history);
       }
     } catch (Exception e) {
       log.warn("Post-bid handling failed: {}", e.getMessage());
@@ -140,5 +147,15 @@ public class BidService {
 
   private void broadcastBid(AuctionBidHistory history) {
     auctionWebSocketService.broadcastBidSuccess(AuctionBidMessage.fromEntity(history));
+  }
+
+  private void publishFraudCheckRequest(AuctionBidHistory history) {
+    AuctionBidSuccessEvent event = new AuctionBidSuccessEvent(
+        history.getAuctionId(),
+        history.getUserId(),
+        history.getBid(),
+        history.getCreatedAt()
+    );
+    kafkaEventPublisher.publish(KafkaTopics.AUCTION_BID_FRAUD_CHECK_REQUESTED, event);
   }
 }

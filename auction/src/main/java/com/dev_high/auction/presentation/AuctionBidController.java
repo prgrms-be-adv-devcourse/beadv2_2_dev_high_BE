@@ -1,5 +1,6 @@
 package com.dev_high.auction.presentation;
 
+import com.dev_high.auction.application.AuctionBidBanService;
 import com.dev_high.auction.application.BidRecordService;
 import com.dev_high.auction.application.BidService;
 import com.dev_high.auction.presentation.dto.AuctionBidRequest;
@@ -23,6 +24,7 @@ public class AuctionBidController {
 
     private final BidService bidService;
     private final BidRecordService bidRecordService;
+    private final AuctionBidBanService auctionBidBanService;
 
     @Operation(summary = "경매 참여 현황 조회", description = "본인의 경매 참여 현황을 전체 조회합니다.")
     @GetMapping("participation/me")
@@ -64,6 +66,15 @@ public class AuctionBidController {
                 bidService.createOrUpdateAuctionBid(auctionId, request.toBidCommand()));
     }
 
+    @Operation(summary = "경매 입찰 제한 상태 조회", description = "부정 입찰 의심으로 인한 제한 상태를 조회합니다.")
+    @GetMapping("{auctionId}/bid-ban")
+    public ApiResponseDto<?> getBidBanStatus(
+            @Parameter(description = "경매 ID", required = true) @PathVariable String auctionId) {
+
+        String userId = UserContext.get().userId();
+        return ApiResponseDto.success(auctionBidBanService.getStatus(auctionId, userId));
+    }
+
     @Operation(summary = "경매 입찰 포기", description = "auctionId에 해당하는 경매에서 본인의 입찰을 포기합니다. 보증금은 즉시 환급")
     @PutMapping("{auctionId}/withdraw")
     public ApiResponseDto<?> withdrawAuctionBid(
@@ -95,5 +106,3 @@ public class AuctionBidController {
         return ApiResponseDto.success(bidRecordService.getBidHistory(auctionId, pageable));
     }
 }
-
-
