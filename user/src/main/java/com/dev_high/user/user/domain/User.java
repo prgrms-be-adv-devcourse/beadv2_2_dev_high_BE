@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import lombok.Getter;
 
 @Entity
-@Table(name = "\"user\"", schema = "\"user\"")
+@Table(name = "user", schema = "user")
 @Getter
 public class User {
 
@@ -38,11 +38,14 @@ public class User {
     private UserStatus userStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private OAuthProvider provider;
 
-    @Column(name = "provider_user_id", nullable = false, length = 100)
+    @Column(name = "provider_user_id", length = 100)
     private String providerUserId;
+
+    @Column(name = "provider_token", length = 300)
+    private String providerToken;
 
     @Column(name = "deleted_yn",  nullable = false)
     private String deletedYn;
@@ -50,13 +53,13 @@ public class User {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @Column(name = "created_by", length = 50)
+    @Column(name = "created_by", length = 50, nullable = false)
     private String createdBy;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @Column(name = "updated_by", length = 50)
+    @Column(name = "updated_by", length = 50, nullable = false)
     private String updatedBy;
 
     @Column(name = "updated_at", nullable = false)
@@ -89,13 +92,14 @@ public class User {
         this.phoneNumber = phoneNumber;
     }
 
-    public User(String email, String name, String nickname, String phoneNumber, OAuthProvider provider, String providerUserId) {
+    public User(String email, String name, String nickname, String phoneNumber, OAuthProvider provider, String providerUserId, String providerToken) {
         this.email = email;
         this.name = name;
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
         this.provider = provider;
         this.providerUserId = providerUserId;
+        this.providerToken = providerToken;
     }
 
     public void updateUser(UpdateUserCommand command) {
@@ -114,13 +118,15 @@ public class User {
         this.deletedYn = "Y";
     }
 
-    public void updateStatus(UserStatus status) {
-        this.userStatus = status;
-    }
-
     public void link(SocialProfileResponse profile) {
         this.provider = profile.provider();
         this.providerUserId = profile.providerUserId();
+        this.providerToken = profile.providerToken();
     }
 
+    public void unlink() {
+        this.provider = null;
+        this.providerUserId = null;
+        this.providerToken = null;
+    }
 }

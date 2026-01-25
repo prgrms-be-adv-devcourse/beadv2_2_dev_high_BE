@@ -64,7 +64,8 @@ public class UserDomainService {
                 socialProfileResponse.nickname(),
                 socialProfileResponse.phoneNumber(),
                 socialProfileResponse.provider(),
-                socialProfileResponse.providerUserId()
+                socialProfileResponse.providerUserId(),
+                socialProfileResponse.providerToken()
 
         );
 
