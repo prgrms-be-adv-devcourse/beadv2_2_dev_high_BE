@@ -30,9 +30,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
-
 import org.springframework.ai.embedding.EmbeddingModel;
 import com.dev_high.search.util.VectorUtils;
+import com.dev_high.search.util.EmbeddingTextPreprocessor;
 
 @AllArgsConstructor
 @Service
@@ -136,10 +136,14 @@ public class SearchService {
 
                 b.should(s -> s.match(mp -> mp.field("description").query(kw).boost(0.2f)));
 
-                if (len >= 3) {
+                if (len >= 3 && len <= 10) {
                     b.should(s -> s.match(mp -> mp.field("productName.ngram")
                             .query(qNoSpace)
-                            .minimumShouldMatch(len <= 4 ? "1" : len <= 7 ? "40%" : "60%")
+                            .minimumShouldMatch(
+                                    len <= 4 ? "1"
+                                    : len <= 7 ? "40%"
+                                    : "60%"
+                            )
                             .boost(0.05f)));
                 }
 
@@ -294,16 +298,39 @@ public class SearchService {
     }
 
     private String buildEmbeddingText(ProductDocument document) {
-        String categories = document.getCategories() != null
-                ? String.join(", ", document.getCategories())
-                : "";
+        StringBuilder sb = new StringBuilder();
 
-        return "%s | %s | %s".formatted(
-                document.getProductName(),
-                document.getDescription() != null ? document.getDescription() : "",
-                categories
-        );
+        appendLine(sb, "상품명", document.getProductName());
 
+        if (document.getCategories() != null && !document.getCategories().isEmpty()) {
+            appendLine(sb, "카테고리", String.join(", ", document.getCategories()));
+        }
+
+        String descriptionForEmbedding = EmbeddingTextPreprocessor.preprocess(document.getDescription());
+
+        appendLine(sb, "설명", descriptionForEmbedding);
+
+        return sb.toString().trim();
+
+    }
+
+    private void appendLine(StringBuilder sb, String label, String value) {
+        if (value == null) {
+            return;
+        }
+
+        String v = value.trim();
+        if (v.isBlank()) {
+            return;
+        }
+
+        if (!sb.isEmpty()) {
+            sb.append('\n');
+        }
+
+        sb.append(label)
+            .append(": ")
+            .append(v);
     }
 
     private ProductDocument retryFind(String productId, int maxRetry,long delayMs) throws SearchDocumentNotFoundException {

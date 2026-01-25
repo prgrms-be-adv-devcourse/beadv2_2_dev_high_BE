@@ -1,11 +1,9 @@
 package com.dev_high.user.user.application;
 
+import com.dev_high.user.auth.application.AuthService;
 import com.dev_high.user.seller.application.SellerService;
 import com.dev_high.user.user.application.dto.*;
-import com.dev_high.user.user.domain.Address;
-import com.dev_high.user.user.domain.AddressRepository;
-import com.dev_high.user.user.domain.User;
-import com.dev_high.user.user.domain.UserRepository;
+import com.dev_high.user.user.domain.*;
 import com.dev_high.user.user.exception.AddressNotFoundException;
 import com.dev_high.user.user.exception.AddressNotOwnedException;
 import com.dev_high.user.user.exception.UserAlreadyExistsException;
@@ -31,6 +29,7 @@ public class UserService {
     private final UserDomainService userDomainService;
     private final ApplicationEventPublisher publisher;
     private final AddressRepository addressRepository;
+    private final AuthService authService;
 
     @Transactional
     public ApiResponseDto<UserResponse> create(CreateUserCommand command){
@@ -104,6 +103,11 @@ public class UserService {
         roles.stream()
                 .filter(roleName -> !roleName.equals("SELLER"))
                 .forEach(roleName -> userDomainService.revokeRoleFromUser(user, roleName));
+
+        if(user.getProvider() != null && user.getProviderToken() != null) {
+            authService.unlink(user.getProvider(), user.getProviderToken());
+            user.unlink();
+        }
 
         user.remove();
         return ApiResponseDto.success(

@@ -38,7 +38,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
-    private final SocialOAuthServiceFactory socialOAuthServiceFactory; // Changed from GoogleOAuthService
+    private final SocialOAuthServiceFactory socialOAuthServiceFactory;
     private final OAuthStateContext oAuthStateContext;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -182,9 +182,8 @@ public class AuthService {
             oAuthStateContext.setState(request.state());
         }
 
-        String accessToken = socialOAuthService.getAccessToken(request.code());
-        SocialProfileResponse socialProfile = socialOAuthService.getProfile(accessToken);
-
+        OAuthTokenResponse authTokenResponse = socialOAuthService.getTokens(request.code());
+        SocialProfileResponse socialProfile = socialOAuthService.getProfile(authTokenResponse);
         Optional<User> userOptional = userRepository.findByProviderAndProviderUserIdAndDeletedYn(
                         socialProfile.provider(),
                         socialProfile.providerUserId(),
@@ -213,9 +212,6 @@ public class AuthService {
         String accessToken = jwtProvider.generateAccessToken(user.getId(), roles);
         String refreshToken = jwtProvider.generateRefreshToken(user.getId());
 
-        log.info("accessToken: {}", accessToken);
-        log.info("refreshToken: {}", refreshToken);
-
         refreshTokenRepository.save(refreshToken, user.getId(), refreshTokenExpiration);
         addRefreshTokenToCookie(response, refreshToken);
 
@@ -225,5 +221,10 @@ public class AuthService {
                 "로그인에 성공했습니다.",
                 loginResponse
         );
+    }
+
+    public void unlink(OAuthProvider provider, String refreshToken) {
+        SocialOAuthService socialOAuthService = socialOAuthServiceFactory.getService(provider);
+        socialOAuthService.unlink(refreshToken);
     }
 }
