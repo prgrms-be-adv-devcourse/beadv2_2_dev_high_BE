@@ -54,4 +54,13 @@ public class PaymentsAdminController {
         Page<DepositPaymentFailureHistoryResponse.Detail> response = infos.map(DepositPaymentFailureHistoryResponse.Detail::from);
         return ApiResponseDto.success(response);
     }
+
+    @Operation(summary = "전체 결제 주문 조회", description = "전체 결제 조회")
+    @GetMapping("/payments/order")
+    public ApiResponseDto<Page<DepositOrderResponse.Detail>> searchOrder(@RequestBody @Valid DepositOrderRequest.search request, Pageable pageable) {
+        DepositOrderDto.SearchOrderCommand command = request.toCommand(request.id(), request.userId(), request.status(), request.type(), request.createdAt());
+        Page<DepositOrderDto.Info> infos = depositOrderService.search(command, pageable);
+        Page<DepositOrderResponse.Detail> response = infos.map(DepositOrderResponse.Detail::from);
+        return ApiResponseDto.success(response);
+    }
 }
