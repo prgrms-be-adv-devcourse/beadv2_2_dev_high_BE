@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class DepositOrderRequest {
     public record CreatePayment(
@@ -103,11 +103,11 @@ public class DepositOrderRequest {
             DepositOrderType type,
 
             @Schema(description = "생성일")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime createdAt
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate createdDate
     ){
-        public DepositOrderDto.SearchOrderCommand toCommand(String id, String userId, DepositOrderStatus status, DepositOrderType type, OffsetDateTime createdAt) {
-            return DepositOrderDto.SearchOrderCommand.of(id, userId, status, type, createdAt);
+        public DepositOrderDto.SearchOrderCommand toCommand(String id, String userId, DepositOrderStatus status, DepositOrderType type, LocalDate createdDate) {
+            return DepositOrderDto.SearchOrderCommand.of(id, userId, status, type, createdDate);
         }
     }
 }
