@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class DepositPaymentRequest {
     public record Create(
@@ -63,9 +63,9 @@ public class DepositPaymentRequest {
             @Schema(description = "결제 수단")
             String method,
 
-            @Schema(description = "요청일시")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime requestedAt,
+            @Schema(description = "요청일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate requestedDate,
 
             @Schema(description = "상태")
             DepositPaymentStatus status,
@@ -73,24 +73,24 @@ public class DepositPaymentRequest {
             @Schema(description = "승인번호")
             String approvalNum,
 
-            @Schema(description = "승인일시")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime approvedAt,
+            @Schema(description = "승인일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate approvedDate,
 
-            @Schema(description = "생성일시")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime createdAt,
+            @Schema(description = "생성일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate createdDate,
 
-            @Schema(description = "수정일시")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime updatedAt,
+            @Schema(description = "수정일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate updatedDate,
 
-            @Schema(description = "취소일시")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            OffsetDateTime canceledAt
+            @Schema(description = "취소일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate canceledDate
     ) {
-        public DepositPaymentDto.SearchPaymentCommand toCommand(String orderId, String userId, String method, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime canceledAt) {
-            return DepositPaymentDto.SearchPaymentCommand.of(orderId, userId, method, requestedAt, status, approvalNum, approvedAt, createdAt, updatedAt, canceledAt);
+        public DepositPaymentDto.SearchPaymentCommand toCommand(String orderId, String userId, String method, LocalDate requestedDate, DepositPaymentStatus status, String approvalNum, LocalDate approvedDate, LocalDate createdDate, LocalDate updatedDate, LocalDate canceledDate) {
+            return DepositPaymentDto.SearchPaymentCommand.of(orderId, userId, method, requestedDate, status, approvalNum, approvedDate, createdDate, updatedDate, canceledDate);
         }
     }
 }
