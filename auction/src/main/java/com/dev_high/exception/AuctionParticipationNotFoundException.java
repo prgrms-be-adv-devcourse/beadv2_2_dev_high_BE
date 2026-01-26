@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class AuctionParticipationNotFoundException extends CustomException {
     public AuctionParticipationNotFoundException() {
-        super(HttpStatus.NOT_FOUND, "참여 기록이 없습니다.");
+        super(HttpStatus.NOT_FOUND, "참여 기록을 찾을 수 없습니다.");
     }
 }
