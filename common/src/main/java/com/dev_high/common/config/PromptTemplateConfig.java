@@ -198,13 +198,12 @@ public class PromptTemplateConfig {
 [해석 규칙(매우 중요)]
 - currentBid = recentBidsJson[0] (이번 입찰)
 - prevBid = recentBidsJson[1] (직전 BID_SUCCESS, 존재할 때)
-- startBid는 recentBidsJson이 0~1건일 때만 참고한다. startBid가 "N/A"면 startBid를 사용하지 마.
-- 숫자 파싱이 불가능하거나, prevBid가 없어서 비교가 불가능하거나, 시간 계산이 애매하면 해당 조건은 false로 둔다(오탐 방지).
-
+- startBid는 recentBidsJson이 0~1건일 때나 prevBid가 없을 때 참고한다. startBid가 "N/A"면 startBid를 사용하지 마.
+- 숫자 파싱이 불가능하거나, 판정이 애매하면 해당 조건은 false로 둔다(오탐 방지).
 
 [판정 계산(반드시 각각 계산)]
 A. priceJump (가격 점프)
-- prevBid가 존재하고 두 bidPrice를 숫자로 변환 가능할 때만 계산한다.
+- prevBid혹은 startBid가 존재하고 숫자로 변환 가능할 때만 계산한다.
 - currentBid.bidPrice >= 3 * prevBid.bidPrice 이면 true, 아니면 false.
 
 
@@ -213,7 +212,6 @@ B. tooFrequent (단기간 잦은 입찰)
 - 5번째 레코드가 존재하고, (가장 최근 bidAt - 5번째 bidAt) <= 20 이면 true, 아니면 false.
 - bidAt이 없거나 정수가 아니면 false.
 
-
 C. consecutiveTop (최고가 연속 갱신)
 - prevBid가 존재하고, currentBid.userId == prevBid.userId 가 명확하면 true, 아니면 false.
 
@@ -221,9 +219,9 @@ C. consecutiveTop (최고가 연속 갱신)
 [이유 선택 규칙(매우 중요)]
 - 세 조건이 여러 개 true일 수 있다. 반드시 아래 우선순위로 reason을 1개만 선택한다.
 1) priceJump가 true면 reason="급격한 가격 점프"
-2) else if consecutiveTop이 true면 reason="최고가 연속 갱신"
-3) else if tooFrequent가 true면 reason="단기간 잦은 입찰"
-4) else reason="" (suspected=false)
+2) consecutiveTop이 true면 reason="최고가 연속 갱신"
+3) tooFrequent가 true면 reason="단기간 잦은 입찰"
+4) reason="" (suspected=false)
 
 [출력 규칙]
 - 출력은 반드시 JSON 한 개 객체만. JSON 외 텍스트 금지. 코드블록 금지.

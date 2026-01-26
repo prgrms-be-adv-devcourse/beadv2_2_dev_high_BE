@@ -50,9 +50,6 @@ public class AuctionBidFraudService {
         String startBid = recentBids.size() <= 1 ? findStartBid(event.auctionId()) : null;
 
         AuctionBidFraudAiResult result = aiService.assess(
-            event.auctionId(),
-            event.userId(),
-            event.bidPrice() == null ? null : event.bidPrice().toPlainString(),
             startBid,
             recentBids
         );
