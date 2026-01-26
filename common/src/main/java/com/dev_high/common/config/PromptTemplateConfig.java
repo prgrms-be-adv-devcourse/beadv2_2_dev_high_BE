@@ -207,11 +207,11 @@ public class PromptTemplateConfig {
 - banMinutes: 1~30 정수, suspected=false면 0
 
 [필수 출력 JSON]
-{
+{{
   "suspected": false,
   "reason": "",
   "banMinutes": 0
-}
+}}
 """;
         return new PromptTemplate(template);
     }
