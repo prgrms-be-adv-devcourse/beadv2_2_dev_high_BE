@@ -58,7 +58,7 @@ public class PaymentsAdminController {
     @Operation(summary = "전체 결제 주문 조회", description = "전체 결제 주문 조회")
     @GetMapping("/payments/order")
     public ApiResponseDto<Page<DepositOrderResponse.Summary>> searchOrder(@ModelAttribute DepositOrderRequest.search request, Pageable pageable) {
-        DepositOrderDto.SearchOrderCommand command = request.toCommand(request.id(), request.userId(), request.status(), request.type(), request.createdAt());
+        DepositOrderDto.SearchOrderCommand command = request.toCommand(request.id(), request.userId(), request.status(), request.type(), request.createdDate());
         Page<DepositOrderDto.Info> infos = depositOrderService.search(command, pageable);
         Page<DepositOrderResponse.Summary> response = infos.map(DepositOrderResponse.Summary::from);
         return ApiResponseDto.success(response);
@@ -67,7 +67,7 @@ public class PaymentsAdminController {
     @Operation(summary = "전체 결제 조회", description = "전체 결제 조회")
     @GetMapping("/payments")
     public ApiResponseDto<Page<DepositPaymentResponse.Summary>> searchPayment(@ModelAttribute DepositPaymentRequest.searchPayment request, Pageable pageable) {
-        DepositPaymentDto.SearchPaymentCommand command = request.toCommand(request.orderId(), request.userId(), request.method(), request.requestedAt(), request.status(), request.approvalNum(), request.approvedAt(), request.createdAt(), request.updatedAt(), request.canceledAt());
+        DepositPaymentDto.SearchPaymentCommand command = request.toCommand(request.orderId(), request.userId(), request.method(), request.requestedDate(), request.status(), request.approvalNum(), request.approvedDate(), request.createdDate(), request.updatedDate(), request.canceledDate());
         Page<DepositPaymentDto.Info> infos = paymentService.search(command, pageable);
         Page<DepositPaymentResponse.Summary> response = infos.map(DepositPaymentResponse.Summary::from);
         return ApiResponseDto.success(response);

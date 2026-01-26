@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -98,10 +99,10 @@ public class DepositOrderDto {
             String userId,
             DepositOrderStatus status,
             DepositOrderType type,
-            OffsetDateTime createdAt
+            LocalDate createdDate
     ) {
-        public static SearchOrderCommand of(String id, String userId, DepositOrderStatus status, DepositOrderType type, OffsetDateTime createdAt) {
-            return new SearchOrderCommand(id, userId, status, type, createdAt);
+        public static SearchOrderCommand of(String id, String userId, DepositOrderStatus status, DepositOrderType type, LocalDate createdDate) {
+            return new SearchOrderCommand(id, userId, status, type, createdDate);
         }
     }
 
@@ -110,7 +111,7 @@ public class DepositOrderDto {
             String userId,
             List<DepositOrderStatus> status,
             List<DepositOrderType> type,
-            OffsetDateTime createdAt,
+            LocalDate createdDate,
             int pageNumber,
             int pageSize,
             Sort sort
@@ -123,7 +124,7 @@ public class DepositOrderDto {
                    command.userId,
                    status,
                    type,
-                   command.createdAt,
+                   command.createdDate,
                    pageable
            );
        }
@@ -133,7 +134,7 @@ public class DepositOrderDto {
                String userId,
                List<DepositOrderStatus> status,
                List<DepositOrderType> type,
-               OffsetDateTime createdAt,
+               LocalDate createdDate,
                Pageable pageable
        ) {
            int pageNumber = pageable != null ? pageable.getPageNumber() : 0;
@@ -146,7 +147,7 @@ public class DepositOrderDto {
                    StringUtils.hasText(userId) ? userId : null,
                    status,
                    type,
-                   createdAt,
+                   createdDate,
                    pageNumber,
                    pageSize,
                    sort

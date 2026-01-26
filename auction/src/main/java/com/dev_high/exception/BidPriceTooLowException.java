@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 public class BidPriceTooLowException extends CustomException {
 
     public BidPriceTooLowException() {
-        super(HttpStatus.BAD_REQUEST, "입찰가가 현재 가격보다 낮습니다.");
+        super(HttpStatus.BAD_REQUEST, "현재 최고 입찰가보다 높은 금액으로 다시 입찰해 주세요.");
     }
 
     public BidPriceTooLowException(String errorCode, String message) {

@@ -5,6 +5,7 @@ import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import com.dev_high.deposit.order.domain.entity.QDepositOrder;
 import com.dev_high.deposit.order.domain.repository.DepositOrderRepository;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,6 +60,13 @@ public class DepositOrderRepositoryAdapter implements DepositOrderRepository {
         }
         if (filter.type() != null) {
             builder.and(qDepositOrder.type.in(filter.type()));
+        }
+        if (filter.createdDate() != null) {
+            ZoneOffset KST = ZoneOffset.of("+09:00");
+            OffsetDateTime start = filter.createdDate().atStartOfDay().atOffset(KST);
+            OffsetDateTime end = start.plusDays(1);
+            builder.and(qDepositOrder.createdAt.goe(start));
+            builder.and(qDepositOrder.createdAt.lt(end));
         }
         long total = Optional.ofNullable(queryFactory.select(qDepositOrder.count()).from(qDepositOrder).where(builder).fetchOne()).orElse(0L);
 
