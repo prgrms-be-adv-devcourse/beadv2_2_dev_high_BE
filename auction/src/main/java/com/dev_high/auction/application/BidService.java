@@ -15,6 +15,7 @@ import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -63,7 +64,7 @@ public class BidService {
           history = placeBid(participation, liveState, bidPrice);
 
           break; // 성공 시 루프 종료
-        } catch (OptimisticLockException e) {
+        } catch (OptimisticLockException | OptimisticLockingFailureException e) {
           if (attempts == 0) {
             bidRecordService.recordHistory(
                 new AuctionBidHistory(auctionId, bidPrice, userId, BidType.BID_FAIL_LOCK));
