@@ -1,5 +1,6 @@
 package com.dev_high.deposit.order.domain.repository;
 
+import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,4 +15,6 @@ public interface DepositOrderRepository {
     Page<DepositOrder> findByUserId(String userId, Pageable pageable);
 
     boolean existsById(String orderId);
+
+    Page<DepositOrder> search(DepositOrderDto.SearchFilter filter);
 }

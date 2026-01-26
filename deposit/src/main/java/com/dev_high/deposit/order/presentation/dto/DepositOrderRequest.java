@@ -1,13 +1,16 @@
 package com.dev_high.deposit.order.presentation.dto;
 
+import com.dev_high.common.type.DepositOrderType;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.common.type.DepositOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 public class DepositOrderRequest {
     public record CreatePayment(
@@ -83,6 +86,28 @@ public class DepositOrderRequest {
     ) {
         public DepositOrderDto.CancelPendingCommand toCommand(String id) {
             return DepositOrderDto.CancelPendingCommand.of(id);
+        }
+    }
+
+    public record search(
+            @Schema(description = "주문 ID")
+            String id,
+
+            @Schema(description = "사용자 ID")
+            String userId,
+
+            @Schema(description = "주문 상태")
+            DepositOrderStatus status,
+
+            @Schema(description = "주문 타입")
+            DepositOrderType type,
+
+            @Schema(description = "생성일")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            OffsetDateTime createdAt
+    ){
+        public DepositOrderDto.SearchOrderCommand toCommand(String id, String userId, DepositOrderStatus status, DepositOrderType type, OffsetDateTime createdAt) {
+            return DepositOrderDto.SearchOrderCommand.of(id, userId, status, type, createdAt);
         }
     }
 }
