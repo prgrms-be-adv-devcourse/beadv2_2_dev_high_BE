@@ -1,5 +1,6 @@
 package com.dev_high.deposit.order.presentation.dto;
 
+import com.dev_high.common.type.DepositOrderType;
 import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.common.type.DepositOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,12 +22,17 @@ public class DepositOrderResponse {
             @Schema(description = "생성일시")
             OffsetDateTime createdAt,
 
+            @Schema(description = "수정일시")
+            OffsetDateTime updatedAt,
+
             @Schema(description = "사용 예치금액")
             BigDecimal deposit,
 
             @Schema(description = "결제금액")
-            BigDecimal paidAmount
+            BigDecimal paidAmount,
 
+            @Schema(description = "타입")
+            DepositOrderType type
     ) {
         public static Detail from(DepositOrderDto.Info info) {
             return new Detail(
@@ -34,8 +40,61 @@ public class DepositOrderResponse {
                     info.amount(),
                     info.status(),
                     info.createdAt(),
+                    info.updatedAt(),
                     info.deposit(),
-                    info.paidAmount()
+                    info.paidAmount(),
+                    info.type()
+            );
+        }
+    }
+
+    public record Summary(
+            @Schema(description = "예치금 주문 ID")
+            String id,
+
+            @Schema(description = "사용자 ID")
+            String userId,
+
+            @Schema(description = "금액")
+            BigDecimal amount,
+
+            @Schema(description = "상태")
+            DepositOrderStatus status,
+
+            @Schema(description = "생성일시")
+            OffsetDateTime createdAt,
+
+            @Schema(description = "생성자")
+            String createdBy,
+
+            @Schema(description = "수정일시")
+            OffsetDateTime updatedAt,
+
+            @Schema(description = "수정자")
+            String updatedBy,
+
+            @Schema(description = "사용 예치금액")
+            BigDecimal deposit,
+
+            @Schema(description = "결제금액")
+            BigDecimal paidAmount,
+
+            @Schema(description = "타입")
+            DepositOrderType type
+    ) {
+        public static Summary from(DepositOrderDto.Info info) {
+            return new Summary(
+                    info.id(),
+                    info.userId(),
+                    info.amount(),
+                    info.status(),
+                    info.createdAt(),
+                    info.createdBy(),
+                    info.updatedAt(),
+                    info.updatedBy(),
+                    info.deposit(),
+                    info.paidAmount(),
+                    info.type()
             );
         }
     }

@@ -11,6 +11,7 @@ import com.dev_high.deposit.order.application.dto.DepositOrderDto;
 import com.dev_high.deposit.order.application.event.OrderEvent;
 import com.dev_high.deposit.order.domain.entity.DepositOrder;
 import com.dev_high.deposit.order.domain.repository.DepositOrderRepository;
+import com.dev_high.deposit.order.presentation.dto.DepositOrderResponse;
 import com.dev_high.deposit.payment.application.DepositPaymentService;
 import com.dev_high.deposit.payment.application.dto.DepositPaymentDto;
 import lombok.RequiredArgsConstructor;
@@ -186,6 +187,17 @@ public class DepositOrderService {
         orderRepository.save(order);
         log.info("[PaymentOrder] cancelPendingOrder success. orderId={}, status={}", command.id(), order.getStatus());
         return DepositOrderDto.Info.from(order);
+    }
+
+    @Transactional
+    public Page<DepositOrderDto.Info> search(DepositOrderDto.SearchOrderCommand command, Pageable pageable) {
+        log.info("[PaymentOrder] search start.");
+        DepositOrderDto.SearchFilter filter = DepositOrderDto.SearchFilter.of(command, pageable);
+        Page<DepositOrderDto.Info> result = orderRepository
+                .search(filter)
+                .map(DepositOrderDto.Info::from);
+        log.info("[PaymentOrder] search success.");
+        return result;
     }
 
     private DepositOrder loadOrder(String orderId) {
