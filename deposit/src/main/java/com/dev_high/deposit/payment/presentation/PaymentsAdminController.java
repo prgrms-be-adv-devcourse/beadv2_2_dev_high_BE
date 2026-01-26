@@ -67,7 +67,7 @@ public class PaymentsAdminController {
     @Operation(summary = "전체 결제 조회", description = "전체 결제 조회")
     @GetMapping("/payments")
     public ApiResponseDto<Page<DepositPaymentResponse.Summary>> searchPayment(@ModelAttribute DepositPaymentRequest.searchPayment request, Pageable pageable) {
-        DepositPaymentDto.SearchPaymentCommand command = request.toCommand(request.orderId(), request.userId(), request.method(), request.requestedAt(), request.status(), request.approvalNum(), request.approvedAt(), request.createdAt(), request.updatedAt(), request.canceledAt());
+        DepositPaymentDto.SearchPaymentCommand command = request.toCommand(request.orderId(), request.userId(), request.method(), request.requestedDate(), request.status(), request.approvalNum(), request.approvedDate(), request.createdDate(), request.updatedDate(), request.canceledDate());
         Page<DepositPaymentDto.Info> infos = paymentService.search(command, pageable);
         Page<DepositPaymentResponse.Summary> response = infos.map(DepositPaymentResponse.Summary::from);
         return ApiResponseDto.success(response);

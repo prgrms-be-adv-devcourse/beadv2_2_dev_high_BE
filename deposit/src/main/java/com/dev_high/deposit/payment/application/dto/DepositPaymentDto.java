@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -57,16 +58,16 @@ public class DepositPaymentDto {
             String orderId,
             String userId,
             String method,
-            OffsetDateTime requestedAt,
+            LocalDate requestedDate,
             DepositPaymentStatus status,
             String approvalNum,
-            OffsetDateTime approvedAt,
-            OffsetDateTime createdAt,
-            OffsetDateTime updatedAt,
-            OffsetDateTime canceledAt
+            LocalDate approvedDate,
+            LocalDate createdDate,
+            LocalDate updatedDate,
+            LocalDate canceledDate
     ) {
-        public static SearchPaymentCommand of(String orderId, String userId, String method, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime canceledAt) {
-            return new SearchPaymentCommand(orderId, userId, method, requestedAt, status, approvalNum, approvedAt, createdAt, updatedAt, canceledAt);
+        public static SearchPaymentCommand of(String orderId, String userId, String method, LocalDate requestedDate, DepositPaymentStatus status, String approvalNum, LocalDate approvedDate, LocalDate createdDate, LocalDate updatedDate, LocalDate canceledDate) {
+            return new SearchPaymentCommand(orderId, userId, method, requestedDate, status, approvalNum, approvedDate, createdDate, updatedDate, canceledDate);
         }
     }
 
@@ -74,13 +75,13 @@ public class DepositPaymentDto {
             String orderId,
             String userId,
             String method,
-            OffsetDateTime requestedAt,
+            LocalDate requestedDate,
             List<DepositPaymentStatus> status,
             String approvalNum,
-            OffsetDateTime approvedAt,
-            OffsetDateTime createdAt,
-            OffsetDateTime updatedAt,
-            OffsetDateTime canceledAt ,
+            LocalDate approvedDate,
+            LocalDate createdDate,
+            LocalDate updatedDate,
+            LocalDate canceledDate,
             int pageNumber,
             int pageSize,
             Sort sort
@@ -91,13 +92,13 @@ public class DepositPaymentDto {
                    command.orderId,
                    command.userId,
                    command.method,
-                   command.requestedAt,
+                   command.requestedDate,
                    status,
                    command.approvalNum,
-                   command.approvedAt,
-                   command.createdAt,
-                   command.updatedAt,
-                   command.canceledAt,
+                   command.approvedDate,
+                   command.createdDate,
+                   command.updatedDate,
+                   command.canceledDate,
                    pageable
            );
        }
@@ -106,13 +107,13 @@ public class DepositPaymentDto {
                String orderId,
                String userId,
                String method,
-               OffsetDateTime requestedAt,
+               LocalDate requestedDate,
                List<DepositPaymentStatus> status,
                String approvalNum,
-               OffsetDateTime approvedAt,
-               OffsetDateTime createdAt,
-               OffsetDateTime updatedAt,
-               OffsetDateTime canceledAt,
+               LocalDate approvedDate,
+               LocalDate createdDate,
+               LocalDate updatedDate,
+               LocalDate canceledDate,
                Pageable pageable
        ) {
            int pageNumber = pageable != null ? pageable.getPageNumber() : 0;
@@ -124,13 +125,13 @@ public class DepositPaymentDto {
                    StringUtils.hasText(orderId) ? orderId : null,
                    StringUtils.hasText(userId) ? userId : null,
                    StringUtils.hasText(method) ? method : null,
-                   requestedAt,
+                   requestedDate,
                    status,
                    StringUtils.hasText(approvalNum) ? approvalNum : null,
-                   approvedAt,
-                   createdAt,
-                   updatedAt,
-                   canceledAt,
+                   approvedDate,
+                   createdDate,
+                   updatedDate,
+                   canceledDate,
                    pageNumber,
                    pageSize,
                    sort
