@@ -154,7 +154,7 @@ spec:
               value: >
                 -Duser.timezone=Asia/Seoul
                 -Xmx128m
-                -XX:MaxMetaspaceSize=128m
+                -XX:MaxMetaspaceSize=160m
                 -XX:MaxDirectMemorySize=32m
                 -XX:ReservedCodeCacheSize=24m
                  
@@ -186,4 +186,4 @@ spec:
               memory: "256Mi"
             limits:
               cpu: "500m"
-              memory: "384Mi"
+              memory: "416Mi"
