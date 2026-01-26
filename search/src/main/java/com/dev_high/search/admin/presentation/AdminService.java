@@ -6,6 +6,7 @@ import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductUpdateSearchRequestEvent;
 import com.dev_high.search.application.SearchService;
 import com.dev_high.search.domain.ProductDocument;
+import com.dev_high.search.exception.SearchDocumentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -67,13 +68,21 @@ public class AdminService {
 
 
     public ApiResponseDto<ProductDocument> updateByProduct(ProductUpdateSearchRequestEvent request) {
-        ProductDocument document = searchService.updateByProduct(request);
-        return ApiResponseDto.success(document);
+        try {
+            ProductDocument document = searchService.updateByProduct(request);
+            return ApiResponseDto.success(document);
+        } catch (SearchDocumentNotFoundException e) {
+            return ApiResponseDto.fail(e.getMessage());
+        }
     }
 
     public ApiResponseDto<ProductDocument> updateByAuction(AuctionUpdateSearchRequestEvent request) {
-        ProductDocument document = searchService.updateByAuction(request);
-        return ApiResponseDto.success(document);
+        try {
+            ProductDocument document = searchService.updateByAuction(request);
+            return ApiResponseDto.success(document);
+        } catch (SearchDocumentNotFoundException e) {
+            return ApiResponseDto.fail(e.getMessage());
+        }
     }
 
     public ApiResponseDto<Void> deleteByProduct(String productId) {

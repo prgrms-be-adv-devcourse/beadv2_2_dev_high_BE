@@ -38,7 +38,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
-    private final SocialOAuthServiceFactory socialOAuthServiceFactory; // Changed from GoogleOAuthService
+    private final SocialOAuthServiceFactory socialOAuthServiceFactory;
     private final OAuthStateContext oAuthStateContext;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -113,10 +113,10 @@ public class AuthService {
         Claims claims = jwtProvider.parseToken(token);
         String userId = claims.getSubject();
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(userId)
+        RefreshToken refreshToken = refreshTokenRepository.findById(token)
                 .orElseThrow(RefreshTokenNotFoundException::new);
 
-        if(!refreshToken.getToken().equals(token)) {
+        if(!refreshToken.getUserId().equals(userId)) {
             throw new RefreshTokenMismatchException();
         }
 
@@ -134,9 +134,8 @@ public class AuthService {
     public ApiResponseDto<Void> logout(String refreshToken, HttpServletResponse response) {
         if (refreshToken != null) {
             try {
-                Claims claims = jwtProvider.parseToken(refreshToken);
-                String userId = claims.getSubject();
-                refreshTokenRepository.deleteById(userId);
+                jwtProvider.parseToken(refreshToken);
+                refreshTokenRepository.deleteById(refreshToken);
             } catch (Exception e) {
                 log.warn("JWT 검증 실패: {}", e.getMessage(), e);
             }
@@ -183,11 +182,9 @@ public class AuthService {
             oAuthStateContext.setState(request.state());
         }
 
-        String accessToken = socialOAuthService.getAccessToken(request.code());
-        SocialProfileResponse socialProfile = socialOAuthService.getProfile(accessToken);
-
-        Optional<User> userOptional =
-                userRepository.findByProviderAndProviderUserIdAndDeletedYn(
+        OAuthTokenResponse authTokenResponse = socialOAuthService.getTokens(request.code());
+        SocialProfileResponse socialProfile = socialOAuthService.getProfile(authTokenResponse);
+        Optional<User> userOptional = userRepository.findByProviderAndProviderUserIdAndDeletedYn(
                         socialProfile.provider(),
                         socialProfile.providerUserId(),
                         "N"
@@ -198,8 +195,7 @@ public class AuthService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
         } else {
-            Optional<User> existingUser =
-                    userRepository.findByEmailAndDeletedYn(socialProfile.email(), "N");
+            Optional<User> existingUser = userRepository.findByEmailAndDeletedYn(socialProfile.email(), "N");
             if (existingUser.isPresent()) {
                 user = existingUser.get();
                 user.link(socialProfile);
@@ -216,10 +212,7 @@ public class AuthService {
         String accessToken = jwtProvider.generateAccessToken(user.getId(), roles);
         String refreshToken = jwtProvider.generateRefreshToken(user.getId());
 
-        log.info("accessToken: {}", accessToken);
-        log.info("refreshToken: {}", refreshToken);
-
-        refreshTokenRepository.save(user.getId(), refreshToken, refreshTokenExpiration);
+        refreshTokenRepository.save(refreshToken, user.getId(), refreshTokenExpiration);
         addRefreshTokenToCookie(response, refreshToken);
 
         LoginResponse loginResponse = new LoginResponse(accessToken, user.getId(), user.getNickname(), roles);
@@ -228,5 +221,10 @@ public class AuthService {
                 "로그인에 성공했습니다.",
                 loginResponse
         );
+    }
+
+    public void unlink(OAuthProvider provider, String refreshToken) {
+        SocialOAuthService socialOAuthService = socialOAuthServiceFactory.getService(provider);
+        socialOAuthService.unlink(refreshToken);
     }
 }

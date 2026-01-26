@@ -14,16 +14,16 @@ import org.springframework.data.redis.core.TimeToLive;
 public class RefreshToken {
 
     @Id
-    private String userId;
-
     private String token;
+
+    private String userId;
 
     @TimeToLive
     private Long ttl; // 초 단위 TTL
 
-    public RefreshToken(String userId, String token, Long ttl) {
-        this.userId = userId;
+    public RefreshToken(String token, String userId, Long ttl) {
         this.token = token;
+        this.userId = userId;
         this.ttl = ttl;
     }
 }
