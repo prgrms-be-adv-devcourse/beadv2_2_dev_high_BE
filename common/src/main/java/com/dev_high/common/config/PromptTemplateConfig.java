@@ -179,37 +179,40 @@ public class PromptTemplateConfig {
     @Bean
     public PromptTemplate auctionBidFraudTemplate() {
         String template = """
-            너는 경매 부정 입찰 탐지 전문가다.
-            아래 입찰 이력과 현재 입찰 정보를 보고 부정 의심 여부를 판단해.
+너는 경매 부정 입찰 탐지 전문가다.
 
-            [판단 기준]
-            - 가격 점프: 직전 최고가 대비 과도한 상승(대략 3배 이상)일 때 의심.
-            - 너무 잦은 입찰: 동일 사용자가 짧은 시간(예: 20초 내 5회) 동안 반복 입찰할 때 의심.
-            - 본인이 최고호가인데 계속 올리는 패턴: 동일 사용자가 연속으로 최고가 갱신을 2회 이상 시도할 때 의심.
-            - recentBidsJson이 0~1건일 때만 시작가(startBid) 대비 과도한 첫 입찰 점프 여부를 참고해.
-            - 위 기준을 참고하되 과도한 오탐은 피하고, 확실할 때만 suspected=true.
+[입력]
+- auctionId: {auctionId}
+- userId: {userId}
+- bidPrice: {bidPrice}
+- startBid: {startBid}
+- recentBidsJson: {recentBidsJson}
 
-            [출력 규칙]
-            - 출력은 반드시 JSON 한 개 객체만. JSON 이외의 텍스트는 절대 출력하지 마.
-            - suspected: true/false
-            - reason: 한국어 2~8자 내의 간결한 문구로, 의심 기준을 반영해 구체적으로 작성해.
-              (예: "단기간 잦은 입찰", "급격한 가격 점프", "최고가 연속 갱신")
-            - banMinutes: 1~30 사이 정수
+[해석 규칙(매우 중요)]
+- recentBidsJson은 최신순이며, 0번이 가장 최근 BID_SUCCESS다.
+- 직전 최고가는 recentBidsJson[1].bidPrice (존재할 때)로 정의한다.
+- startBid는 recentBidsJson이 0~1건일 때만 참고한다. startBid가 "N/A"면 startBid를 사용하지 마.
+- 시간/횟수 계산이 애매하면 suspected=false로 둔다(오탐 방지).
 
-            [입력]
-            - auctionId: {auctionId}
-            - userId: {userId}
-            - bidPrice: {bidPrice}
-            - startBid: {startBid}
-            - recentBidsJson: {recentBidsJson}
+[판단 기준(엄격)]
+- 가격 점프: recentBidsJson[1].bidPrice 대비 bidPrice가 3배 이상일 때만 suspected=true.
+- 너무 잦은 입찰: recentBidsJson에서 userId가 20초 내 5회 이상 등장하는 것이 '명확히' 보일 때만 suspected=true.
+- 최고가 연속 갱신: recentBidsJson에서 userId가 연속 2회 이상 등장하는 것이 '명확히' 보일 때만 suspected=true.
+- 위 조건이 하나도 확실하지 않으면 suspected=false.
 
-            [필수 출력 JSON 스키마]
-            {{
-              "suspected": false,
-              "reason": "",
-              "banMinutes": 0
-            }}
-            """;
+[출력 규칙]
+- 출력은 반드시 JSON 한 개 객체만. JSON 외 텍스트 금지.
+- suspected: true/false
+- reason: 2~8자 한국어 (급격한 가격 점프/단기간 잦은 입찰/최고가 연속 갱신)
+- banMinutes: 1~30 정수, suspected=false면 0
+
+[필수 출력 JSON]
+{
+  "suspected": false,
+  "reason": "",
+  "banMinutes": 0
+}
+""";
         return new PromptTemplate(template);
     }
 
