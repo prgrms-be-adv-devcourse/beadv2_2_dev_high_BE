@@ -6,6 +6,7 @@ import com.dev_high.auction.presentation.dto.AuctionRequest;
 import com.dev_high.common.context.UserContext;
 import com.dev_high.common.kafka.KafkaEventEnvelope;
 import com.dev_high.common.kafka.KafkaEventPublisher;
+import com.dev_high.common.kafka.event.auction.AuctionBidSuccessEvent;
 import com.dev_high.common.kafka.event.auction.AuctionCreateRequestEvent;
 import com.dev_high.common.kafka.event.product.ProductCreateSearchRequestEvent;
 import com.dev_high.common.kafka.event.auction.AuctionUpdateSearchRequestEvent;
@@ -35,6 +36,7 @@ public class AuctionEventListener {
 
     private final KafkaEventPublisher eventPublisher;
     private final AuctionService auctionService;
+    private final AuctionBidFraudService auctionBidFraudService;
 
     private final BidRecordService recordService;
 
@@ -148,6 +150,20 @@ public class AuctionEventListener {
             throw new RuntimeException();
         } finally {
             UserContext.clear();
+        }
+    }
+
+    @KafkaListener(topics = KafkaTopics.AUCTION_BID_FRAUD_CHECK_REQUESTED)
+    public void fraudCheck(KafkaEventEnvelope<?> envelope, ConsumerRecord<?, ?> record) {
+        AuctionBidSuccessEvent val = JsonUtil.fromPayload(envelope.payload(),
+            AuctionBidSuccessEvent.class);
+        try {
+            auctionBidFraudService.checkAndBan(val);
+        } catch (TransientDataAccessException | NetworkException e) {
+            log.warn("일시적 오류 발생, 재시도: {}, 메시지: {}", e.getClass().getSimpleName(), envelope.payload());
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException();
         }
     }
 

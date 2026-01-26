@@ -80,6 +80,14 @@ public class DepositOrderDto {
         }
     }
 
+    public record CancelPendingCommand(
+            String id
+    ) {
+        public static CancelPendingCommand of(String id) {
+            return new CancelPendingCommand(id);
+        }
+    }
+
     public record Info(
             String id,
             String userId,

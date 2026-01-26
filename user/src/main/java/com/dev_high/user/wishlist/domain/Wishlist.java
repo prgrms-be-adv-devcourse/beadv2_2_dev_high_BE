@@ -8,7 +8,7 @@ import lombok.Getter;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "wishlist", schema = "\"user\"")
+@Table(name = "wishlist", schema = "user")
 @Getter
 public class Wishlist {
 

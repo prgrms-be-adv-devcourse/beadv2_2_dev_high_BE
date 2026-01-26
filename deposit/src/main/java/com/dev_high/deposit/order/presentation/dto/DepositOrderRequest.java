@@ -75,4 +75,14 @@ public class DepositOrderRequest {
             return DepositOrderDto.CancelCommand.of(id, cancelReason);
         }
     }
+
+    public record CancelPending(
+            @Schema(description = "취소할 주문 ID")
+            @NotBlank(message = "주문 ID는 필수 입니다.")
+            String id
+    ) {
+        public DepositOrderDto.CancelPendingCommand toCommand(String id) {
+            return DepositOrderDto.CancelPendingCommand.of(id);
+        }
+    }
 }

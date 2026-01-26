@@ -89,4 +89,15 @@ public class DepositOrderController {
         log.info("[PaymentOrder API] PATH : /orders/cancled success. orderId={}, amount={}, deposit={}, paidAmount={}, status={}", response.id(), response.amount(), response.deposit(), response.paidAmount(), response.status());
         return ApiResponseDto.success(response);
     }
+
+    @Operation(summary = "주문 ID의 주문 취소 대기 처리", description = "주문 ID의 주문 취소 대기 처리")
+    @PostMapping("/orders/cancel-pending")
+    public ApiResponseDto<DepositOrderResponse.Detail> cancelPendingOrder(@RequestBody @Valid DepositOrderRequest.CancelPending request) {
+        log.info("[PaymentOrder API] PATH : /orders/cancel-pending request received. id={}", request.id());
+        DepositOrderDto.CancelPendingCommand command = request.toCommand(request.id());
+        DepositOrderDto.Info info = depositOrderService.cancelPendingOrder(command);
+        DepositOrderResponse.Detail response = DepositOrderResponse.Detail.from(info);
+        log.info("[PaymentOrder API] PATH : /orders/cancel-pending success. id={}", request.id());
+        return ApiResponseDto.success(response);
+    }
 }
