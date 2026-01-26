@@ -73,7 +73,7 @@ public class AuctionBidFraudAiService {
                 Map<String, Object> row = new HashMap<>();
                 row.put("userId", bid.getUserId());
                 row.put("bidPrice", bid.getBid());
-                row.put("bidAt", bid.getCreatedAt());
+                row.put("bidAt", bid.getCreatedAt().toEpochSecond());
                 return row;
             }).toList());
         } catch (Exception e) {

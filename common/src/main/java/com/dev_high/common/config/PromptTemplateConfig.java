@@ -182,26 +182,45 @@ public class PromptTemplateConfig {
 너는 경매 부정 입찰 탐지 전문가다.
 
 [입력]
-- auctionId: {auctionId}
-- userId: {userId}
-- bidPrice: {bidPrice}
 - startBid: {startBid}
 - recentBidsJson: {recentBidsJson}
 
+
+[recentBidsJson 필드 정의(매우 중요)]
+- recentBidsJson[i].userId
+- recentBidsJson[i].bidPrice # 숫자 문자열 (예: "12000")
+- recentBidsJson[i].bidAt # epoch seconds (정수, 초 단위)
+
+
 [해석 규칙(매우 중요)]
 - recentBidsJson은 최신순이며, 0번이 가장 최근 BID_SUCCESS다.
-- 직전 최고가는 recentBidsJson[1].bidPrice (존재할 때)로 정의한다.
+- currentBid = recentBidsJson[0] 으로 정의한다. (이번 입찰)
+- 직전 최고가(prevBid)는 recentBidsJson[1] (존재할 때)로 정의한다.
 - startBid는 recentBidsJson이 0~1건일 때만 참고한다. startBid가 "N/A"면 startBid를 사용하지 마.
 - 시간/횟수 계산이 애매하면 suspected=false로 둔다(오탐 방지).
 
+
 [판단 기준(엄격)]
-- 가격 점프: recentBidsJson[1].bidPrice 대비 bidPrice가 3배 이상일 때만 suspected=true.
-- 너무 잦은 입찰: recentBidsJson에서 userId가 20초 내 5회 이상 등장하는 것이 '명확히' 보일 때만 suspected=true.
-- 최고가 연속 갱신: recentBidsJson에서 userId가 연속 2회 이상 등장하는 것이 '명확히' 보일 때만 suspected=true.
+1) 가격 점프
+- prevBid가 존재할 때만 비교한다.
+- currentBid.bidPrice >= 3 * prevBid.bidPrice 일 때만 suspected=true.
+
+2) 너무 잦은 입찰
+- recentBidsJson에서 currentBid.userId 와 같은 레코드들의 bidAt(초)을 사용한다.
+- '20초 내 5회 이상'이 '명확히' 보일 때만 suspected=true.
+- 판단 방법(명확히):
+- currentBid.userId 의 레코드를 최신순으로 봤을 때, 5번째 레코드가 존재하고
+- (가장 최근 bidAt - 5번째 bidAt) <= 20 이면 '20초 내 5회'로 본다.
+- 위 조건을 충족하는 것이 확실하지 않으면 suspected=false.
+
+3) 최고가 연속 갱신
+- recentBidsJson[1]이 존재하고
+- currentBid.userId == recentBidsJson[1].userId 가 '명확히' 보일 때만 suspected=true.
+
 - 위 조건이 하나도 확실하지 않으면 suspected=false.
 
 [출력 규칙]
-- 출력은 반드시 JSON 한 개 객체만. JSON 외 텍스트 금지.
+- 출력은 반드시 JSON 한 개 객체만. JSON 외 텍스트 금지. 코드블록 금지.
 - suspected: true/false
 - reason: 2~8자 한국어 (급격한 가격 점프/단기간 잦은 입찰/최고가 연속 갱신)
 - banMinutes: 1~30 정수, suspected=false면 0
