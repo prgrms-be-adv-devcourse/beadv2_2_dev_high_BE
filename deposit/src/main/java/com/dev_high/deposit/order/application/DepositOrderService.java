@@ -120,6 +120,7 @@ public class DepositOrderService {
         if(order.getType() == DepositOrderType.DEPOSIT_CHARGE) {
             log.info("[PaymentOrder] Applying deposit charge transaction. orderId={}", order.getId());
             applyDepositTransaction(order, DepositType.CHARGE);
+            publishOrderNotification(order, order.getType(), "CONFIRM");
         } else if(order.getType() == DepositOrderType.ORDER_PAYMENT) {
             log.info("[PaymentOrder] Publishing OrderCompleted event. orderId={}, winningOrderId={}", order.getId(), command.winningOrderId());
             applicationEventPublisher.publishEvent(OrderEvent.OrderCompleted.of(command.winningOrderId(), order.getId()));
