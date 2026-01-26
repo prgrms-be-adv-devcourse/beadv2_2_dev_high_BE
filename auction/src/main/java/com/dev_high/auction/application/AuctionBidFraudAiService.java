@@ -35,9 +35,6 @@ public class AuctionBidFraudAiService {
     ) {
         try {
             Prompt prompt = auctionBidFraudTemplate.create(Map.ofEntries(
-                Map.entry("auctionId", safe(auctionId)),
-                Map.entry("userId", safe(userId)),
-                Map.entry("bidPrice", safe(bidPrice)),
                 Map.entry("startBid", safe(startBid)),
                 Map.entry("recentBidsJson", toJson(recentBids))
             ));
@@ -61,7 +58,7 @@ public class AuctionBidFraudAiService {
     }
 
     private String safe(Object value) {
-        return value == null ? "" : value.toString();
+        return value == null ? "N/A" : value.toString();
     }
 
     private String toJson(List<AuctionBidHistory> recentBids) {
