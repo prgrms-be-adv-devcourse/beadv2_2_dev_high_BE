@@ -227,7 +227,7 @@ public class ProductAdminAiService {
         OpenAiImageOptions options = OpenAiImageOptions.builder()
             .width(1024)
             .height(1024)
-            .quality("low")
+            .quality("high")
             .build();
 
         ImageResponse response = imageModel.call(new ImagePrompt(imagePrompt, options));
