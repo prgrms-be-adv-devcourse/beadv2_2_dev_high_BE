@@ -82,8 +82,8 @@ public class BidService {
       if (history != null) {
         auctionRankingService.registerBidder(auctionId, userId);
         auctionRankingService.incrementBidCount(auctionId);
-        broadcastBid(history);
         publishFraudCheckRequest(history);
+        broadcastBid(history);
       }
     } catch (Exception e) {
       log.warn("Post-bid handling failed: {}", e.getMessage());

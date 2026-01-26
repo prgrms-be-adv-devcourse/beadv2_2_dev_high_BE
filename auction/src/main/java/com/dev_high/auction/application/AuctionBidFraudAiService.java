@@ -27,13 +27,11 @@ public class AuctionBidFraudAiService {
     private final ObjectMapper objectMapper;
 
     public AuctionBidFraudAiResult assess(
-        String auctionId,
-        String userId,
-        String bidPrice,
         String startBid,
         List<AuctionBidHistory> recentBids
     ) {
         try {
+
             Prompt prompt = auctionBidFraudTemplate.create(Map.ofEntries(
                 Map.entry("startBid", safe(startBid)),
                 Map.entry("recentBidsJson", toJson(recentBids))
