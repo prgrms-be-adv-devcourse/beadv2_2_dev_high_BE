@@ -2,9 +2,13 @@ package com.dev_high.deposit.payment.application.dto;
 
 import com.dev_high.deposit.payment.domain.entity.DepositPayment;
 import com.dev_high.common.type.DepositPaymentStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public class DepositPaymentDto {
     public record CreateCommand(
@@ -49,6 +53,91 @@ public class DepositPaymentDto {
         }
     }
 
+    public record SearchPaymentCommand(
+            String orderId,
+            String userId,
+            String method,
+            OffsetDateTime requestedAt,
+            DepositPaymentStatus status,
+            String approvalNum,
+            OffsetDateTime approvedAt,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            OffsetDateTime canceledAt
+    ) {
+        public static SearchPaymentCommand of(String orderId, String userId, String method, OffsetDateTime requestedAt, DepositPaymentStatus status, String approvalNum, OffsetDateTime approvedAt, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime canceledAt) {
+            return new SearchPaymentCommand(orderId, userId, method, requestedAt, status, approvalNum, approvedAt, createdAt, updatedAt, canceledAt);
+        }
+    }
+
+    public record SearchFilter(
+            String orderId,
+            String userId,
+            String method,
+            OffsetDateTime requestedAt,
+            List<DepositPaymentStatus> status,
+            String approvalNum,
+            OffsetDateTime approvedAt,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
+            OffsetDateTime canceledAt ,
+            int pageNumber,
+            int pageSize,
+            Sort sort
+    ) {
+       public static SearchFilter of(SearchPaymentCommand command, Pageable pageable) {
+           List<DepositPaymentStatus> status = command.status != null ? List.of(command.status) : null;
+           return build(
+                   command.orderId,
+                   command.userId,
+                   command.method,
+                   command.requestedAt,
+                   status,
+                   command.approvalNum,
+                   command.approvedAt,
+                   command.createdAt,
+                   command.updatedAt,
+                   command.canceledAt,
+                   pageable
+           );
+       }
+
+       public static SearchFilter build(
+               String orderId,
+               String userId,
+               String method,
+               OffsetDateTime requestedAt,
+               List<DepositPaymentStatus> status,
+               String approvalNum,
+               OffsetDateTime approvedAt,
+               OffsetDateTime createdAt,
+               OffsetDateTime updatedAt,
+               OffsetDateTime canceledAt,
+               Pageable pageable
+       ) {
+           int pageNumber = pageable != null ? pageable.getPageNumber() : 0;
+           int pageSize = pageable != null ? pageable.getPageSize() : 20;
+           Sort sort = (pageable != null && pageable.getSort() != null) ? pageable.getSort()
+                   : Sort.by("createdAt").descending();
+
+           return new SearchFilter(
+                   StringUtils.hasText(orderId) ? orderId : null,
+                   StringUtils.hasText(userId) ? userId : null,
+                   StringUtils.hasText(method) ? method : null,
+                   requestedAt,
+                   status,
+                   StringUtils.hasText(approvalNum) ? approvalNum : null,
+                   approvedAt,
+                   createdAt,
+                   updatedAt,
+                   canceledAt,
+                   pageNumber,
+                   pageSize,
+                   sort
+           );
+       }
+    }
+
 
     public record Info(
             String id,
@@ -61,7 +150,11 @@ public class DepositPaymentDto {
             DepositPaymentStatus status,
             String approvalNum,
             OffsetDateTime approvedAt,
-            OffsetDateTime createdAt
+            OffsetDateTime createdAt,
+            String createdBy,
+            OffsetDateTime updatedAt,
+            String updatedBy,
+            OffsetDateTime canceledAt
     ) {
         public static Info from(DepositPayment depositPayment) {
             return new Info(
@@ -75,7 +168,11 @@ public class DepositPaymentDto {
                     depositPayment.getStatus(),
                     depositPayment.getApprovalNum(),
                     depositPayment.getApprovedAt(),
-                    depositPayment.getCreatedAt()
+                    depositPayment.getCreatedAt(),
+                    depositPayment.getCreatedBy(),
+                    depositPayment.getUpdatedAt(),
+                    depositPayment.getUpdatedBy(),
+                    depositPayment.getCanceledAt()
             );
         }
     }
