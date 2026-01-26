@@ -160,7 +160,9 @@ public class DepositOrderDto {
             BigDecimal amount,
             DepositOrderStatus status,
             OffsetDateTime createdAt,
+            String createdBy,
             OffsetDateTime updatedAt,
+            String updatedBy,
             BigDecimal deposit,
             BigDecimal paidAmount,
             DepositOrderType type
@@ -172,7 +174,9 @@ public class DepositOrderDto {
                     depositOrder.getAmount(),
                     depositOrder.getStatus(),
                     depositOrder.getCreatedAt(),
+                    depositOrder.getCreatedBy(),
                     depositOrder.getUpdatedAt(),
+                    depositOrder.getUpdatedBy(),
                     depositOrder.getDeposit(),
                     depositOrder.getPaidAmount(),
                     depositOrder.getType()

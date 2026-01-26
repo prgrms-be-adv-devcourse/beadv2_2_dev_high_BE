@@ -183,6 +183,17 @@ public class DepositPaymentService {
         log.info("[Payment] cancelPayment success. paymentId={}, orderId={}, amount={}, status={}", savedPayment.getId(), savedPayment.getOrderId(), savedPayment.getAmount(), savedPayment.getStatus());
     }
 
+    @Transactional
+    public Page<DepositPaymentDto.Info> search(DepositPaymentDto.SearchPaymentCommand command, Pageable pageable) {
+        log.info("[Payment] search start.");
+        DepositPaymentDto.SearchFilter filter = DepositPaymentDto.SearchFilter.of(command, pageable);
+        Page<DepositPaymentDto.Info> result = depositPaymentRepository
+                .search(filter)
+                .map(DepositPaymentDto.Info::from);
+        log.info("[Payment] search success.");
+        return result;
+    }
+
     private TossCancel extractCancel(TossPaymentResponse response) {
         if (response.cancels() == null || response.cancels().isEmpty()) {
             log.error("[Payment] Toss cancel response has no cancel data. response={}", response);

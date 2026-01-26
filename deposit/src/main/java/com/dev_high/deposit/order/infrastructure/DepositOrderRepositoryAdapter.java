@@ -58,9 +58,6 @@ public class DepositOrderRepositoryAdapter implements DepositOrderRepository {
         if (filter.type() != null) {
             builder.and(qDepositOrder.type.in(filter.type()));
         }
-        if (filter.createdAt() != null) {
-            builder.and(qDepositOrder.createdAt.eq(filter.createdAt()));
-        }
         long total = Optional.ofNullable(queryFactory.select(qDepositOrder.count()).from(qDepositOrder).where(builder).fetchOne()).orElse(0L);
 
         long offset = (long) filter.pageNumber() * filter.pageSize();
