@@ -47,7 +47,7 @@ public class AuctionBidFraudService {
                 PageRequest.of(0, MAX_RECENT_BIDS, Sort.by(Sort.Direction.DESC, "createdAt"))
             )
             .getContent();
-        String startBid = recentBids.size() <= 1 ? findStartBid(event.auctionId()) : "N/A";
+        String startBid = recentBids.size() <= 1 ? findStartBid(event.auctionId()) : null;
 
         AuctionBidFraudAiResult result = aiService.assess(
             event.auctionId(),
