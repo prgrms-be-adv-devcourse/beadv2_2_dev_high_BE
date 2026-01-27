@@ -10,7 +10,8 @@ public record AuctionBidMessage(
     String auctionId,
     String highestUserId,
     BigDecimal bidPrice,
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") OffsetDateTime bidAt,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+    OffsetDateTime bidAt,
     long bidSrno,
     int currentUsers
 ) {
